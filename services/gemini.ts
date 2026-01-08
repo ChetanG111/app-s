@@ -6,7 +6,7 @@ export async function generateStep1(screenshotBase64: string, templateBase64: st
     // Reverting to your specific model name
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
 
-    const prompt = `Combine these two images by putting the 2nd screenshot onto the green layer of the 1st one.`;
+    const prompt = `Replace only the bright green screen area on the phone in the first image with the UI from the second screenshot. Keep the phone’s angle, edges, reflections, shadows, and blue background exactly the same. Do not change any other part of the first image; just composite the second image perfectly into the green screen area so it looks like the app is displayed on the phone screen, with clean edges and no distortion`;
 
     const result = await model.generateContent([
         prompt,
@@ -30,9 +30,7 @@ export async function generateStep1(screenshotBase64: string, templateBase64: st
 export async function generateStep2(mockupBase64: string, stylePrompt: string) {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
 
-    const prompt = `Replace the blue screen layer with a ${stylePrompt}. 
-    Keep the phone and the screenshot exactly as they are. DO NOT change the phone or the screen content.
-    Make it look professional, like an App Store screenshot.`;
+    const prompt = `Take the uploaded image and change only the blue background behind the phone. Replace that blue area with a modern vertical gradient that goes from rich near-black at the top to light neutral grey at the bottom. Keep the phone, whatever UI or content is shown on its screen, all reflections, shadows, and edges exactly the same. Do not modify the screen content, phone colors, or composition—only update the background to ${stylePrompt} with no visible banding or artifacts.`;
 
     const result = await model.generateContent([
         prompt,
