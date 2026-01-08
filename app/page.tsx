@@ -11,11 +11,15 @@ import {
     Sparkles,
     Camera,
     ChevronDown,
+    MoreHorizontal,
+    LucideIcon,
+    Download,
+    Trash2,
+    CheckCircle2,
+    Plus,
     Check,
     Zap,
-    Palette,
-    MoreHorizontal,
-    LucideIcon
+    Palette
 } from 'lucide-react';
 
 interface SidebarIconProps {
@@ -524,28 +528,229 @@ const BackgroundView: React.FC<BackgroundViewProps> = ({
     );
 };
 
-const GenerateView: React.FC = () => {
-    const handleGenerate = () => {
-        // Placeholder for actual generation logic
-        console.log("Generating mockup...");
+interface GenerateViewProps {
+    uploadedImage: string | null;
+}
+
+const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage }) => {
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [history, setHistory] = useState<any[]>([]);
+    const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+
+    const fetchHistory = async () => {
+        try {
+            const res = await fetch("/api/outputs");
+            const data = await res.json();
+            if (data.files) setHistory(data.files);
+        } catch (err) {
+            console.error("Failed to fetch history:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchHistory();
+    }, []);
+
+    const handleGenerate = async () => {
+        if (!uploadedImage) {
+            setError("Please upload a screenshot first.");
+            return;
+        }
+
+        setIsGenerating(true);
+        setError(null);
+
+        try {
+            const response = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ screenshot: uploadedImage }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Generation failed");
+
+            fetchHistory(); // Refresh history
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const toggleSelection = (filename: string) => {
+        const newSet = new Set(selectedFiles);
+        if (newSet.has(filename)) newSet.delete(filename);
+        else newSet.add(filename);
+        setSelectedFiles(newSet);
+    };
+
+    const handleDownloadSelected = () => {
+        selectedFiles.forEach(fileUrl => {
+            const link = document.createElement('a');
+            link.href = fileUrl;
+            link.download = fileUrl.split('/').pop() || 'mockup.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    };
+
+    const handleDeleteSelected = async () => {
+        if (!confirm(`Are you sure you want to delete ${selectedFiles.size} images?`)) return;
+
+        try {
+            const response = await fetch("/api/outputs/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ filenames: Array.from(selectedFiles) }),
+            });
+
+            if (response.ok) {
+                setSelectedFiles(new Set());
+                fetchHistory();
+            }
+        } catch (err) {
+            console.error("Failed to delete files:", err);
+        }
     };
 
     return (
-        <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in zoom-in duration-500">
-            <h1 className="text-white text-5xl font-black mb-8 tracking-tight text-center">
-                Ready to go?
+        <div className="flex flex-col items-center w-full h-full max-w-6xl mx-auto px-6 animate-in fade-in zoom-in duration-500 pt-24 pb-32">
+            <h1 className="text-white text-5xl font-black mb-4 tracking-tight text-center">
+                Ready to Generate?
             </h1>
-            <p className="text-zinc-500 text-lg mb-16 text-center max-w-md">
-                Review your settings and click the button below to generate your professional mockup.
+
+            <p className="text-zinc-500 text-lg mb-12 text-center max-w-md">
+                Click the generate card below to create your professional device mockup.
             </p>
 
-            <button
-                onClick={handleGenerate}
-                className="flex items-center gap-4 bg-white hover:bg-zinc-200 text-black px-16 py-6 rounded-full font-black text-xl transition-all duration-300 group shadow-[0_0_50px_rgba(255,255,255,0.15)] active:scale-95"
-            >
-                <Sparkles size={28} className="fill-black group-hover:scale-110 transition-transform duration-300" />
-                Generate Mockup
-            </button>
+            {error && (
+                <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm w-full max-w-md">
+                    {error}
+                </div>
+            )}
+
+            <div className="flex flex-col items-center gap-12 w-full">
+                {/* Selection Actions */}
+                {selectedFiles.size > 0 && (
+                    <div className="flex items-center gap-4 animate-in slide-in-from-top-4 duration-300">
+                        <button
+                            onClick={handleDownloadSelected}
+                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-full font-bold text-sm transition-all shadow-lg"
+                        >
+                            <Download size={18} />
+                            Download {selectedFiles.size}
+                        </button>
+                        <button
+                            onClick={handleDeleteSelected}
+                            className="flex items-center gap-2 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/20 px-6 py-3 rounded-full font-bold text-sm transition-all"
+                        >
+                            <Trash2 size={18} />
+                            Delete {selectedFiles.size}
+                        </button>
+                        <div className="h-6 w-[1px] bg-zinc-800 mx-2" />
+                        <button
+                            onClick={() => setSelectedFiles(new Set())}
+                            className="text-zinc-500 hover:text-white text-sm font-medium"
+                        >
+                            Deselect all
+                        </button>
+                    </div>
+                )}
+
+                {/* History Gallery + Generate Card */}
+                <div className="w-full">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            Recent Generations
+                            <span className="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded-md font-mono">
+                                {history.length}
+                            </span>
+                        </h2>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        {/* The Generate Card - Always present at the start of the grid */}
+                        <button
+                            onClick={handleGenerate}
+                            disabled={isGenerating || !uploadedImage}
+                            className={`
+                                relative aspect-[9/16] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center transition-all duration-500 group
+                                ${isGenerating
+                                    ? 'border-blue-500/50 bg-blue-500/5 cursor-wait'
+                                    : !uploadedImage
+                                        ? 'border-zinc-900 bg-black/20 opacity-40 cursor-not-allowed'
+                                        : 'border-zinc-800 hover:border-zinc-500 bg-black/40 hover:bg-white/5 cursor-pointer'
+                                }
+                            `}
+                        >
+                            {isGenerating ? (
+                                <>
+                                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
+                                    <span className="text-blue-400 font-bold text-sm animate-pulse">Generating...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-white/5">
+                                        <Plus className="text-zinc-500 group-hover:text-white" size={32} strokeWidth={2} />
+                                    </div>
+                                    <span className="text-zinc-400 group-hover:text-white font-bold text-lg">Generate</span>
+                                    {!uploadedImage && <span className="text-zinc-600 text-[10px] uppercase tracking-widest mt-2">Upload Required</span>}
+                                </>
+                            )}
+                        </button>
+
+                        {/* History Items */}
+                        {history.map((file) => (
+                            <div
+                                key={file.name}
+                                onClick={() => toggleSelection(file.url)}
+                                className={`
+                                    group relative aspect-[9/16] bg-zinc-900 rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-300 border-2
+                                    ${selectedFiles.has(file.url) ? 'border-blue-500 scale-[1.02]' : 'border-transparent hover:border-zinc-700'}
+                                `}
+                            >
+                                <img
+                                    src={file.url}
+                                    alt={file.name}
+                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                />
+
+                                <div className={`
+                                    absolute inset-0 bg-blue-500/10 transition-opacity duration-300
+                                    ${selectedFiles.has(file.url) ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}
+                                `} />
+
+                                <div className="absolute top-6 right-6 transition-transform duration-300 transform">
+                                    {selectedFiles.has(file.url) ? (
+                                        <div className="bg-blue-500 text-white p-2 rounded-full shadow-lg">
+                                            <CheckCircle2 size={18} strokeWidth={3} />
+                                        </div>
+                                    ) : (
+                                        <div className="bg-black/40 backdrop-blur-md text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="w-5 h-5 border-2 border-white/50 rounded-full" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="absolute bottom-6 inset-x-0 px-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <p className="text-[11px] text-zinc-400 font-mono bg-black/60 backdrop-blur-sm py-1.5 px-3 rounded-full w-fit">
+                                        {new Date(file.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {history.length === 0 && !isGenerating && (
+                        <p className="text-zinc-600 text-sm mt-12 text-center italic">
+                            Choose your screenshot and style, then click Generate to begin.
+                        </p>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };
@@ -630,7 +835,7 @@ export default function Home() {
                 )}
 
                 {selectedIndex === 6 && (
-                    <GenerateView />
+                    <GenerateView uploadedImage={uploadedImage} />
                 )}
 
 
