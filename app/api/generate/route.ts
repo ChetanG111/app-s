@@ -5,14 +5,14 @@ import path from "path";
 
 export async function POST(req: NextRequest) {
     try {
-        const { screenshot } = await req.json();
+        const { screenshot, style = 'Basic' } = await req.json();
 
         if (!screenshot) {
             return NextResponse.json({ error: "Screenshot is required" }, { status: 400 });
         }
 
         // Read the template image from public folder
-        const templatePath = path.join(process.cwd(), "public", "templates", "layouts", "Basic.png");
+        const templatePath = path.join(process.cwd(), "public", "templates", "layouts", `${style}.png`);
         const templateBuffer = fs.readFileSync(templatePath);
         const templateBase64 = `data:image/png;base64,${templateBuffer.toString("base64")}`;
 
