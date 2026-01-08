@@ -451,13 +451,13 @@ interface BackgroundOption {
     colorClass?: string;
     isAI?: boolean;
     isCustom?: boolean;
+    description?: string;
 }
 
 const BACKGROUND_OPTIONS: BackgroundOption[] = [
-    { id: 'ai', label: 'AI Suggestions', isAI: true },
-    { id: 'slate', label: 'Dark Slate', colorClass: 'bg-[#121212] border-zinc-700' },
-    { id: 'midnight', label: 'Midnight', colorClass: 'bg-[#050505] border-zinc-900' },
-    { id: 'indigo', label: 'Deep Indigo', colorClass: 'bg-[#1a1c2c]' },
+    { id: 'charcoal', label: 'Charcoal', colorClass: 'bg-[#151922] border-white/5', description: 'Default. Safest.' },
+    { id: 'deep_indigo', label: 'Deep Indigo', colorClass: 'bg-[#0F1430] border-white/10', description: 'Slight color, still premium.' },
+    { id: 'dark_slate', label: 'Dark Slate', colorClass: 'bg-[#0E1116] border-white/5' },
     { id: 'custom', label: 'Custom', isCustom: true },
 ];
 
@@ -466,21 +466,40 @@ interface BackgroundViewProps {
     onSelect: (id: string) => void;
     customValue: string;
     setCustomValue: (val: string) => void;
+    generateBackground: boolean;
+    setGenerateBackground: (val: boolean) => void;
 }
 
 const BackgroundView: React.FC<BackgroundViewProps> = ({
     selectedBg,
     onSelect,
     customValue,
-    setCustomValue
+    setCustomValue,
+    generateBackground,
+    setGenerateBackground
 }) => {
     const [isFocused, setIsFocused] = useState(false);
 
     return (
         <div className="flex flex-col items-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
-            <h1 className="text-white text-5xl font-black pt-12 mb-8 tracking-tight text-center shrink-0">
-                Background Style
-            </h1>
+            <div className="flex flex-col items-center w-full shrink-0 mb-8">
+                <h1 className="text-white text-5xl font-black mb-6 tracking-tight text-center">
+                    Background Style
+                </h1>
+
+                {/* Dev Mode Toggle */}
+                <div
+                    onClick={() => setGenerateBackground(!generateBackground)}
+                    className="flex items-center gap-3 bg-[#0c0c0c]/60 backdrop-blur-md border border-white/5 px-4 py-2 rounded-2xl cursor-pointer hover:border-white/20 transition-all group"
+                >
+                    <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${generateBackground ? 'bg-blue-500' : 'bg-zinc-800'}`}>
+                        <div className={`absolute top-1 w-2 h-2 bg-white rounded-full transition-all duration-300 ${generateBackground ? 'left-5' : 'left-1'}`} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                        Generate AI Background {generateBackground ? '(ON)' : '(OFF)'}
+                    </span>
+                </div>
+            </div>
 
             <div className="w-full max-w-md flex flex-col gap-2.5 px-4 pb-20">
                 {BACKGROUND_OPTIONS.map((option) => (
@@ -488,30 +507,48 @@ const BackgroundView: React.FC<BackgroundViewProps> = ({
                         key={option.id}
                         onClick={() => onSelect(option.id)}
                         className={`
-              w-full h-14 shrink-0 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
-              ${selectedBg === option.id
+                            w-full h-[72px] shrink-0 rounded-2xl flex items-center justify-between px-6 transition-all duration-300 border-2
+                            ${selectedBg === option.id
                                 ? 'bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.15)] scale-[1.02]'
-                                : 'bg-[#0c0c0c]/80 border-zinc-800 text-zinc-400 hover:border-zinc-500 hover:text-white'
+                                : 'bg-[#0c0c0c]/80 border-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-white'
                             }
-            `}
+                        `}
                     >
-                        <div className="flex items-center gap-4">
-                            {option.isAI ? (
-                                <Zap size={18} className={selectedBg === option.id ? 'text-blue-600' : 'text-zinc-500'} />
-                            ) : option.isCustom ? (
-                                <Palette size={18} className={selectedBg === option.id ? 'text-indigo-600' : 'text-zinc-500'} />
-                            ) : (
-                                <div className={`w-5 h-5 rounded-full border ${option.colorClass}`} />
-                            )}
-                            <span>{option.label}</span>
+                        <div className={`flex flex-col items-start ${!generateBackground ? 'opacity-30' : ''}`}>
+                            <div className="flex items-center gap-4">
+                                {option.isAI ? (
+                                    <Zap size={20} className={selectedBg === option.id ? 'text-blue-600' : 'text-zinc-500'} />
+                                ) : option.isCustom ? (
+                                    <Palette size={20} className={selectedBg === option.id ? 'text-indigo-600' : 'text-zinc-500'} />
+                                ) : (
+                                    <div className={`w-6 h-6 rounded-full border ${option.colorClass}`} />
+                                )}
+                                <div className="flex flex-col items-start">
+                                    <span className="text-base font-bold leading-tight">{option.label}</span>
+                                    {option.description && (
+                                        <span className={`text-[11px] font-medium leading-tight mt-1 ${selectedBg === option.id ? 'text-black/60' : 'text-zinc-600'}`}>
+                                            {option.description}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                        {selectedBg === option.id && (
-                            <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
-                                <Check size={12} className="text-white" strokeWidth={4} />
+                        {selectedBg === option.id && generateBackground && (
+                            <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
+                                <Check size={14} className="text-white" strokeWidth={4} />
                             </div>
                         )}
                     </button>
                 ))}
+
+                {!generateBackground && (
+                    <div className="mt-4 p-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 animate-in fade-in duration-500">
+                        <p className="text-zinc-400 text-xs text-center leading-relaxed">
+                            <span className="text-blue-400 font-bold uppercase text-[10px] block mb-1">Developer Mode</span>
+                            Background generation is disabled. App will only generate the phone mockup on its original template background.
+                        </p>
+                    </div>
+                )}
 
                 {selectedBg === 'custom' && (
                     <div className="mt-4 animate-in slide-in-from-top-4 duration-500 flex flex-col items-center w-full">
@@ -555,12 +592,17 @@ const BackgroundView: React.FC<BackgroundViewProps> = ({
 
 interface GenerateViewProps {
     uploadedImage: string | null;
-    selectedStyle: string;
+    isGenerating: boolean;
+    handleGenerate: () => Promise<void>;
     onNotify: (message: string, type: NotificationType) => void;
 }
 
-const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage, selectedStyle, onNotify }) => {
-    const [isGenerating, setIsGenerating] = useState(false);
+const GenerateView: React.FC<GenerateViewProps> = ({
+    uploadedImage,
+    isGenerating,
+    handleGenerate,
+    onNotify
+}) => {
     const [history, setHistory] = useState<any[]>([]);
     const [viewingImage, setViewingImage] = useState<string | null>(null);
 
@@ -576,36 +618,11 @@ const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage, selectedStyl
 
     useEffect(() => {
         fetchHistory();
-    }, []);
+    }, [isGenerating]); // Refresh history whenever generation state changes (especially when it finishes)
 
-    const handleGenerate = async () => {
-        if (!uploadedImage) {
-            onNotify("Please upload a screenshot first.", "warning");
-            return;
-        }
-
-        setIsGenerating(true);
-
-        try {
-            const response = await fetch("/api/generate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    screenshot: uploadedImage,
-                    style: selectedStyle
-                }),
-            });
-
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || "Generation failed");
-
-            onNotify("Mockup generated successfully!", "success");
-            fetchHistory(); // Refresh history
-        } catch (err: any) {
-            onNotify(err.message, "error");
-        } finally {
-            setIsGenerating(false);
-        }
+    const onGenerateClick = async () => {
+        await handleGenerate();
+        fetchHistory();
     };
 
     const handleDownload = (fileUrl: string) => {
@@ -640,7 +657,7 @@ const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage, selectedStyl
     const handleCloseViewer = () => setViewingImage(null);
 
     return (
-        <div className="flex flex-col items-center w-full h-full max-w-6xl mx-auto px-6 animate-in fade-in zoom-in duration-500 pt-24 pb-32">
+        <div className="flex flex-col items-center w-full h-full max-w-6xl mx-auto px-6 animate-in fade-in zoom-in duration-500 pt-24 pb-32 overflow-y-auto">
             {/* Full Screen Image Viewer Modal */}
             {viewingImage && (
                 <div
@@ -688,7 +705,7 @@ const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage, selectedStyl
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         {/* The Generate Card - Always present at the start of the grid */}
                         <button
-                            onClick={handleGenerate}
+                            onClick={onGenerateClick}
                             disabled={isGenerating || !uploadedImage}
                             className={`
                                 relative aspect-[9/16] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center transition-all duration-500 group
@@ -703,7 +720,7 @@ const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage, selectedStyl
                             {isGenerating ? (
                                 <>
                                     <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
-                                    <span className="text-blue-400 font-bold text-sm animate-pulse">Generating...</span>
+                                    <span className="text-blue-400 font-bold text-sm animate-pulse text-center px-4">Creating your mockup...</span>
                                 </>
                             ) : (
                                 <>
@@ -782,9 +799,47 @@ export default function Home() {
     const [headline, setHeadline] = useState("");
     const [selectedFont, setSelectedFont] = useState("standard");
     const [selectedColor, setSelectedColor] = useState("white");
-    const [selectedBg, setSelectedBg] = useState("midnight");
+    const [selectedBg, setSelectedBg] = useState("charcoal");
     const [customBgPrompt, setCustomBgPrompt] = useState("");
     const [projectName, setProjectName] = useState("App-1");
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generateBackground, setGenerateBackground] = useState(true);
+
+    const handleGenerate = async () => {
+        if (!uploadedImage) {
+            showNotification("Please upload a screenshot first.", "warning");
+            setSelectedIndex(0);
+            return;
+        }
+
+        setIsGenerating(true);
+
+        try {
+            const response = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    screenshot: uploadedImage,
+                    style: selectedStyle,
+                    backgroundId: selectedBg,
+                    customBackground: customBgPrompt,
+                    headline,
+                    font: selectedFont,
+                    color: selectedColor,
+                    skipBackground: !generateBackground
+                }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Generation failed");
+
+            showNotification("Mockup generated successfully!", "success");
+        } catch (err: any) {
+            showNotification(err.message, "error");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     const icons = [
         { id: 'upload', icon: ImagePlus },
@@ -817,12 +872,16 @@ export default function Home() {
             <div className="absolute left-6 top-1/2 -translate-y-1/2 z-30">
                 <div className="flex flex-col items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-full p-2 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                     {icons.map((item, index) => (
-                        <SidebarIcon
-                            key={item.id}
-                            Icon={item.icon}
-                            isSelected={selectedIndex === index}
-                            onClick={() => setSelectedIndex(index)}
-                        />
+                        <div key={item.id} className="relative">
+                            <SidebarIcon
+                                Icon={item.icon}
+                                isSelected={selectedIndex === index}
+                                onClick={() => setSelectedIndex(index)}
+                            />
+                            {item.id === 'generate' && isGenerating && (
+                                <div className="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-[#0c0c0c] animate-pulse" />
+                            )}
+                        </div>
                     ))}
                 </div>
             </div>
@@ -861,13 +920,16 @@ export default function Home() {
                         onSelect={setSelectedBg}
                         customValue={customBgPrompt}
                         setCustomValue={setCustomBgPrompt}
+                        generateBackground={generateBackground}
+                        setGenerateBackground={setGenerateBackground}
                     />
                 )}
 
                 {selectedIndex === 6 && (
                     <GenerateView
                         uploadedImage={uploadedImage}
-                        selectedStyle={selectedStyle}
+                        isGenerating={isGenerating}
+                        handleGenerate={handleGenerate}
                         onNotify={showNotification}
                     />
                 )}
