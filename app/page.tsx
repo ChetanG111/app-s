@@ -87,7 +87,7 @@ const TopNav: React.FC<TopNavProps> = ({ projectName, setProjectName }) => {
                         placeholder="Untitled Project"
                     />
 
-                    <button 
+                    <button
                         aria-label="More options"
                         className={`
             transition-colors duration-200
@@ -160,32 +160,30 @@ const UploadView: React.FC<ViewProps> = ({ onImageUpload }) => {
 
 const StyleView: React.FC<{ uploadedImage: string | null }> = ({ uploadedImage }) => {
     const [isSelected, setIsSelected] = useState(true);
-    const mockupImage = uploadedImage || 'https://images.unsplash.com/photo-1695653422715-991ec3a0db7a?q=80&w=1974&auto=format&fit=crop';
+    const mockupImage = uploadedImage || '/templates/layouts/Basic.png';
 
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h1 className="text-white text-4xl font-black mb-8 pt-16 tracking-tight text-center">
+            <h1 className="text-white text-4xl font-black mb-8 pt-12 tracking-tight text-center">
                 Select your layout style
             </h1>
 
-            <div className="relative mb-[120px] mt-16">
+            <div className="relative mb-24 mt-8 flex justify-center">
                 <div
                     onClick={() => setIsSelected(!isSelected)}
                     className={`
-            group relative h-[520px] aspect-[9/16] bg-[#0c0c0c] rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-500 border-2
-            ${isSelected
+                        group relative bg-[#0c0c0c] rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-500 border-2
+                        ${isSelected
                             ? 'border-white shadow-[0_0_60px_rgba(255,255,255,0.1)] scale-100'
                             : 'border-zinc-800 scale-[0.98] hover:border-zinc-600 opacity-60 hover:opacity-100'
                         }
-          `}
+                    `}
                 >
-                    <div className="w-full h-full relative p-0 overflow-hidden">
-                        <img
-                            src={mockupImage}
-                            alt="Style mockup"
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
+                    <img
+                        src={mockupImage}
+                        alt="Style mockup"
+                        className="h-[520px] w-auto block object-contain"
+                    />
 
                     {isSelected && (
                         <div className="absolute top-6 right-6 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-2xl animate-in zoom-in duration-300">
