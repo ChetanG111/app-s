@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import { NotificationToast, useNotification, NotificationType } from '../components/Notification';
 import {
     ImagePlus,
     Smartphone,
@@ -15,11 +16,15 @@ import {
     LucideIcon,
     Download,
     Trash2,
-    CheckCircle2,
     Plus,
     Check,
     Zap,
-    Palette
+    Palette,
+    X,
+    AlertCircle,
+    CheckCircle2,
+    Info,
+    AlertTriangle
 } from 'lucide-react';
 
 interface SidebarIconProps {
@@ -530,13 +535,13 @@ const BackgroundView: React.FC<BackgroundViewProps> = ({
 
 interface GenerateViewProps {
     uploadedImage: string | null;
+    onNotify: (message: string, type: NotificationType) => void;
 }
 
-const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage }) => {
+const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage, onNotify }) => {
     const [isGenerating, setIsGenerating] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [history, setHistory] = useState<any[]>([]);
-    const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+    const [viewingImage, setViewingImage] = useState<string | null>(null);
 
     const fetchHistory = async () => {
         try {
@@ -554,12 +559,11 @@ const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage }) => {
 
     const handleGenerate = async () => {
         if (!uploadedImage) {
-            setError("Please upload a screenshot first.");
+            onNotify("Please upload a screenshot first.", "warning");
             return;
         }
 
         setIsGenerating(true);
-        setError(null);
 
         try {
             const response = await fetch("/api/generate", {
@@ -571,95 +575,81 @@ const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage }) => {
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Generation failed");
 
+            onNotify("Mockup generated successfully!", "success");
             fetchHistory(); // Refresh history
         } catch (err: any) {
-            setError(err.message);
+            onNotify(err.message, "error");
         } finally {
             setIsGenerating(false);
         }
     };
 
-    const toggleSelection = (filename: string) => {
-        const newSet = new Set(selectedFiles);
-        if (newSet.has(filename)) newSet.delete(filename);
-        else newSet.add(filename);
-        setSelectedFiles(newSet);
+    const handleDownload = (fileUrl: string) => {
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        // Ensure query params are stripped before extracting filename
+        const cleanName = fileUrl.split('?')[0].split('/').pop();
+        link.download = cleanName || 'mockup.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
-    const handleDownloadSelected = () => {
-        selectedFiles.forEach(fileUrl => {
-            const link = document.createElement('a');
-            link.href = fileUrl;
-            link.download = fileUrl.split('/').pop() || 'mockup.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-    };
-
-    const handleDeleteSelected = async () => {
-        if (!confirm(`Are you sure you want to delete ${selectedFiles.size} images?`)) return;
+    const handleDelete = async (fileUrl: string) => {
+        if (!confirm('Are you sure you want to delete this image?')) return;
 
         try {
             const response = await fetch("/api/outputs/delete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ filenames: Array.from(selectedFiles) }),
+                body: JSON.stringify({ filenames: [fileUrl] }),
             });
 
             if (response.ok) {
-                setSelectedFiles(new Set());
                 fetchHistory();
             }
         } catch (err) {
-            console.error("Failed to delete files:", err);
+            console.error("Failed to delete file:", err);
         }
     };
 
+    const handleCloseViewer = () => setViewingImage(null);
+
     return (
         <div className="flex flex-col items-center w-full h-full max-w-6xl mx-auto px-6 animate-in fade-in zoom-in duration-500 pt-24 pb-32">
-            <h1 className="text-white text-5xl font-black mb-4 tracking-tight text-center">
-                Ready to Generate?
-            </h1>
+            {/* Full Screen Image Viewer Modal */}
+            {viewingImage && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 animate-in fade-in duration-300"
+                    onClick={handleCloseViewer}
+                >
+                    {/* Backdrop Blur Layer */}
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl" />
 
-            <p className="text-zinc-500 text-lg mb-12 text-center max-w-md">
-                Click the generate card below to create your professional device mockup.
-            </p>
+                    {/* Close Button */}
+                    <button
+                        onClick={handleCloseViewer}
+                        className="absolute top-8 right-8 z-[110] p-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full text-white transition-all hover:scale-110 active:scale-95"
+                    >
+                        <X size={24} />
+                    </button>
 
-            {error && (
-                <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm w-full max-w-md">
-                    {error}
+                    {/* Image Container */}
+                    <div
+                        className="relative z-[110] max-w-full max-h-full flex items-center justify-center animate-in zoom-in duration-400"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <img
+                            src={viewingImage}
+                            alt="Full screen preview"
+                            className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-[0_0_100px_rgba(0,0,0,0.8)]"
+                        />
+
+                    </div>
                 </div>
             )}
 
-            <div className="flex flex-col items-center gap-12 w-full">
-                {/* Selection Actions */}
-                {selectedFiles.size > 0 && (
-                    <div className="flex items-center gap-4 animate-in slide-in-from-top-4 duration-300">
-                        <button
-                            onClick={handleDownloadSelected}
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-full font-bold text-sm transition-all shadow-lg"
-                        >
-                            <Download size={18} />
-                            Download {selectedFiles.size}
-                        </button>
-                        <button
-                            onClick={handleDeleteSelected}
-                            className="flex items-center gap-2 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/20 px-6 py-3 rounded-full font-bold text-sm transition-all"
-                        >
-                            <Trash2 size={18} />
-                            Delete {selectedFiles.size}
-                        </button>
-                        <div className="h-6 w-[1px] bg-zinc-800 mx-2" />
-                        <button
-                            onClick={() => setSelectedFiles(new Set())}
-                            className="text-zinc-500 hover:text-white text-sm font-medium"
-                        >
-                            Deselect all
-                        </button>
-                    </div>
-                )}
-
+            <div className="flex flex-col items-center gap-8 w-full">
                 {/* History Gallery + Generate Card */}
                 <div className="w-full">
                     <div className="flex items-center justify-between mb-6">
@@ -706,11 +696,8 @@ const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage }) => {
                         {history.map((file) => (
                             <div
                                 key={file.name}
-                                onClick={() => toggleSelection(file.url)}
-                                className={`
-                                    group relative aspect-[9/16] bg-zinc-900 rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-300 border-2
-                                    ${selectedFiles.has(file.url) ? 'border-blue-500 scale-[1.02]' : 'border-transparent hover:border-zinc-700'}
-                                `}
+                                onClick={() => setViewingImage(file.url)}
+                                className="group relative aspect-[9/16] bg-zinc-900 rounded-[2.5rem] overflow-hidden transition-all duration-300 border-2 border-transparent hover:border-zinc-700 cursor-pointer"
                             >
                                 <img
                                     src={file.url}
@@ -718,21 +705,29 @@ const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage }) => {
                                     className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                 />
 
-                                <div className={`
-                                    absolute inset-0 bg-blue-500/10 transition-opacity duration-300
-                                    ${selectedFiles.has(file.url) ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}
-                                `} />
+                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                                <div className="absolute top-6 right-6 transition-transform duration-300 transform">
-                                    {selectedFiles.has(file.url) ? (
-                                        <div className="bg-blue-500 text-white p-2 rounded-full shadow-lg">
-                                            <CheckCircle2 size={18} strokeWidth={3} />
-                                        </div>
-                                    ) : (
-                                        <div className="bg-black/40 backdrop-blur-md text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <div className="w-5 h-5 border-2 border-white/50 rounded-full" />
-                                        </div>
-                                    )}
+                                <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDownload(file.url);
+                                        }}
+                                        className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-black transition-all shadow-xl hover:scale-110 active:scale-95"
+                                        title="Download"
+                                    >
+                                        <Download size={16} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(file.url);
+                                        }}
+                                        className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-xl hover:scale-110 active:scale-95"
+                                        title="Delete"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
 
                                 <div className="absolute bottom-6 inset-x-0 px-6 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -756,6 +751,7 @@ const GenerateView: React.FC<GenerateViewProps> = ({ uploadedImage }) => {
 };
 
 export default function Home() {
+    const { notification, showNotification, hideNotification } = useNotification();
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
     const [headline, setHeadline] = useState("");
@@ -783,6 +779,12 @@ export default function Home() {
 
     return (
         <main className="relative w-screen h-screen overflow-hidden text-white">
+            <NotificationToast
+                message={notification.message}
+                type={notification.type}
+                isVisible={notification.isVisible}
+                onClose={hideNotification}
+            />
             {/* Top Navigation */}
             <TopNav projectName={projectName} setProjectName={setProjectName} />
 
@@ -835,7 +837,10 @@ export default function Home() {
                 )}
 
                 {selectedIndex === 6 && (
-                    <GenerateView uploadedImage={uploadedImage} />
+                    <GenerateView
+                        uploadedImage={uploadedImage}
+                        onNotify={showNotification}
+                    />
                 )}
 
 
