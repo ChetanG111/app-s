@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NotificationToast, useNotification, NotificationType } from '../components/Notification';
+import { ConfirmationModal, useConfirmation } from '../components/ConfirmationModal';
 import {
     ImagePlus,
     Smartphone,
@@ -76,7 +77,7 @@ const TopNav: React.FC<TopNavProps> = ({ projectName, setProjectName }) => {
                         <div className="w-4 h-4 bg-white/20 rounded-full blur-[2px]" />
                     </div>
 
-                    <span className="text-white font-bold tracking-tight text-sm">Shots</span>
+                    <span className="text-white font-bold tracking-tight text-sm">shots88</span>
                 </div>
 
                 {/* Divider */}
@@ -137,8 +138,8 @@ const UploadView: React.FC<ViewProps> = ({ uploadedImage, onImageUpload, onNotif
                         if (fileInputRef.current) fileInputRef.current.value = "";
                         // Ensure we don't proceed
                         return;
-                    } 
-                    
+                    }
+
                     // Only upload if valid
                     onImageUpload(e.target?.result as string);
                 };
@@ -611,13 +612,15 @@ interface GenerateViewProps {
     isGenerating: boolean;
     handleGenerate: () => Promise<void>;
     onNotify: (message: string, type: NotificationType) => void;
+    onConfirm: (options: { title: string; message: string; isDanger?: boolean; onConfirm: () => void }) => void;
 }
 
 const GenerateView: React.FC<GenerateViewProps> = ({
     uploadedImage,
     isGenerating,
     handleGenerate,
-    onNotify
+    onNotify,
+    onConfirm
 }) => {
     const [history, setHistory] = useState<any[]>([]);
     const [viewingImage, setViewingImage] = useState<string | null>(null);
@@ -653,21 +656,28 @@ const GenerateView: React.FC<GenerateViewProps> = ({
     };
 
     const handleDelete = async (fileUrl: string) => {
-        if (!confirm('Are you sure you want to delete this image?')) return;
+        onConfirm({
+            title: "Delete Image",
+            message: "Are you sure you want to delete this image? This action cannot be undone.",
+            isDanger: true,
+            onConfirm: async () => {
+                try {
+                    const response = await fetch("/api/outputs/delete", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ filenames: [fileUrl] }),
+                    });
 
-        try {
-            const response = await fetch("/api/outputs/delete", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ filenames: [fileUrl] }),
-            });
-
-            if (response.ok) {
-                fetchHistory();
+                    if (response.ok) {
+                        fetchHistory();
+                        onNotify("Image deleted successfully", "success");
+                    }
+                } catch (err) {
+                    console.error("Failed to delete file:", err);
+                    onNotify("Failed to delete image", "error");
+                }
             }
-        } catch (err) {
-            console.error("Failed to delete file:", err);
-        }
+        });
     };
 
     const handleCloseViewer = () => setViewingImage(null);
@@ -809,6 +819,7 @@ const GenerateView: React.FC<GenerateViewProps> = ({
 
 export default function Home() {
     const { notification, showNotification, hideNotification } = useNotification();
+    const { confirmConfig, confirm, closeConfirm, handleConfirm } = useConfirmation();
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
     const [selectedStyle, setSelectedStyle] = useState("Basic");
@@ -880,6 +891,16 @@ export default function Home() {
                 type={notification.type}
                 isVisible={notification.isVisible}
                 onClose={hideNotification}
+            />
+            <ConfirmationModal
+                isOpen={confirmConfig.isOpen}
+                title={confirmConfig.title}
+                message={confirmConfig.message}
+                confirmLabel={confirmConfig.confirmLabel}
+                cancelLabel={confirmConfig.cancelLabel}
+                isDanger={confirmConfig.isDanger}
+                onConfirm={handleConfirm}
+                onCancel={closeConfirm}
             />
             {/* Top Navigation */}
             <TopNav projectName={projectName} setProjectName={setProjectName} />
@@ -963,6 +984,7 @@ export default function Home() {
                         isGenerating={isGenerating}
                         handleGenerate={handleGenerate}
                         onNotify={showNotification}
+                        onConfirm={confirm}
                     />
                 )}
 
