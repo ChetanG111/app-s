@@ -12,7 +12,7 @@ export const TopNav: React.FC<TopNavProps> = ({ projectName, setProjectName }) =
     return (
         <div className="absolute top-6 left-6 z-40 flex items-center gap-2 pointer-events-auto">
             <div className={`
-        flex items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border rounded-2xl px-4 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-all duration-300
+        flex items-center h-12 bg-[#0c0c0c]/90 backdrop-blur-2xl border rounded-2xl px-5 shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-all duration-300
         ${isFocused ? 'border-white/20 ring-1 ring-white/10' : 'border-white/5 hover:border-white/10'}
       `}>
                 {/* Logo/Icon Area */}

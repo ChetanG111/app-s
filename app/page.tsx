@@ -25,6 +25,7 @@ import { FontView } from '../components/views/FontView';
 import { ColorView } from '../components/views/ColorView';
 import { BackgroundView } from '../components/views/BackgroundView';
 import { GenerateView } from '../components/views/GenerateView';
+import { UserNav } from '../components/UserNav';
 
 export default function Home() {
     const { notification, showNotification, hideNotification } = useNotification();
@@ -123,6 +124,7 @@ export default function Home() {
             />
             {/* Top Navigation */}
             <TopNav projectName={projectName} setProjectName={setProjectName} />
+            <UserNav />
 
             {/* Sidebar UI */}
             <div className="absolute left-6 top-1/2 -translate-y-1/2 z-30">
