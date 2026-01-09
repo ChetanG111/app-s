@@ -114,9 +114,10 @@ const TopNav: React.FC<TopNavProps> = ({ projectName, setProjectName }) => {
 interface ViewProps {
     uploadedImage: string | null;
     onImageUpload: (image: string) => void;
+    onNotify: (message: string, type: NotificationType) => void;
 }
 
-const UploadView: React.FC<ViewProps> = ({ uploadedImage, onImageUpload }) => {
+const UploadView: React.FC<ViewProps> = ({ uploadedImage, onImageUpload, onNotify }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
 
@@ -127,8 +128,21 @@ const UploadView: React.FC<ViewProps> = ({ uploadedImage, onImageUpload }) => {
     const processFile = (file: File) => {
         if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                onImageUpload(reader.result as string);
+            reader.onloadend = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Portrait means Height > Width. Reject anything else (Landscape or Square)
+                    if (img.width >= img.height) {
+                        onNotify("Please upload a portrait screenshot (height must be greater than width).", "warning");
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                        // Ensure we don't proceed
+                        return;
+                    } 
+                    
+                    // Only upload if valid
+                    onImageUpload(e.target?.result as string);
+                };
+                img.src = e.target?.result as string;
             };
             reader.readAsDataURL(file);
         }
@@ -960,6 +974,7 @@ export default function Home() {
                     <UploadView
                         uploadedImage={uploadedImage}
                         onImageUpload={setUploadedImage}
+                        onNotify={showNotification}
                     />
                 )}
 
