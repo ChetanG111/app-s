@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateStep1, generateStep2 } from "@/services/gemini";
+import { generateScreenStep, generateTextStep, generateBackgroundStep } from "@/services/gemini";
 import fs from "fs";
 import path from "path";
 
@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
             style = 'Basic',
             backgroundId = 'charcoal',
             customBackground = '',
+            headline = '',
+            font = 'standard',
+            color = 'white',
             skipBackground = false
         } = await req.json();
 
@@ -43,31 +46,50 @@ export async function POST(req: NextRequest) {
         const templateBuffer = fs.readFileSync(templatePath);
         const templateBase64 = `data:image/png;base64,${templateBuffer.toString("base64")}`;
 
-        // STEP 1: Generate mockup on plain white background
-        console.log("Generating Step 1: Mockup on white...");
-        const step1Result = await generateStep1(screenshot, templateBase64);
-        const mockupBase64 = extractImageBase64(step1Result);
+        const timestamp = Date.now();
+        const intermediateDir = path.join(process.cwd(), "public", "intermediate");
+        if (!fs.existsSync(intermediateDir)) {
+            fs.mkdirSync(intermediateDir, { recursive: true });
+        }
 
-        if (!mockupBase64) {
+        // STEP 1: Generate mockup on plain white background (Screen Overlay)
+        console.log("Generating Step 1: Screen Overlay...");
+        const step1Result = await generateScreenStep(screenshot, templateBase64);
+        const step1Base64 = extractImageBase64(step1Result);
+
+        if (!step1Base64) {
             return NextResponse.json({
                 error: "Step 1 failed: Model did not return an image.",
                 raw: step1Result
             }, { status: 500 });
         }
 
-        // Save Step 1 intermediate result to disk
-        const step1Buffer = Buffer.from(mockupBase64, 'base64');
-        const timestamp = Date.now();
-        const step1Filename = `step1-${timestamp}.png`;
-        const intermediateDir = path.join(process.cwd(), "public", "intermediate");
+        // Save Step 1 intermediate result
+        fs.writeFileSync(path.join(intermediateDir, `step1-${timestamp}.png`), Buffer.from(step1Base64, 'base64'));
 
-        if (!fs.existsSync(intermediateDir)) {
-            fs.mkdirSync(intermediateDir, { recursive: true });
+        // STEP 2: Generate Text Overlay
+        let step2Base64 = step1Base64;
+        if (headline) {
+            console.log("Generating Step 2: Text Overlay...");
+            const step2Result = await generateTextStep(step1Base64, headline, font, color);
+            const extractedStep2 = extractImageBase64(step2Result);
+
+            if (!extractedStep2) {
+                return NextResponse.json({
+                    error: "Step 2 failed: Model did not return an image.",
+                    raw: step2Result
+                }, { status: 500 });
+            }
+            step2Base64 = extractedStep2;
+            // Save Step 2 intermediate result
+            fs.writeFileSync(path.join(intermediateDir, `step2-${timestamp}.png`), Buffer.from(step2Base64, 'base64'));
+        } else {
+            console.log("Skipping Step 2: No headline provided.");
         }
-        fs.writeFileSync(path.join(intermediateDir, step1Filename), step1Buffer);
 
-        let finalImageBase64 = mockupBase64;
-        let finalFilename = `mockup-${timestamp}.png`;
+        // STEP 3: Generate background for the mockup
+        let finalImageBase64 = step2Base64;
+        const finalFilename = `mockup-${timestamp}.png`;
 
         if (!skipBackground) {
             // Determine background prompt
@@ -75,25 +97,23 @@ export async function POST(req: NextRequest) {
                 ? customBackground
                 : (BACKGROUND_STYLE_MAP[backgroundId] || BACKGROUND_STYLE_MAP['charcoal']);
 
-            // STEP 2: Generate background for the mockup
-            console.log(`Generating Step 2: Background with style '${backgroundId}'...`);
-            const finalResult = await generateStep2(mockupBase64, backgroundPrompt);
+            console.log(`Generating Step 3: Background with style '${backgroundId}'...`);
+            const finalResult = await generateBackgroundStep(step2Base64, backgroundPrompt);
             const extractedBase64 = extractImageBase64(finalResult);
 
             if (!extractedBase64) {
                 return NextResponse.json({
-                    error: "Step 2 failed: Model did not return an image.",
+                    error: "Step 3 failed: Model did not return an image.",
                     raw: finalResult
                 }, { status: 500 });
             }
             finalImageBase64 = extractedBase64;
         } else {
-            console.log("Skipping Step 2 as requested.");
+            console.log("Skipping Step 3 as requested.");
         }
 
         // Save final image to disk
         const outputDir = path.join(process.cwd(), "public", "outputs");
-
         if (!fs.existsSync(outputDir)) {
             fs.mkdirSync(outputDir, { recursive: true });
         }
@@ -102,7 +122,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             image: `/outputs/${finalFilename}`,
-            intermediate: `/intermediate/${step1Filename}`
+            step1: `/intermediate/step1-${timestamp}.png`,
+            step2: headline ? `/intermediate/step2-${timestamp}.png` : null
         });
 
     } catch (error: any) {

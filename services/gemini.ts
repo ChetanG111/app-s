@@ -2,8 +2,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-export async function generateStep1(screenshotBase64: string, templateBase64: string) {
-    // Reverting to your specific model name
+/**
+ * STEP 1: Replace the green screen area with the uploaded screenshot.
+ */
+export async function generateScreenStep(screenshotBase64: string, templateBase64: string) {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
 
     const prompt = `Replace only the bright green screen area on the phone in the first image with the UI from the second screenshot. 
@@ -29,7 +31,37 @@ export async function generateStep1(screenshotBase64: string, templateBase64: st
     return await result.response;
 }
 
-export async function generateStep2(mockupBase64: string, stylePrompt: string) {
+/**
+ * STEP 2: Replace the placeholder text with the user's headline, font, and color.
+ */
+export async function generateTextStep(mockupBase64: string, headline: string, font: string, color: string) {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
+
+    // TEMPORARY PROMPT: User will provide the final version later.
+    const prompt = `Take the uploaded image and replace the "TEXT HERE" at the top with this headline: "${headline}".
+    Use a ${font} font style and make the text color ${color}.
+    Ensure the text is perfectly centered and naturally composited into the image.
+    Wrap the text and change the size (if needed) to fit the image but keep padding similar on both sides.
+    Don't change the content of the text.
+    Keep all other elements, including the phone and background, exactly the same.`;
+
+    const result = await model.generateContent([
+        prompt,
+        {
+            inlineData: {
+                data: mockupBase64,
+                mimeType: "image/png"
+            }
+        }
+    ]);
+
+    return await result.response;
+}
+
+/**
+ * STEP 3: Transform the background style.
+ */
+export async function generateBackgroundStep(mockupBase64: string, stylePrompt: string) {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
 
     const prompt = `Take the uploaded image and change only the blue background behind the phone. 

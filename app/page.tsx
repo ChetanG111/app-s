@@ -217,6 +217,7 @@ const UploadView: React.FC<ViewProps> = ({ uploadedImage, onImageUpload }) => {
 const LAYOUT_STYLES = [
     { id: 'Basic', name: 'Basic', image: '/templates/layouts/Basic.png' },
     { id: 'Rotated', name: 'Rotated', image: '/templates/layouts/Rotated.png' },
+    { id: 'Rotated-left-facing', name: 'Rotated Left', image: '/templates/layouts/Rotated-left-facing.png' },
 ];
 
 interface StyleViewProps {
@@ -266,7 +267,7 @@ const StyleView: React.FC<StyleViewProps> = ({ selectedStyle, onSelect }) => {
                                 absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10 transition-all duration-300
                                 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
                             `}>
-                                <span className="text-xs font-bold tracking-widest uppercase text-white">{style.name}</span>
+                                <span className="text-xs font-bold tracking-widest uppercase text-white whitespace-nowrap">{style.name}</span>
                             </div>
                         </div>
                     );
