@@ -35,6 +35,8 @@ export async function POST(req: Request) {
             // cancel_url: `${new URL(req.url).origin}/?canceled=true`,
             metadata: {
                 userId: session.user.id,
+                credits: plan === "starter" ? "10" : "70",
+                tier: plan === "starter" ? "STARTER" : "PRO",
             },
         });
 

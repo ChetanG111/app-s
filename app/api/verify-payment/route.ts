@@ -85,15 +85,26 @@ export async function POST(req: Request) {
         let creditsToAdd = 0;
         let tier = "STARTER";
 
-        // Adjust these values based on your actual pricing (e.g. cents)
-        if (amount === 10 || amount === 1000) {
-            creditsToAdd = 10;
-            tier = "STARTER";
-        } else if (amount === 50 || amount === 5000) {
-            creditsToAdd = 70;
-            tier = "PRO";
-        } else {
-            console.warn(`Unknown amount: ${amount}, defaulting to 0 credits`);
+        // Check metadata for plan info (more robust)
+        if (metadata?.credits) {
+            creditsToAdd = parseInt(metadata.credits as string, 10);
+        }
+        if (metadata?.tier) {
+            tier = metadata.tier as string;
+        }
+
+        // Fallback to amount logic if metadata is missing (legacy or direct payment without metadata)
+        if (creditsToAdd === 0) {
+            const amt = Number(amount);
+            if (amt === 10 || amt === 1000) {
+                creditsToAdd = 10;
+                tier = "STARTER";
+            } else if (amt === 50 || amt === 5000) {
+                creditsToAdd = 70;
+                tier = "PRO";
+            } else {
+                console.warn(`Unknown amount: ${amount} (type: ${typeof amount}), defaulting to 0 credits`);
+            }
         }
 
         if (creditsToAdd > 0) {
