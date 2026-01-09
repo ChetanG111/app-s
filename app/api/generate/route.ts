@@ -6,6 +6,7 @@ import { existsSync } from "fs";
 import path from "path";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 
 const BACKGROUND_STYLE_MAP: Record<string, string> = {
     'charcoal': 'modern Black to light grey gradient',
@@ -188,6 +189,10 @@ export async function POST(req: NextRequest) {
                         }
                     }
                 });
+
+                // Invalidate cache
+                revalidateTag(`user-${userId}-credits`);
+                revalidateTag(`user-${userId}-screenshots`);
 
                 sendUpdate({
                     type: 'final',

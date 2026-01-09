@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import { getCachedUserCredits } from "@/lib/data";
 
 export async function GET() {
     try {
@@ -10,12 +10,16 @@ export async function GET() {
             return NextResponse.json({ credits: 0 });
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: { credits: true }
-        });
+        const credits = await getCachedUserCredits(session.user.id);
 
-        return NextResponse.json({ credits: user?.credits ?? 0 });
+        return NextResponse.json(
+            { credits },
+            {
+                headers: {
+                    'Cache-Control': 'private, s-maxage=1, stale-while-revalidate=59'
+                }
+            }
+        );
     } catch (error) {
         console.error("Failed to fetch credits:", error);
         return NextResponse.json({ credits: 0 }, { status: 500 });

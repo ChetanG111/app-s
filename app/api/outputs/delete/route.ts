@@ -4,6 +4,7 @@ import { existsSync } from "fs";
 import path from "path";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 
 export async function POST(req: NextRequest) {
     try {
@@ -22,6 +23,7 @@ export async function POST(req: NextRequest) {
         const publicDir = path.join(process.cwd(), "public", "outputs");
 
         const deletedFiles = [];
+        let hasDeletions = false;
 
         for (const filename of filenames) {
             // Secure filename
@@ -56,7 +58,12 @@ export async function POST(req: NextRequest) {
                 }
                 
                 deletedFiles.push(safeFilename);
+                hasDeletions = true;
             }
+        }
+
+        if (hasDeletions) {
+             revalidateTag(`user-${session.user.id}-screenshots`);
         }
 
         return NextResponse.json({ success: true, deleted: deletedFiles });

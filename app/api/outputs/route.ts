@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import { getCachedUserScreenshots } from "@/lib/data";
 
 export async function GET() {
     try {
@@ -9,22 +9,16 @@ export async function GET() {
              return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const screenshots = await prisma.screenshot.findMany({
-            where: {
-                userId: session.user.id
-            },
-            orderBy: {
-                createdAt: 'desc'
+        const files = await getCachedUserScreenshots(session.user.id);
+
+        return NextResponse.json(
+            { files },
+            {
+                headers: {
+                    'Cache-Control': 'private, s-maxage=1, stale-while-revalidate=59'
+                }
             }
-        });
-
-        const files = screenshots.map(s => ({
-            name: s.url.split('/').pop() || s.id, // Extract filename from URL
-            url: s.url,
-            createdAt: s.createdAt
-        }));
-
-        return NextResponse.json({ files });
+        );
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         return NextResponse.json({ error: errorMessage }, { status: 500 });
