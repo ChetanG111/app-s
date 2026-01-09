@@ -43,7 +43,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                        className="relative w-full max-w-md bg-[#0c0c0c] border border-white/10 rounded-[2rem] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden"
+                        className="relative w-full max-w-md bg-[#0c0c0c] border border-white/10 rounded-[2rem] p-8 shadow-2xl overflow-hidden"
                     >
                         {/* Subtle background detail */}
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
@@ -70,9 +70,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                                 </button>
                                 <button
                                     onClick={onConfirm}
-                                    className={`flex-1 h-12 rounded-xl font-bold transition-all active:scale-95 shadow-lg ${isDanger
-                                            ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-900/20'
-                                            : 'bg-white hover:bg-zinc-200 text-black shadow-white/5'
+                                    className={`flex-1 h-12 rounded-xl font-bold transition-all active:scale-95 ${isDanger
+                                            ? 'bg-red-600 hover:bg-red-500 text-white'
+                                            : 'bg-white hover:bg-zinc-200 text-black'
                                         }`}
                                 >
                                     {confirmLabel}

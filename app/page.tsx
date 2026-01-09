@@ -257,7 +257,7 @@ const StyleView: React.FC<StyleViewProps> = ({ selectedStyle, onSelect }) => {
                             className={`
                                 group relative bg-[#0c0c0c] rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-500 border-2
                                 ${isSelected
-                                    ? 'border-white shadow-[0_0_60px_rgba(255,255,255,0.1)] scale-100 z-10'
+                                    ? 'border-white scale-100 z-10'
                                     : 'border-zinc-800 scale-[0.98] hover:border-zinc-600 opacity-60 hover:opacity-100'
                                 }
                             `}
@@ -300,6 +300,8 @@ interface TextViewProps {
 const TextView: React.FC<TextViewProps> = ({ headline, setHeadline }) => {
     const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    const limit = 50;
+    const isAtLimit = headline.length >= limit;
 
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -308,34 +310,38 @@ const TextView: React.FC<TextViewProps> = ({ headline, setHeadline }) => {
             </h1>
 
             <div className="w-full max-w-2xl mb-auto flex flex-col items-center px-4">
-                <div className={`
-          relative w-full transition-all duration-500 border-b-2 py-4
-          ${isFocused ? 'border-white' : 'border-zinc-800'}
-        `}>
+                <motion.div
+                    animate={isAtLimit ? { x: [-1, 2, -2, 2, -2, 0] } : {}}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                    className={`
+                        relative w-full transition-all duration-500 border-b-2 py-4
+                        ${isFocused ? 'border-white' : 'border-zinc-800'}
+                    `}
+                >
                     <input
                         ref={inputRef}
                         type="text"
                         value={headline}
-                        onChange={(e) => setHeadline(e.target.value.slice(0, 50))}
+                        onChange={(e) => setHeadline(e.target.value)}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         placeholder="Enter your headline here..."
+                        maxLength={limit}
                         className="w-full bg-transparent text-white text-4xl font-bold text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
-                        maxLength={50}
                     />
 
                     <div className={`
-            absolute -bottom-10 right-0 text-sm font-medium transition-colors duration-300
-            ${isFocused ? 'text-zinc-400' : 'text-zinc-600'}
-          `}>
-                        {headline.length} / 50
+                        absolute -bottom-10 right-0 text-sm font-bold transition-colors duration-300
+                        ${isAtLimit ? 'text-red-500' : isFocused ? 'text-zinc-400' : 'text-zinc-600'}
+                    `}>
+                        {headline.length} / {limit}
                     </div>
 
                     <div className={`
-            absolute inset-x-0 -bottom-[2px] h-[2px] bg-white transition-opacity duration-500 shadow-[0_4px_20px_rgba(255,255,255,0.3)]
-            ${isFocused ? 'opacity-100' : 'opacity-0'}
-          `} />
-                </div>
+                        absolute inset-x-0 -bottom-[2px] h-[2px] bg-white transition-opacity duration-500
+                        ${isFocused ? 'opacity-100' : 'opacity-0'}
+                    `} />
+                </motion.div>
 
                 <p className="text-zinc-500 text-sm mt-16 text-center max-w-md">
                     This text will appear at the top of your generated mockup. Make it punchy and clear.
@@ -377,7 +383,7 @@ const FontView: React.FC<FontViewProps> = ({ selectedFont, onSelect }) => {
                         className={`
               w-full h-16 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
               ${selectedFont === option.id
-                                ? 'bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.15)] scale-[1.02]'
+                                ? 'bg-white text-black border-white scale-[1.02]'
                                 : 'bg-[#0c0c0c]/80 border-zinc-800 text-zinc-400 hover:border-zinc-500 hover:text-white'
                             }
             `}
@@ -433,7 +439,7 @@ const ColorView: React.FC<ColorViewProps> = ({ selectedColor, onSelect }) => {
                         className={`
               w-full h-16 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
               ${selectedColor === option.id
-                                ? 'bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.15)] scale-[1.02]'
+                                ? 'bg-white text-black border-white scale-[1.02]'
                                 : 'bg-[#0c0c0c]/80 border-zinc-800 text-zinc-400 hover:border-zinc-500 hover:text-white'
                             }
             `}
@@ -526,7 +532,7 @@ const BackgroundView: React.FC<BackgroundViewProps> = ({
                         className={`
                             w-full h-[72px] shrink-0 rounded-2xl flex items-center justify-between px-6 transition-all duration-300 border-2
                             ${selectedBg === option.id
-                                ? 'bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.15)] scale-[1.02]'
+                                ? 'bg-white text-black border-white scale-[1.02]'
                                 : 'bg-[#0c0c0c]/80 border-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-white'
                             }
                         `}
@@ -569,33 +575,37 @@ const BackgroundView: React.FC<BackgroundViewProps> = ({
 
                 {selectedBg === 'custom' && (
                     <div className="mt-4 animate-in slide-in-from-top-4 duration-500 flex flex-col items-center w-full">
-                        <div className={`
-              relative w-full transition-all duration-500 border-b-2 py-2
-              ${isFocused ? 'border-white' : 'border-zinc-800'}
-            `}>
+                        <motion.div
+                            animate={customValue.length >= 100 ? { x: [-1, 2, -2, 2, -2, 0] } : {}}
+                            transition={{ duration: 0.4 }}
+                            className={`
+                                relative w-full transition-all duration-500 border-b-2 py-2
+                                ${isFocused ? 'border-white' : 'border-zinc-800'}
+                            `}
+                        >
                             <input
                                 type="text"
                                 value={customValue}
-                                onChange={(e) => setCustomValue(e.target.value.slice(0, 100))}
+                                onChange={(e) => setCustomValue(e.target.value)}
                                 onFocus={() => setIsFocused(true)}
                                 onBlur={() => setIsFocused(false)}
                                 placeholder="Enter custom prompt or hex..."
-                                className="w-full bg-transparent text-white text-lg font-medium text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
                                 maxLength={100}
+                                className="w-full bg-transparent text-white text-lg font-medium text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
                             />
 
                             <div className={`
-                absolute -bottom-6 right-0 text-[9px] font-bold uppercase tracking-widest transition-colors duration-300
-                ${isFocused ? 'text-zinc-400' : 'text-zinc-700'}
-              `}>
+                                absolute -bottom-6 right-0 text-[10px] font-bold uppercase tracking-widest transition-colors duration-300
+                                ${customValue.length >= 100 ? 'text-red-500' : isFocused ? 'text-zinc-400' : 'text-zinc-700'}
+                            `}>
                                 {customValue.length} / 100
                             </div>
 
                             <div className={`
-                absolute inset-x-0 -bottom-[1px] h-[1px] bg-white transition-opacity duration-500 shadow-[0_2px_10px_rgba(255,255,255,0.3)]
-                ${isFocused ? 'opacity-100' : 'opacity-0'}
-              `} />
-                        </div>
+                                absolute inset-x-0 -bottom-[1px] h-[1px] bg-white transition-opacity duration-500
+                                ${isFocused ? 'opacity-100' : 'opacity-0'}
+                            `} />
+                        </motion.div>
                     </div>
                 )}
 
@@ -709,7 +719,7 @@ const GenerateView: React.FC<GenerateViewProps> = ({
                         <img
                             src={viewingImage}
                             alt="Full screen preview"
-                            className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-[0_0_100px_rgba(0,0,0,0.8)]"
+                            className="max-w-full max-h-[85vh] object-contain rounded-2xl"
                         />
 
                     </div>
@@ -738,7 +748,7 @@ const GenerateView: React.FC<GenerateViewProps> = ({
                                 ${isGenerating
                                     ? 'border-blue-500/50 bg-blue-500/5 cursor-wait'
                                     : !uploadedImage
-                                        ? 'border-zinc-900 bg-black/20 opacity-40 cursor-not-allowed'
+                                        ? 'border-zinc-800 bg-black/20 opacity-60 cursor-not-allowed'
                                         : 'border-zinc-800 hover:border-zinc-500 bg-black/40 hover:bg-white/5 cursor-pointer'
                                 }
                             `}
@@ -780,7 +790,7 @@ const GenerateView: React.FC<GenerateViewProps> = ({
                                             e.stopPropagation();
                                             handleDownload(file.url);
                                         }}
-                                        className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-black transition-all shadow-xl hover:scale-110 active:scale-95"
+                                        className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-black transition-all hover:scale-110 active:scale-95"
                                         title="Download"
                                     >
                                         <Download size={16} />
@@ -790,7 +800,7 @@ const GenerateView: React.FC<GenerateViewProps> = ({
                                             e.stopPropagation();
                                             handleDelete(file.url);
                                         }}
-                                        className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-xl hover:scale-110 active:scale-95"
+                                        className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-red-500 hover:text-white hover:border-red-500 transition-all hover:scale-110 active:scale-95"
                                         title="Delete"
                                     >
                                         <Trash2 size={16} />
@@ -907,7 +917,7 @@ export default function Home() {
 
             {/* Sidebar UI */}
             <div className="absolute left-6 top-1/2 -translate-y-1/2 z-30">
-                <div className="flex flex-col items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-full p-2 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                <div className="flex flex-col items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-full p-2">
                     {icons.map((item, index) => {
                         const isSelected = selectedIndex === index;
                         return (
@@ -915,7 +925,7 @@ export default function Home() {
                                 {isSelected && (
                                     <motion.div
                                         layoutId="sidebar-pill"
-                                        className="absolute inset-0 bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                                        className="absolute inset-0 bg-white rounded-full"
                                         transition={{
                                             type: "spring",
                                             stiffness: 300,
@@ -994,7 +1004,7 @@ export default function Home() {
                     <div className="absolute bottom-10 left-0 right-0 flex justify-center pl-24 pointer-events-none">
                         <button
                             onClick={handleNext}
-                            className="pointer-events-auto flex items-center gap-3 bg-white hover:bg-zinc-200 text-black px-12 py-4 rounded-full font-bold transition-all duration-300 group shadow-xl active:scale-95"
+                            className="pointer-events-auto flex items-center gap-3 bg-white hover:bg-zinc-200 text-black px-12 py-4 rounded-full font-bold transition-all duration-300 group active:scale-95"
                         >
                             Continue
                             <ChevronDown size={20} strokeWidth={3} className="transition-transform duration-300 group-hover:translate-y-0.5" />

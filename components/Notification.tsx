@@ -67,7 +67,7 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
     return (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-top-4 duration-500">
             <div className={`
-                flex items-center gap-3 px-4 py-3 rounded-2xl border backdrop-blur-2xl shadow-2xl min-w-[320px] max-w-md
+                flex items-center gap-3 px-4 py-3 rounded-2xl border backdrop-blur-2xl min-w-[320px] max-w-md
                 ${currentStyle.bg} ${currentStyle.border}
             `}>
                 <div className="shrink-0">{currentStyle.icon}</div>
