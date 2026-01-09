@@ -1,0 +1,152 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Zap, Palette, Check } from 'lucide-react';
+
+interface BackgroundOption {
+    id: string;
+    label: string;
+    colorClass?: string;
+    isAI?: boolean;
+    isCustom?: boolean;
+    description?: string;
+}
+
+const BACKGROUND_OPTIONS: BackgroundOption[] = [
+    { id: 'charcoal', label: 'Charcoal', colorClass: 'bg-[#151922] border-white/5', description: 'Default. Safest.' },
+    { id: 'deep_indigo', label: 'Deep Indigo', colorClass: 'bg-[#0F1430] border-white/10', description: 'Slight color, still premium.' },
+    { id: 'dark_slate', label: 'Dark Slate', colorClass: 'bg-[#0E1116] border-white/5' },
+    { id: 'custom', label: 'Custom', isCustom: true },
+];
+
+interface BackgroundViewProps {
+    selectedBg: string;
+    onSelect: (id: string) => void;
+    customValue: string;
+    setCustomValue: (val: string) => void;
+    generateBackground: boolean;
+    setGenerateBackground: (val: boolean) => void;
+}
+
+export const BackgroundView: React.FC<BackgroundViewProps> = ({
+    selectedBg,
+    onSelect,
+    customValue,
+    setCustomValue,
+    generateBackground,
+    setGenerateBackground
+}) => {
+    const [isFocused, setIsFocused] = useState(false);
+
+    return (
+        <div className="flex flex-col items-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
+            <div className="flex flex-col items-center w-full shrink-0 mb-8">
+                <h1 className="text-white text-5xl font-black mb-6 tracking-tight text-center">
+                    Background Style
+                </h1>
+
+                {/* Dev Mode Toggle */}
+                <div
+                    onClick={() => setGenerateBackground(!generateBackground)}
+                    className="flex items-center gap-3 bg-[#0c0c0c]/60 backdrop-blur-md border border-white/5 px-4 py-2 rounded-2xl cursor-pointer hover:border-white/20 transition-all group"
+                >
+                    <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${generateBackground ? 'bg-blue-500' : 'bg-zinc-800'}`}>
+                        <div className={`absolute top-1 w-2 h-2 bg-white rounded-full transition-all duration-300 ${generateBackground ? 'left-5' : 'left-1'}`} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                        Generate AI Background {generateBackground ? '(ON)' : '(OFF)'}
+                    </span>
+                </div>
+            </div>
+
+            <div className="w-full max-w-md flex flex-col gap-2.5 px-4 pb-20">
+                {BACKGROUND_OPTIONS.map((option) => (
+                    <button
+                        key={option.id}
+                        onClick={() => onSelect(option.id)}
+                        className={`
+                            w-full h-[72px] shrink-0 rounded-2xl flex items-center justify-between px-6 transition-all duration-300 border-2
+                            ${selectedBg === option.id
+                                ? 'bg-white text-black border-white scale-[1.02]'
+                                : 'bg-[#0c0c0c]/80 border-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-white'
+                            }
+                        `}
+                    >
+                        <div className={`flex flex-col items-start ${!generateBackground ? 'opacity-30' : ''}`}>
+                            <div className="flex items-center gap-4">
+                                {option.isAI ? (
+                                    <Zap size={20} className={selectedBg === option.id ? 'text-blue-600' : 'text-zinc-500'} />
+                                ) : option.isCustom ? (
+                                    <Palette size={20} className={selectedBg === option.id ? 'text-indigo-600' : 'text-zinc-500'} />
+                                ) : (
+                                    <div className={`w-6 h-6 rounded-full border ${option.colorClass}`} />
+                                )}
+                                <div className="flex flex-col items-start">
+                                    <span className="text-base font-bold leading-tight">{option.label}</span>
+                                    {option.description && (
+                                        <span className={`text-[11px] font-medium leading-tight mt-1 ${selectedBg === option.id ? 'text-black/60' : 'text-zinc-600'}`}>
+                                            {option.description}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        {selectedBg === option.id && generateBackground && (
+                            <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
+                                <Check size={14} className="text-white" strokeWidth={4} />
+                            </div>
+                        )}
+                    </button>
+                ))}
+
+                {!generateBackground && (
+                    <div className="mt-4 p-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 animate-in fade-in duration-500">
+                        <p className="text-zinc-400 text-xs text-center leading-relaxed">
+                            <span className="text-blue-400 font-bold uppercase text-[10px] block mb-1">Developer Mode</span>
+                            Background generation is disabled. App will only generate the phone mockup on its original template background.
+                        </p>
+                    </div>
+                )}
+
+                {selectedBg === 'custom' && (
+                    <div className="mt-4 animate-in slide-in-from-top-4 duration-500 flex flex-col items-center w-full">
+                        <motion.div
+                            animate={customValue.length >= 100 ? { x: [-1, 2, -2, 2, -2, 0] } : {}}
+                            transition={{ duration: 0.4 }}
+                            className={`
+                                relative w-full transition-all duration-500 border-b-2 py-2
+                                ${isFocused ? 'border-white' : 'border-zinc-800'}
+                            `}
+                        >
+                            <input
+                                type="text"
+                                value={customValue}
+                                onChange={(e) => setCustomValue(e.target.value)}
+                                onFocus={() => setIsFocused(true)}
+                                onBlur={() => setIsFocused(false)}
+                                placeholder="Enter custom prompt or hex..."
+                                maxLength={100}
+                                className="w-full bg-transparent text-white text-lg font-medium text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
+                            />
+
+                            <div className={`
+                                absolute -bottom-6 right-0 text-[10px] font-bold uppercase tracking-widest transition-colors duration-300
+                                ${customValue.length >= 100 ? 'text-red-500' : isFocused ? 'text-zinc-400' : 'text-zinc-700'}
+                            `}>
+                                {customValue.length} / 100
+                            </div>
+
+                            <div className={`
+                                absolute inset-x-0 -bottom-[1px] h-[1px] bg-white transition-opacity duration-500
+                                ${isFocused ? 'opacity-100' : 'opacity-0'}
+                            `} />
+                        </motion.div>
+                    </div>
+                )}
+
+                <p className="text-zinc-500 text-sm mt-6 text-center shrink-0">
+                    The background sets the mood for your entire screenshot.
+                </p>
+            </div>
+        </div>
+    );
+};
