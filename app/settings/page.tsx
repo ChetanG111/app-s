@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
+import { ConfirmationModal, useConfirmation } from '@/components/ConfirmationModal';
+import { NotificationToast, useNotification } from '@/components/Notification';
 import {
     User as UserIcon,
     CreditCard,
@@ -40,10 +42,10 @@ const TABS: TabItem[] = [
 
 // --- Sub-Components ---
 
-const AccountView = () => {
+const AccountView = ({ onDelete }: { onDelete: () => void }) => {
     const { data: session } = useSession();
     const user = session?.user;
-    const isOAuth = user?.image?.includes('googleusercontent.com') || !!user?.image; // Basic check for OAuth avatar
+    const isOAuth = user?.image?.includes('googleusercontent.com') || !!user?.image;
 
     return (
         <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -117,7 +119,10 @@ const AccountView = () => {
                 <p className="text-zinc-400 text-sm mb-6">
                     Permanently delete your account and all of your content. This action cannot be undone.
                 </p>
-                <button className="text-red-400 hover:text-white hover:bg-red-600 border border-red-500/30 hover:border-red-600 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                <button 
+                    onClick={onDelete}
+                    className="text-red-400 hover:text-white hover:bg-red-600 border border-red-500/30 hover:border-red-600 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                >
                     Delete Account
                 </button>
             </div>
@@ -310,6 +315,8 @@ const HelpView = () => {
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState<TabId>('account');
     const [credits, setCredits] = useState(0);
+    const { notification, showNotification, hideNotification } = useNotification();
+    const { confirmConfig, confirm, closeConfirm, handleConfirm } = useConfirmation();
 
     React.useEffect(() => {
         const fetchCredits = async () => {
@@ -324,8 +331,46 @@ export default function SettingsPage() {
         fetchCredits();
     }, []);
 
+    const handleDeleteAccount = () => {
+        confirm({
+            title: "Delete Account",
+            message: "Are you sure you want to permanently delete your account? This action cannot be undone and you will lose all your generated assets.",
+            isDanger: true,
+            confirmLabel: "Delete Forever",
+            onConfirm: async () => {
+                try {
+                    const res = await fetch("/api/user/delete", { method: "DELETE" });
+                    if (!res.ok) throw new Error("Failed to delete account");
+                    
+                    showNotification("Account deleted successfully", "success");
+                    // Sign out and redirect
+                    setTimeout(() => signOut({ callbackUrl: "/" }), 1000);
+                } catch (error) {
+                    console.error(error);
+                    showNotification("Failed to delete account. Please try again.", "error");
+                }
+            }
+        });
+    };
+
     return (
         <div className="flex w-screen h-screen overflow-hidden p-6 gap-6 relative">
+            <NotificationToast
+                message={notification.message}
+                type={notification.type}
+                isVisible={notification.isVisible}
+                onClose={hideNotification}
+            />
+            <ConfirmationModal
+                isOpen={confirmConfig.isOpen}
+                title={confirmConfig.title}
+                message={confirmConfig.message}
+                confirmLabel={confirmConfig.confirmLabel}
+                cancelLabel={confirmConfig.cancelLabel}
+                isDanger={confirmConfig.isDanger}
+                onConfirm={handleConfirm}
+                onCancel={closeConfirm}
+            />
             
             {/* Floating Sidebar */}
             <aside className="w-[300px] h-full flex flex-col bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden shrink-0 z-10">
@@ -372,7 +417,10 @@ export default function SettingsPage() {
 
                 {/* Sidebar Footer */}
                 <div className="p-6 border-t border-white/5">
-                    <button className="w-full flex items-center justify-center gap-3 px-4 py-4 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all text-sm font-bold group border border-transparent hover:border-red-500/20">
+                    <button 
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                        className="w-full flex items-center justify-center gap-3 px-4 py-4 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all text-sm font-bold group border border-transparent hover:border-red-500/20"
+                    >
                         <LogOut size={18} className="group-hover:scale-110 transition-transform" />
                         Log Out
                     </button>
@@ -383,7 +431,7 @@ export default function SettingsPage() {
             <main className="flex-1 h-full bg-[#0c0c0c]/80 backdrop-blur-xl border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden relative z-10">
                 <div className="h-full overflow-y-auto scroll-smooth">
                     <div className="max-w-4xl mx-auto py-16 px-12">
-                       {activeTab === 'account' && <AccountView />}
+                       {activeTab === 'account' && <AccountView onDelete={handleDeleteAccount} />}
                        {activeTab === 'billing' && <BillingView credits={credits} />}
                        {activeTab === 'help' && <HelpView />}
                     </div>

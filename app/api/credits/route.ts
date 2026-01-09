@@ -1,16 +1,23 @@
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-
-const DATA_FILE = path.join(process.cwd(), "data", "credits.json");
+import { auth } from "@/auth";
+import prisma from "@/lib/prisma";
 
 export async function GET() {
     try {
-        const data = await fs.readFile(DATA_FILE, "utf-8");
-        const json = JSON.parse(data);
-        return NextResponse.json({ credits: json.credits });
+        const session = await auth();
+        
+        if (!session?.user?.id) {
+            return NextResponse.json({ credits: 0 });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { credits: true }
+        });
+
+        return NextResponse.json({ credits: user?.credits ?? 0 });
     } catch (error) {
-        console.error("Failed to read credits:", error);
+        console.error("Failed to fetch credits:", error);
         return NextResponse.json({ credits: 0 }, { status: 500 });
     }
 }

@@ -4,37 +4,14 @@ import { addTextOverlay } from "@/services/typography";
 import fs from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
+import { auth } from "@/auth";
+import prisma from "@/lib/prisma";
 
 const BACKGROUND_STYLE_MAP: Record<string, string> = {
     'charcoal': 'modern Black to light grey gradient',
     'deep_indigo': 'deep indigo to purple vibrant gradient',
     'dark_slate': 'dark slate gray minimalist surface',
 };
-
-const CREDITS_FILE = path.join(process.cwd(), "data", "credits.json");
-
-async function updateCredits(amount: number) {
-    try {
-        const data = await fs.readFile(CREDITS_FILE, "utf-8");
-        const json = JSON.parse(data);
-        const newCredits = json.credits + amount;
-        await fs.writeFile(CREDITS_FILE, JSON.stringify({ credits: newCredits }, null, 2));
-        return newCredits;
-    } catch (error) {
-        console.error("Failed to update credits:", error);
-        throw error;
-    }
-}
-
-async function getCredits() {
-    try {
-        const data = await fs.readFile(CREDITS_FILE, "utf-8");
-        const json = JSON.parse(data);
-        return json.credits;
-    } catch {
-        return 0;
-    }
-}
 
 interface CandidatePart {
     inlineData?: {
@@ -74,19 +51,17 @@ export async function POST(req: NextRequest) {
             };
 
             let creditsDeducted = false;
+            let userId: string | null = null;
 
             try {
-                // 0. Check Credits
-                const currentCredits = await getCredits();
-                if (currentCredits <= 0) {
-                    sendUpdate({ type: 'error', error: "Insufficient credits" });
+                // 0. Check Auth & Credits
+                const session = await auth();
+                if (!session?.user?.id) {
+                    sendUpdate({ type: 'error', error: "Unauthorized. Please log in." });
                     controller.close();
                     return;
                 }
-
-                // Deduct credit immediately
-                await updateCredits(-1);
-                creditsDeducted = true;
+                userId = session.user.id;
 
                 const {
                     screenshot,
@@ -102,6 +77,22 @@ export async function POST(req: NextRequest) {
                 if (!screenshot) {
                     throw new Error("Screenshot is required");
                 }
+
+                // Deduct credit atomically and verify sufficiency
+                const updateResult = await prisma.user.updateMany({
+                    where: { 
+                        id: userId,
+                        credits: { gt: 0 }
+                    },
+                    data: { credits: { decrement: 1 } }
+                });
+
+                if (updateResult.count === 0) {
+                    sendUpdate({ type: 'error', error: "Insufficient credits" });
+                    controller.close();
+                    return;
+                }
+                creditsDeducted = true;
 
                 // 1. Prepare Files
                 sendUpdate({ type: 'progress', step: "Creating overlay" });
@@ -182,6 +173,22 @@ export async function POST(req: NextRequest) {
                 }
                 await fs.writeFile(path.join(outputDir, finalFilename), Buffer.from(finalImageBase64, 'base64'));
 
+                // Save to database
+                await prisma.screenshot.create({
+                    data: {
+                        userId: userId!,
+                        url: `/outputs/${finalFilename}`,
+                        projectName: "Generated Mockup", // You can pass this from frontend later
+                        settings: {
+                            style,
+                            backgroundId,
+                            headline,
+                            font,
+                            color
+                        }
+                    }
+                });
+
                 sendUpdate({
                     type: 'final',
                     image: `/outputs/${finalFilename}`,
@@ -194,9 +201,16 @@ export async function POST(req: NextRequest) {
                 console.error("GENERATION ERROR:", error);
                 
                 // Refund credit if we deducted it but failed
-                if (creditsDeducted) {
-                    await updateCredits(1);
-                    console.log("Credit refunded due to error");
+                if (creditsDeducted && userId) {
+                    try {
+                        await prisma.user.update({
+                            where: { id: userId },
+                            data: { credits: { increment: 1 } }
+                        });
+                        console.log("Credit refunded due to error");
+                    } catch (refundError) {
+                        console.error("CRITICAL: Failed to refund credit:", refundError);
+                    }
                 }
 
                 const errorMessage = error instanceof Error ? error.message : "Processing failed";
