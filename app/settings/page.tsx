@@ -16,7 +16,8 @@ import {
     FileText,
     Check,
     AlertTriangle,
-    Upload
+    Upload,
+    Zap
 } from 'lucide-react';
 
 // --- Types ---
@@ -105,67 +106,114 @@ const AccountView = () => {
     );
 };
 
-const BillingView = () => {
+const BillingView = ({ credits }: { credits: number }) => {
     return (
-        <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="mb-10">
-                <h2 className="text-2xl font-bold text-white mb-2">Plan & Usage</h2>
-                <p className="text-zinc-400">View your current plan and usage statistics.</p>
+        <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="mb-10 flex items-end justify-between">
+                <div>
+                    <h2 className="text-3xl font-black text-white mb-2 tracking-tight">Billing & Plans</h2>
+                    <p className="text-zinc-400">Add credits to your account to keep generating mockups.</p>
+                </div>
+                
+                <div className="text-right">
+                    <div className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Available Balance</div>
+                    <div className="flex items-center gap-2 justify-end">
+                        <Zap size={18} className="text-blue-500" />
+                        <span className="text-3xl font-black text-white">{credits}</span>
+                        <span className="text-zinc-400 text-sm font-bold">Credits</span>
+                    </div>
+                </div>
             </div>
 
-            {/* Current Plan Card */}
-            <div className="bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-2xl p-6 mb-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
-                
-                <div className="flex items-start justify-between mb-8 relative z-10">
-                    <div>
-                        <div className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
-                            Current Plan
+            {/* Pricing Section */}
+            <div className="mb-12">
+                <div className="grid md:grid-cols-2 gap-6">
+                    {/* Starter Plan */}
+                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 flex flex-col hover:border-zinc-700 transition-all group">
+                        <div className="mb-8">
+                            <h4 className="text-zinc-400 font-bold uppercase tracking-wider text-xs mb-1">Starter</h4>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-4xl font-black text-white">$10</span>
+                                <span className="text-zinc-500 text-sm">one-time</span>
+                            </div>
                         </div>
-                        <h3 className="text-3xl font-black text-white">Free Plan</h3>
-                        <p className="text-zinc-400 mt-1">Basic features for personal use</p>
+                        <ul className="space-y-4 mb-10 flex-1">
+                            <li className="flex items-center gap-3 text-sm text-zinc-300 font-medium">
+                                <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                    <Check size={12} className="text-blue-500" strokeWidth={3} />
+                                </div>
+                                10 Generation Credits
+                            </li>
+                            <li className="flex items-center gap-3 text-sm text-zinc-300 font-medium">
+                                <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                    <Check size={12} className="text-blue-500" strokeWidth={3} />
+                                </div>
+                                Full Feature Access
+                            </li>
+                            <li className="flex items-center gap-3 text-sm text-zinc-300 font-medium">
+                                <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                    <Check size={12} className="text-blue-500" strokeWidth={3} />
+                                </div>
+                                Lifetime Assets
+                            </li>
+                        </ul>
+                        <button className="w-full py-4 bg-white text-black rounded-2xl font-black text-sm hover:bg-zinc-200 transition-all active:scale-95">
+                            Buy Credits
+                        </button>
                     </div>
-                    <button className="bg-white text-black px-5 py-2.5 rounded-xl font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-lg shadow-white/10">
-                        Upgrade to Pro
-                    </button>
-                </div>
 
-                <div className="space-y-4 relative z-10">
-                    <div>
-                        <div className="flex justify-between text-sm mb-2">
-                            <span className="text-zinc-300 font-medium">Monthly Generations</span>
-                            <span className="text-white font-bold">15 / 50</span>
+                    {/* Pro Plan */}
+                    <div className="bg-blue-600/5 border border-blue-500/20 rounded-3xl p-8 flex flex-col relative overflow-hidden group hover:border-blue-500/40 transition-all">
+                        <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl">
+                            Best Value
                         </div>
-                        <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                            <div className="h-full w-[30%] bg-blue-500 rounded-full" />
+                        <div className="mb-8">
+                            <h4 className="text-blue-400 font-bold uppercase tracking-wider text-xs mb-1">Professional</h4>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-4xl font-black text-white">$50</span>
+                                <span className="text-zinc-500 text-sm">one-time</span>
+                            </div>
                         </div>
+                        <ul className="space-y-4 mb-10 flex-1">
+                            <li className="flex items-center gap-3 text-sm text-zinc-300 font-medium">
+                                <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                    <Check size={12} className="text-blue-500" strokeWidth={3} />
+                                </div>
+                                <span className="font-bold text-white">70 Generation Credits</span>
+                            </li>
+                            <li className="flex items-center gap-3 text-sm text-zinc-300 font-medium">
+                                <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                    <Check size={12} className="text-blue-500" strokeWidth={3} />
+                                </div>
+                                Full Feature Access
+                            </li>
+                            <li className="flex items-center gap-3 text-sm text-zinc-300 font-medium">
+                                <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                    <Check size={12} className="text-blue-500" strokeWidth={3} />
+                                </div>
+                                Lifetime Assets
+                            </li>
+                        </ul>
+                        <button className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-500 transition-all active:scale-95">
+                            Buy Credits
+                        </button>
                     </div>
                 </div>
             </div>
 
             {/* Payment Method */}
-            <div className="mb-10">
+            <div className="mb-12">
                 <h3 className="text-lg font-bold text-white mb-4">Payment Method</h3>
-                <div className="flex items-center justify-between bg-zinc-900/50 border border-zinc-800 rounded-xl p-4">
+                <div className="flex items-center justify-between bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-6 bg-zinc-700 rounded flex items-center justify-center text-[10px] font-bold text-zinc-400">
+                        <div className="w-12 h-8 bg-zinc-800 rounded-lg flex items-center justify-center text-[10px] font-black text-zinc-500 border border-white/5">
                             CARD
                         </div>
-                        <span className="text-zinc-300 text-sm">No payment method added</span>
+                        <span className="text-zinc-400 text-sm font-medium">No payment method added yet.</span>
                     </div>
-                    <button className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors">
+                    <button className="text-blue-400 hover:text-blue-300 text-sm font-bold transition-colors">
                         Add Method
                     </button>
-                </div>
-            </div>
-
-             {/* Invoice History */}
-             <div>
-                <h3 className="text-lg font-bold text-white mb-4">Invoice History</h3>
-                <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl overflow-hidden">
-                   <div className="p-8 text-center">
-                        <p className="text-zinc-500 text-sm">No invoices found</p>
-                   </div>
                 </div>
             </div>
         </div>
@@ -242,6 +290,20 @@ const HelpView = () => {
 
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState<TabId>('account');
+    const [credits, setCredits] = useState(0);
+
+    React.useEffect(() => {
+        const fetchCredits = async () => {
+            try {
+                const res = await fetch("/api/credits");
+                const data = await res.json();
+                setCredits(data.credits);
+            } catch (error) {
+                console.error("Failed to fetch credits:", error);
+            }
+        };
+        fetchCredits();
+    }, []);
 
     return (
         <div className="flex w-screen h-screen overflow-hidden p-6 gap-6 relative">
@@ -303,7 +365,7 @@ export default function SettingsPage() {
                 <div className="h-full overflow-y-auto scroll-smooth">
                     <div className="max-w-4xl mx-auto py-16 px-12">
                        {activeTab === 'account' && <AccountView />}
-                       {activeTab === 'billing' && <BillingView />}
+                       {activeTab === 'billing' && <BillingView credits={credits} />}
                        {activeTab === 'help' && <HelpView />}
                     </div>
                 </div>
