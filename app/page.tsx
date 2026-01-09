@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NotificationToast, useNotification, NotificationType } from '../components/Notification';
 import { ConfirmationModal, useConfirmation } from '../components/ConfirmationModal';
+import { ExportModal } from '../components/ExportModal';
 import {
     ImagePlus,
     Smartphone,
@@ -623,6 +624,7 @@ interface GenerateViewProps {
     handleGenerate: () => Promise<void>;
     onNotify: (message: string, type: NotificationType) => void;
     onConfirm: (options: { title: string; message: string; isDanger?: boolean; onConfirm: () => void }) => void;
+    onExport: (url: string) => void;
 }
 
 const GenerateView: React.FC<GenerateViewProps> = ({
@@ -630,7 +632,8 @@ const GenerateView: React.FC<GenerateViewProps> = ({
     isGenerating,
     handleGenerate,
     onNotify,
-    onConfirm
+    onConfirm,
+    onExport
 }) => {
     const [history, setHistory] = useState<any[]>([]);
     const [viewingImage, setViewingImage] = useState<string | null>(null);
@@ -788,10 +791,10 @@ const GenerateView: React.FC<GenerateViewProps> = ({
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            handleDownload(file.url);
+                                            onExport(file.url);
                                         }}
                                         className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-black transition-all hover:scale-110 active:scale-95"
-                                        title="Download"
+                                        title="Export"
                                     >
                                         <Download size={16} />
                                     </button>
@@ -841,6 +844,10 @@ export default function Home() {
     const [projectName, setProjectName] = useState("App-1");
     const [isGenerating, setIsGenerating] = useState(false);
     const [generateBackground, setGenerateBackground] = useState(true);
+    const [exportConfig, setExportConfig] = useState<{ isOpen: boolean; url: string | null }>({
+        isOpen: false,
+        url: null
+    });
 
     const handleGenerate = async () => {
         if (!uploadedImage) {
@@ -911,6 +918,12 @@ export default function Home() {
                 isDanger={confirmConfig.isDanger}
                 onConfirm={handleConfirm}
                 onCancel={closeConfirm}
+            />
+            <ExportModal
+                isOpen={exportConfig.isOpen}
+                imageUrl={exportConfig.url}
+                onClose={() => setExportConfig({ ...exportConfig, isOpen: false })}
+                onNotify={showNotification}
             />
             {/* Top Navigation */}
             <TopNav projectName={projectName} setProjectName={setProjectName} />
@@ -995,6 +1008,7 @@ export default function Home() {
                         handleGenerate={handleGenerate}
                         onNotify={showNotification}
                         onConfirm={confirm}
+                        onExport={(url) => setExportConfig({ isOpen: true, url })}
                     />
                 )}
 
