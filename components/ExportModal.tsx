@@ -22,23 +22,51 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     const handleDownload = async (format: 'png' | 'jpg') => {
         try {
             const response = await fetch(imageUrl);
-            const blob = await response.blob();
+            const initialBlob = await response.blob();
+            let finalBlob = initialBlob;
+            let finalUrl = '';
 
-            // For JPG, we'd ideally convert it. For now, since it's a simple download, 
-            // we'll just rename it. Real conversion would happen in a canvas or backend.
-            const url = window.URL.createObjectURL(blob);
+            // If user wants JPG, we must convert it (real conversion, not just renaming)
+            if (format === 'jpg') {
+                const bitmap = await createImageBitmap(initialBlob);
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    // JPG doesn't support transparency, so fill with white first
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(bitmap, 0, 0);
+                    
+                    finalBlob = await new Promise<Blob>((resolve, reject) => {
+                        canvas.toBlob((blob) => {
+                            if (blob) resolve(blob);
+                            else reject(new Error('Canvas conversion failed'));
+                        }, 'image/jpeg', 0.9);
+                    });
+                }
+            }
+
+            finalUrl = window.URL.createObjectURL(finalBlob);
             const link = document.createElement('a');
-            link.href = url;
-
-            const filename = `shot88-${Date.now()}.${format}`;
+            link.href = finalUrl;
+            
+            // Generate clean filename
+            const date = new Date().toISOString().split('T')[0];
+            const timestamp = new Date().getTime().toString().slice(-4);
+            const filename = `shot-${date}-${timestamp}.${format}`;
+            
             link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
             link.parentNode?.removeChild(link);
-            window.URL.revokeObjectURL(url);
+            window.URL.revokeObjectURL(finalUrl);
 
             onNotify(`Exported as ${format.toUpperCase()}`, 'success');
         } catch (err) {
+            console.error(err);
             onNotify('Failed to download image', 'error');
         }
     };

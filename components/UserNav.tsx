@@ -1,5 +1,6 @@
 import React from 'react';
 import { Home, Settings, User } from 'lucide-react';
+import Link from 'next/link';
 
 export const UserNav: React.FC = () => {
     return (
@@ -7,22 +8,22 @@ export const UserNav: React.FC = () => {
             <div className="flex items-center h-12 bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-2xl px-1.5 shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-white/10">
                 <div className="flex items-center gap-1.5">
                     {/* Home Button */}
-                    <button
+                    <Link
+                        href="/"
                         className="flex items-center gap-2 px-4 h-9 rounded-xl border border-white/5 hover:border-white/10 hover:bg-white/5 transition-all group"
-                        onClick={() => { }} // No implementation as requested
                     >
                         <Home size={15} className="text-zinc-500 group-hover:text-white transition-colors" />
                         <span className="text-sm font-medium text-zinc-400 group-hover:text-white transition-colors">Home</span>
-                    </button>
+                    </Link>
 
                     {/* Settings Button */}
-                    <button
+                    <Link
+                        href="/settings"
                         className="flex items-center gap-2 px-4 h-9 rounded-xl border border-white/5 hover:border-white/10 hover:bg-white/5 transition-all group"
-                        onClick={() => { }} // No implementation as requested
                     >
                         <Settings size={15} className="text-zinc-500 group-hover:text-white transition-colors" />
                         <span className="text-sm font-medium text-zinc-400 group-hover:text-white transition-colors">Settings</span>
-                    </button>
+                    </Link>
 
                     {/* Divider */}
                     <div className="w-[1px] h-5 bg-white/10 mx-1" />

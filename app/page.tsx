@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { NotificationToast, useNotification } from '../components/Notification';
 import { ConfirmationModal, useConfirmation } from '../components/ConfirmationModal';
 import { ExportModal } from '../components/ExportModal';
@@ -13,7 +14,8 @@ import {
     Droplet,
     Layers,
     Sparkles,
-    ChevronDown
+    ChevronDown,
+    Settings
 } from 'lucide-react';
 
 import { SidebarIcon } from '../components/SidebarIcon';
