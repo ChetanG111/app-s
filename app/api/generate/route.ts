@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
                 if (!skipBackground) {
                     sendUpdate({ type: 'progress', step: "Generating background" });
                     const backgroundPrompt = backgroundId === 'custom'
-                        ? customBackground
+                        ? (customBackground || '')
                         : (BACKGROUND_STYLE_MAP[backgroundId] || BACKGROUND_STYLE_MAP['charcoal']);
 
                     const step2Result = await generateBackgroundStep(step1Base64, backgroundPrompt);

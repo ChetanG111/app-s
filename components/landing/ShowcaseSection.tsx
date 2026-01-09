@@ -2,30 +2,6 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Smartphone, Palette, Wand2, Download } from 'lucide-react';
-
-const features = [
-    {
-        icon: Smartphone,
-        title: "Device Mockups",
-        description: "Multiple layout styles including basic, rotated, and floating device frames."
-    },
-    {
-        icon: Palette,
-        title: "AI Backgrounds",
-        description: "Generate stunning backgrounds with AI or choose from curated color palettes."
-    },
-    {
-        icon: Wand2,
-        title: "Smart Typography",
-        description: "Add headlines with custom fonts and colors that match your brand."
-    },
-    {
-        icon: Download,
-        title: "Export Ready",
-        description: "Download high-resolution images ready for App Store and Play Store."
-    }
-];
 
 export const ShowcaseSection: React.FC = () => {
     return (
