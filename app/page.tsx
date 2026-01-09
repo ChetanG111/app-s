@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { NotificationToast, useNotification, NotificationType } from '../components/Notification';
 import {
     ImagePlus,
@@ -42,9 +43,9 @@ const SidebarIcon: React.FC<SidebarIconProps> = ({
         <button
             onClick={onClick}
             className={`
-        relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200
+        relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 z-10
         ${isSelected
-                    ? 'bg-white text-black scale-100'
+                    ? 'text-black'
                     : 'text-zinc-500 hover:text-white'
                 }
       `}
@@ -871,18 +872,33 @@ export default function Home() {
             {/* Sidebar UI */}
             <div className="absolute left-6 top-1/2 -translate-y-1/2 z-30">
                 <div className="flex flex-col items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-full p-2 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-                    {icons.map((item, index) => (
-                        <div key={item.id} className="relative">
-                            <SidebarIcon
-                                Icon={item.icon}
-                                isSelected={selectedIndex === index}
-                                onClick={() => setSelectedIndex(index)}
-                            />
-                            {item.id === 'generate' && isGenerating && (
-                                <div className="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-[#0c0c0c] animate-pulse" />
-                            )}
-                        </div>
-                    ))}
+                    {icons.map((item, index) => {
+                        const isSelected = selectedIndex === index;
+                        return (
+                            <div key={item.id} className="relative">
+                                {isSelected && (
+                                    <motion.div
+                                        layoutId="sidebar-pill"
+                                        className="absolute inset-0 bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                                        transition={{
+                                            type: "spring",
+                                            stiffness: 300,
+                                            damping: 25,
+                                            mass: 1.2
+                                        }}
+                                    />
+                                )}
+                                <SidebarIcon
+                                    Icon={item.icon}
+                                    isSelected={isSelected}
+                                    onClick={() => setSelectedIndex(index)}
+                                />
+                                {item.id === 'generate' && isGenerating && (
+                                    <div className="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-[#0c0c0c] animate-pulse z-20" />
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
