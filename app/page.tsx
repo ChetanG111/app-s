@@ -22,7 +22,7 @@ export default function LandingPage() {
         <main className="relative min-h-screen text-white overflow-x-hidden">
             <LandingNav onScrollTo={handleScrollTo} />
 
-            <HeroSection />
+            <HeroSection onStartCreating={() => handleScrollTo('pricing')} />
 
             <div ref={showcaseRef}>
                 <ShowcaseSection />

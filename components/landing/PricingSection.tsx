@@ -6,6 +6,39 @@ import Link from 'next/link';
 import { Check, Zap } from 'lucide-react';
 
 export const PricingSection: React.FC = () => {
+    const [isLoading, setIsLoading] = React.useState<string | null>(null);
+
+    const handleCheckout = async (plan: "starter" | "pro") => {
+        console.log("handleCheckout called with plan:", plan); // Debug log
+        setIsLoading(plan);
+        try {
+            console.log("Sending network request..."); // Debug log
+            const res = await fetch("/api/create-checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ plan }),
+            });
+
+            if (res.status === 401) {
+                window.location.href = "/login?callbackUrl=/"; // Redirect to login if unauthorized
+                return;
+            }
+
+            const data = await res.json();
+
+            if (data.checkout_url) {
+                window.location.href = data.checkout_url;
+            } else {
+                alert("Something went wrong. Please try again.");
+            }
+        } catch (error) {
+            console.error("Checkout Error:", error);
+            alert("Failed to initiate checkout. Check console for details.");
+        } finally {
+            setIsLoading(null);
+        }
+    };
+
     return (
         <section id="pricing" className="py-24 px-6">
             <div className="max-w-4xl mx-auto">
@@ -62,12 +95,13 @@ export const PricingSection: React.FC = () => {
                                 Lifetime Assets
                             </li>
                         </ul>
-                        <Link
-                            href="/dash"
-                            className="w-full py-4 bg-white text-black rounded-2xl font-black text-sm hover:bg-zinc-200 transition-all active:scale-95 text-center block"
+                        <button
+                            onClick={() => handleCheckout("starter")}
+                            disabled={isLoading !== null}
+                            className="w-full py-4 bg-white text-black rounded-2xl font-black text-sm hover:bg-zinc-200 transition-all active:scale-95 text-center block disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Get Started
-                        </Link>
+                            {isLoading === "starter" ? "Loading..." : "Buy Now"}
+                        </button>
                     </motion.div>
 
                     {/* Pro Plan */}
@@ -108,12 +142,13 @@ export const PricingSection: React.FC = () => {
                                 Lifetime Assets
                             </li>
                         </ul>
-                        <Link
-                            href="/dash"
-                            className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-500 transition-all active:scale-95 text-center block"
+                        <button
+                            onClick={() => handleCheckout("pro")}
+                            disabled={isLoading !== null}
+                            className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-500 transition-all active:scale-95 text-center block disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Get Started
-                        </Link>
+                            {isLoading === "pro" ? "Loading..." : "Buy Now"}
+                        </button>
                     </motion.div>
                 </div>
 

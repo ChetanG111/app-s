@@ -5,7 +5,11 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
-export const HeroSection: React.FC = () => {
+interface Props {
+    onStartCreating: () => void;
+}
+
+export const HeroSection: React.FC<Props> = ({ onStartCreating }) => {
     return (
         <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-16">
             <motion.div
@@ -42,13 +46,13 @@ export const HeroSection: React.FC = () => {
 
                 {/* CTA Button */}
                 <div className="flex justify-center">
-                    <Link
-                        href="/dash"
+                    <button
+                        onClick={onStartCreating}
                         className="group flex items-center gap-3 px-8 py-4 bg-white text-black font-bold rounded-2xl hover:bg-zinc-200 transition-all active:scale-95 shadow-lg shadow-black/20"
                     >
                         Start Creating
                         <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                    </Link>
+                    </button>
                 </div>
             </motion.div>
 
