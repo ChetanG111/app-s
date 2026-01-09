@@ -21,139 +21,131 @@ function extractImageBase64(result: any): string | null {
 }
 
 export async function POST(req: NextRequest) {
-    try {
-        const {
-            screenshot,
-            style = 'Basic',
-            backgroundId = 'charcoal',
-            customBackground = '',
-            headline = '',
-            font = 'standard',
-            color = 'white',
-            skipBackground = false
-        } = await req.json();
+    const encoder = new TextEncoder();
 
-        if (!screenshot) {
-            return NextResponse.json({ error: "Screenshot is required" }, { status: 400 });
-        }
+    const stream = new ReadableStream({
+        async start(controller) {
+            const sendUpdate = (data: any) => {
+                controller.enqueue(encoder.encode(JSON.stringify(data) + "\n"));
+            };
 
-        // Read the template image from public folder
-        const templatePath = path.join(process.cwd(), "public", "templates", "layouts", `${style}.png`);
-        if (!fs.existsSync(templatePath)) {
-            return NextResponse.json({ error: `Template style '${style}' not found` }, { status: 404 });
-        }
+            try {
+                const {
+                    screenshot,
+                    style = 'Basic',
+                    backgroundId = 'charcoal',
+                    customBackground = '',
+                    headline = '',
+                    font = 'standard',
+                    color = 'white',
+                    skipBackground = false
+                } = await req.json();
 
-        const templateBuffer = fs.readFileSync(templatePath);
-        const templateBase64 = `data:image/png;base64,${templateBuffer.toString("base64")}`;
+                if (!screenshot) {
+                    sendUpdate({ error: "Screenshot is required" });
+                    controller.close();
+                    return;
+                }
 
-        const timestamp = Date.now();
-        const intermediateDir = path.join(process.cwd(), "public", "intermediate");
-        if (!fs.existsSync(intermediateDir)) {
-            fs.mkdirSync(intermediateDir, { recursive: true });
-        }
+                // Read the template image from public folder
+                const templatePath = path.join(process.cwd(), "public", "templates", "layouts", `${style}.png`);
+                if (!fs.existsSync(templatePath)) {
+                    sendUpdate({ error: `Template style '${style}' not found` });
+                    controller.close();
+                    return;
+                }
 
-        // STEP 1: Generate mockup on plain white background (Screen Overlay)
-        console.log("Generating Step 1: Screen Overlay...");
-        const step1Result = await generateScreenStep(screenshot, templateBase64);
-        const step1Base64 = extractImageBase64(step1Result);
+                const templateBuffer = fs.readFileSync(templatePath);
+                const templateBase64 = `data:image/png;base64,${templateBuffer.toString("base64")}`;
 
-        if (!step1Base64) {
-            return NextResponse.json({
-                error: "Step 1 failed: Model did not return an image.",
-                raw: step1Result
-            }, { status: 500 });
-        }
+                const timestamp = Date.now();
+                const intermediateDir = path.join(process.cwd(), "public", "intermediate");
+                if (!fs.existsSync(intermediateDir)) {
+                    fs.mkdirSync(intermediateDir, { recursive: true });
+                }
 
-        // Save Step 1 intermediate result
-        fs.writeFileSync(path.join(intermediateDir, `step1-${timestamp}.png`), Buffer.from(step1Base64, 'base64'));
+                // STEP 1: Generate mockup on plain white background (Screen Overlay)
+                console.log("Generating Step 1: Screen Overlay...");
+                sendUpdate({ step: 'overlaying', status: 'started' });
+                const step1Result = await generateScreenStep(screenshot, templateBase64);
+                const step1Base64 = extractImageBase64(step1Result);
 
-        // STEP 2: Generate Text Overlay
-        let step2Base64 = step1Base64;
-        if (headline) {
-            console.log("Generating Step 2: Text Overlay...");
-            const step2Result = await generateTextStep(step1Base64, headline, font, color);
-            const extractedStep2 = extractImageBase64(step2Result);
+                if (!step1Base64) {
+                    sendUpdate({ error: "Step 1 failed: Model did not return an image." });
+                    controller.close();
+                    return;
+                }
+                fs.writeFileSync(path.join(intermediateDir, `step1-${timestamp}.png`), Buffer.from(step1Base64, 'base64'));
 
-            if (!extractedStep2) {
-                return NextResponse.json({
-                    error: "Step 2 failed: Model did not return an image.",
-                    raw: step2Result
-                }, { status: 500 });
+                // STEP 2: Generate Text Overlay
+                let step2Base64 = step1Base64;
+                if (headline) {
+                    console.log("Generating Step 2: Text Overlay...");
+                    sendUpdate({ step: 'text', status: 'started' });
+                    const step2Result = await generateTextStep(step1Base64, headline, font, color);
+                    const extractedStep2 = extractImageBase64(step2Result);
+
+                    if (!extractedStep2) {
+                        sendUpdate({ error: "Step 2 failed: Model did not return an image." });
+                        controller.close();
+                        return;
+                    }
+                    step2Base64 = extractedStep2;
+                    fs.writeFileSync(path.join(intermediateDir, `step2-${timestamp}.png`), Buffer.from(step2Base64, 'base64'));
+                }
+
+                // STEP 3: Generate background
+                let finalImageBase64 = step2Base64;
+                const finalFilename = `mockup-${timestamp}.png`;
+
+                if (!skipBackground) {
+                    const backgroundPrompt = backgroundId === 'custom'
+                        ? customBackground
+                        : (BACKGROUND_STYLE_MAP[backgroundId] || BACKGROUND_STYLE_MAP['charcoal']);
+
+                    console.log(`Generating Step 3: Background with style '${backgroundId}'...`);
+                    sendUpdate({ step: 'background', status: 'started' });
+                    const finalResult = await generateBackgroundStep(step2Base64, backgroundPrompt);
+                    const extractedBase64 = extractImageBase64(finalResult);
+
+                    if (!extractedBase64) {
+                        sendUpdate({ error: "Step 3 failed: Model did not return an image." });
+                        controller.close();
+                        return;
+                    }
+                    finalImageBase64 = extractedBase64;
+                }
+
+                // Save final image
+                const outputDir = path.join(process.cwd(), "public", "outputs");
+                if (!fs.existsSync(outputDir)) {
+                    fs.mkdirSync(outputDir, { recursive: true });
+                }
+                fs.writeFileSync(path.join(outputDir, finalFilename), Buffer.from(finalImageBase64, 'base64'));
+
+                // Send final result
+                sendUpdate({
+                    done: true,
+                    result: {
+                        image: `/outputs/${finalFilename}`,
+                        step1: `/intermediate/step1-${timestamp}.png`,
+                        step2: headline ? `/intermediate/step2-${timestamp}.png` : null
+                    }
+                });
+                controller.close();
+
+            } catch (error: any) {
+                console.error("CRITICAL GENERATION ERROR:", error);
+                sendUpdate({ error: error.message || "Internal server error" });
+                controller.close();
             }
-            step2Base64 = extractedStep2;
-            // Save Step 2 intermediate result
-            fs.writeFileSync(path.join(intermediateDir, `step2-${timestamp}.png`), Buffer.from(step2Base64, 'base64'));
-        } else {
-            console.log("Skipping Step 2: No headline provided.");
         }
+    });
 
-        // STEP 3: Generate background for the mockup
-        let finalImageBase64 = step2Base64;
-        const finalFilename = `mockup-${timestamp}.png`;
-
-        if (!skipBackground) {
-            // Determine background prompt
-            const backgroundPrompt = backgroundId === 'custom'
-                ? customBackground
-                : (BACKGROUND_STYLE_MAP[backgroundId] || BACKGROUND_STYLE_MAP['charcoal']);
-
-            console.log(`Generating Step 3: Background with style '${backgroundId}'...`);
-            const finalResult = await generateBackgroundStep(step2Base64, backgroundPrompt);
-            const extractedBase64 = extractImageBase64(finalResult);
-
-            if (!extractedBase64) {
-                return NextResponse.json({
-                    error: "Step 3 failed: Model did not return an image.",
-                    raw: finalResult
-                }, { status: 500 });
-            }
-            finalImageBase64 = extractedBase64;
-        } else {
-            console.log("Skipping Step 3 as requested.");
-        }
-
-        // Save final image to disk
-        const outputDir = path.join(process.cwd(), "public", "outputs");
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-        }
-
-        fs.writeFileSync(path.join(outputDir, finalFilename), Buffer.from(finalImageBase64, 'base64'));
-
-        return NextResponse.json({
-            image: `/outputs/${finalFilename}`,
-            step1: `/intermediate/step1-${timestamp}.png`,
-            step2: headline ? `/intermediate/step2-${timestamp}.png` : null
-        });
-
-    } catch (error: any) {
-        // Log the full error to the console for debugging
-        console.error("CRITICAL GENERATION ERROR:", error);
-
-        let userMessage = "Something went wrong during generation. Please try again.";
-        let statusCode = 500;
-
-        // Handle specific Gemini/Google AI errors
-        const errorMsg = error.message || "";
-        const status = error.status || (error.response?.status);
-
-        if (status === 503 || errorMsg.includes("503") || errorMsg.includes("overloaded")) {
-            userMessage = "The AI is currently under high load and is taking a breather. Please wait 10-20 seconds and try again.";
-            statusCode = 503;
-        } else if (status === 429 || errorMsg.includes("429") || errorMsg.includes("quota")) {
-            userMessage = "Slow down! You've hit the generation limit. Please wait a minute before trying again.";
-            statusCode = 429;
-        } else if (status === 400 && errorMsg.includes("safety")) {
-            userMessage = "The AI filters blocked this generation. Try using a different screenshot or a simpler background prompt.";
-            statusCode = 400;
-        } else if (errorMsg.includes("API key")) {
-            userMessage = "Invalid API configuration. Please check your Gemini API key.";
-            statusCode = 401;
-        }
-
-        return NextResponse.json({
-            error: userMessage,
-            rawError: process.env.NODE_ENV === 'development' ? errorMsg : undefined
-        }, { status: statusCode });
-    }
+    return new NextResponse(stream, {
+        headers: {
+            'Content-Type': 'application/x-ndjson',
+            'Cache-Control': 'no-cache',
+        },
+    });
 }
