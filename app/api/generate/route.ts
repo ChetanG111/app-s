@@ -11,6 +11,31 @@ const BACKGROUND_STYLE_MAP: Record<string, string> = {
     'dark_slate': 'dark slate gray minimalist surface',
 };
 
+const CREDITS_FILE = path.join(process.cwd(), "data", "credits.json");
+
+async function updateCredits(amount: number) {
+    try {
+        const data = await fs.readFile(CREDITS_FILE, "utf-8");
+        const json = JSON.parse(data);
+        const newCredits = json.credits + amount;
+        await fs.writeFile(CREDITS_FILE, JSON.stringify({ credits: newCredits }, null, 2));
+        return newCredits;
+    } catch (error) {
+        console.error("Failed to update credits:", error);
+        throw error;
+    }
+}
+
+async function getCredits() {
+    try {
+        const data = await fs.readFile(CREDITS_FILE, "utf-8");
+        const json = JSON.parse(data);
+        return json.credits;
+    } catch (error) {
+        return 0;
+    }
+}
+
 function extractImageBase64(result: any): string | null {
     const candidates = result.candidates;
     if (candidates?.[0]?.content?.parts) {
@@ -32,7 +57,21 @@ export async function POST(req: NextRequest) {
                 controller.enqueue(encoder.encode(JSON.stringify(data) + "\n"));
             };
 
+            let creditsDeducted = false;
+
             try {
+                // 0. Check Credits
+                const currentCredits = await getCredits();
+                if (currentCredits <= 0) {
+                    sendUpdate({ type: 'error', error: "Insufficient credits" });
+                    controller.close();
+                    return;
+                }
+
+                // Deduct credit immediately
+                await updateCredits(-1);
+                creditsDeducted = true;
+
                 const {
                     screenshot,
                     style = 'Basic',
@@ -45,18 +84,14 @@ export async function POST(req: NextRequest) {
                 } = await req.json();
 
                 if (!screenshot) {
-                    sendUpdate({ type: 'error', error: "Screenshot is required" });
-                    controller.close();
-                    return;
+                    throw new Error("Screenshot is required");
                 }
 
                 // 1. Prepare Files
                 sendUpdate({ type: 'progress', step: "Creating overlay" });
                 const templatePath = path.join(process.cwd(), "public", "templates", "layouts", `${style}.png`);
                 if (!existsSync(templatePath)) {
-                    sendUpdate({ type: 'error', error: `Template style '${style}' not found` });
-                    controller.close();
-                    return;
+                    throw new Error(`Template style '${style}' not found`);
                 }
                 const templateBuffer = await fs.readFile(templatePath);
                 const templateBase64 = `data:image/png;base64,${templateBuffer.toString("base64")}`;
@@ -72,9 +107,7 @@ export async function POST(req: NextRequest) {
                 let step1Base64 = extractImageBase64(step1Result);
 
                 if (!step1Base64) {
-                    sendUpdate({ type: 'error', error: "Step 1 failed: No image returned." });
-                    controller.close();
-                    return;
+                    throw new Error("Step 1 failed: No image returned.");
                 }
 
                 // 3. Verification Step 1
@@ -85,9 +118,7 @@ export async function POST(req: NextRequest) {
                     step1Result = await generateScreenStep(screenshot, templateBase64);
                     step1Base64 = extractImageBase64(step1Result);
                     if (!step1Base64) {
-                        sendUpdate({ type: 'error', error: "Step 1 retry failed." });
-                        controller.close();
-                        return;
+                        throw new Error("Step 1 retry failed.");
                     }
                 }
 
@@ -145,6 +176,13 @@ export async function POST(req: NextRequest) {
                 controller.close();
             } catch (error: any) {
                 console.error("GENERATION ERROR:", error);
+                
+                // Refund credit if we deducted it but failed
+                if (creditsDeducted) {
+                    await updateCredits(1);
+                    console.log("Credit refunded due to error");
+                }
+
                 sendUpdate({ type: 'error', error: error.message || "Processing failed" });
                 controller.close();
             }

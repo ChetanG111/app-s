@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { NotificationToast, useNotification } from '../components/Notification';
@@ -44,15 +44,35 @@ export default function Home() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentStep, setCurrentStep] = useState<string | null>(null);
     const [generateBackground, setGenerateBackground] = useState(true);
+    const [credits, setCredits] = useState(0);
     const [exportConfig, setExportConfig] = useState<{ isOpen: boolean; url: string | null }>({
         isOpen: false,
         url: null
     });
 
+    const fetchCredits = async () => {
+        try {
+            const res = await fetch("/api/credits");
+            const data = await res.json();
+            setCredits(data.credits);
+        } catch (error) {
+            console.error("Failed to fetch credits:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchCredits();
+    }, []);
+
     const handleGenerate = async () => {
         if (!uploadedImage) {
             showNotification("Please upload a screenshot first.", "warning");
             setSelectedIndex(0);
+            return;
+        }
+
+        if (credits <= 0) {
+            showNotification("Insufficient credits. Please upgrade to continue.", "error");
             return;
         }
 
@@ -115,6 +135,7 @@ export default function Home() {
         } finally {
             setIsGenerating(false);
             setCurrentStep(null);
+            fetchCredits(); // Refresh credits
         }
     };
 
@@ -159,7 +180,7 @@ export default function Home() {
                 onNotify={showNotification}
             />
             {/* Top Navigation */}
-            <TopNav projectName={projectName} setProjectName={setProjectName} />
+            <TopNav projectName={projectName} setProjectName={setProjectName} credits={credits} />
             <UserNav />
 
             {/* Sidebar UI */}
