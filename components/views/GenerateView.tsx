@@ -12,6 +12,12 @@ interface GenerateViewProps {
     onExport: (url: string) => void;
 }
 
+interface HistoryItem {
+    name: string;
+    url: string;
+    createdAt: string;
+}
+
 export const GenerateView: React.FC<GenerateViewProps> = ({
     uploadedImage,
     isGenerating,
@@ -21,7 +27,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
     onConfirm,
     onExport
 }) => {
-    const [history, setHistory] = useState<any[]>([]);
+    const [history, setHistory] = useState<HistoryItem[]>([]);
     const [viewingImage, setViewingImage] = useState<string | null>(null);
 
     // Simplified 4-state UI sequence

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Copy, FileImage, FileType } from 'lucide-react';
+import { X, Copy, FileImage, FileType } from 'lucide-react';
 
 interface ExportModalProps {
     isOpen: boolean;
@@ -78,7 +78,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             const data = [new ClipboardItem({ [blob.type]: blob })];
             await navigator.clipboard.write(data);
             onNotify('Copied to clipboard', 'success');
-        } catch (err) {
+        } catch {
             onNotify('Failed to copy image', 'error');
         }
     };

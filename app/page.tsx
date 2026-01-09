@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import { NotificationToast, useNotification } from '../components/Notification';
 import { ConfirmationModal, useConfirmation } from '../components/ConfirmationModal';
 import { ExportModal } from '../components/ExportModal';
@@ -14,8 +13,7 @@ import {
     Droplet,
     Layers,
     Sparkles,
-    ChevronDown,
-    Settings
+    ChevronDown
 } from 'lucide-react';
 
 import { SidebarIcon } from '../components/SidebarIcon';
@@ -130,8 +128,9 @@ export default function Home() {
                     }
                 }
             }
-        } catch (err: any) {
-            showNotification(err.message, "error");
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "Generation failed";
+            showNotification(errorMessage, "error");
         } finally {
             setIsGenerating(false);
             setCurrentStep(null);

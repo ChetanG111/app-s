@@ -110,7 +110,7 @@ export default function LoginPage() {
                     {/* Footer / Toggle */}
                     <div className="px-10 py-6 bg-white/[0.02] border-t border-white/5 text-center">
                         <p className="text-sm text-zinc-500">
-                            Don't have an account? <Link href="/signup" className="text-white font-bold hover:underline decoration-zinc-700 underline-offset-4 ml-1 transition-colors">Sign up</Link>
+                            Don&apos;t have an account? <Link href="/signup" className="text-white font-bold hover:underline decoration-zinc-700 underline-offset-4 ml-1 transition-colors">Sign up</Link>
                         </p>
                     </div>
                 </motion.div>

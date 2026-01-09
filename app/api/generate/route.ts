@@ -31,16 +31,32 @@ async function getCredits() {
         const data = await fs.readFile(CREDITS_FILE, "utf-8");
         const json = JSON.parse(data);
         return json.credits;
-    } catch (error) {
+    } catch {
         return 0;
     }
 }
 
-function extractImageBase64(result: any): string | null {
+interface CandidatePart {
+    inlineData?: {
+        data: string;
+    };
+}
+
+interface GenerationCandidate {
+    content?: {
+        parts?: CandidatePart[];
+    };
+}
+
+interface GenerationResult {
+    candidates?: GenerationCandidate[];
+}
+
+function extractImageBase64(result: GenerationResult): string | null {
     const candidates = result.candidates;
     if (candidates?.[0]?.content?.parts) {
-        const imagePart = candidates[0].content.parts.find((p: any) => p.inlineData);
-        if (imagePart) {
+        const imagePart = candidates[0].content.parts.find((p) => p.inlineData);
+        if (imagePart?.inlineData) {
             return imagePart.inlineData.data;
         }
     }
@@ -53,7 +69,7 @@ export async function POST(req: NextRequest) {
     // We'll use a ReadableStream so we can send progress updates
     const stream = new ReadableStream({
         async start(controller) {
-            const sendUpdate = (data: any) => {
+            const sendUpdate = (data: Record<string, unknown>) => {
                 controller.enqueue(encoder.encode(JSON.stringify(data) + "\n"));
             };
 
@@ -174,7 +190,7 @@ export async function POST(req: NextRequest) {
                 });
 
                 controller.close();
-            } catch (error: any) {
+            } catch (error) {
                 console.error("GENERATION ERROR:", error);
                 
                 // Refund credit if we deducted it but failed
@@ -183,7 +199,8 @@ export async function POST(req: NextRequest) {
                     console.log("Credit refunded due to error");
                 }
 
-                sendUpdate({ type: 'error', error: error.message || "Processing failed" });
+                const errorMessage = error instanceof Error ? error.message : "Processing failed";
+                sendUpdate({ type: 'error', error: errorMessage });
                 controller.close();
             }
         }

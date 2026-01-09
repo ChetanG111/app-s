@@ -48,7 +48,7 @@ export const FontView: React.FC<FontViewProps> = ({ selectedFont, onSelect }) =>
                 ))}
 
                 <p className="text-zinc-500 text-sm mt-12 text-center">
-                    Choose a font that matches your app's brand identity.
+                    Choose a font that matches your app&apos;s brand identity.
                 </p>
             </div>
         </div>

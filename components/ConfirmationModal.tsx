@@ -131,7 +131,7 @@ export const useConfirmation = () => {
     const handleConfirm = useCallback(() => {
         config.onConfirm();
         closeConfirm();
-    }, [config.onConfirm, closeConfirm]);
+    }, [config, closeConfirm]);
 
     return {
         confirmConfig: config,
