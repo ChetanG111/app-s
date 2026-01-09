@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { LandingNav } from '@/components/LandingNav';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { ShowcaseSection } from '@/components/landing/ShowcaseSection';
 import { PricingSection } from '@/components/landing/PricingSection';
 
 export default function LandingPage() {
+    const router = useRouter();
     const showcaseRef = useRef<HTMLDivElement>(null);
     const pricingRef = useRef<HTMLDivElement>(null);
 
@@ -22,7 +24,7 @@ export default function LandingPage() {
         <main className="relative min-h-screen text-white overflow-x-hidden">
             <LandingNav onScrollTo={handleScrollTo} />
 
-            <HeroSection onStartCreating={() => handleScrollTo('pricing')} />
+            <HeroSection onStartCreating={() => router.push('/dash')} />
 
             <div ref={showcaseRef}>
                 <ShowcaseSection />

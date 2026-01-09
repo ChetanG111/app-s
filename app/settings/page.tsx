@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { ConfirmationModal, useConfirmation } from '@/components/ConfirmationModal';
 import { NotificationToast, useNotification } from '@/components/Notification';
@@ -313,7 +314,12 @@ const HelpView = () => {
 // --- Main Page Component ---
 
 export default function SettingsPage() {
-    const [activeTab, setActiveTab] = useState<TabId>('account');
+    const searchParams = useSearchParams();
+    const tabParam = searchParams.get('tab');
+    const validTabs: TabId[] = ['account', 'billing', 'help'];
+    const initialTab = (tabParam && validTabs.includes(tabParam as TabId)) ? (tabParam as TabId) : 'account';
+
+    const [activeTab, setActiveTab] = useState<TabId>(initialTab);
     const [credits, setCredits] = useState(0);
     const { notification, showNotification, hideNotification } = useNotification();
     const { confirmConfig, confirm, closeConfirm, handleConfirm } = useConfirmation();

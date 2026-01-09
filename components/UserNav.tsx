@@ -3,10 +3,12 @@
 import React from 'react';
 import { Home, Settings, User } from 'lucide-react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 export const UserNav: React.FC = () => {
     const { data: session } = useSession();
+    const router = useRouter();
 
     return (
         <div className="absolute top-6 right-6 z-40 flex items-center gap-2 pointer-events-auto">
@@ -37,8 +39,8 @@ export const UserNav: React.FC = () => {
                     {session?.user ? (
                         <button
                             className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-900 border border-white/10 hover:border-white/20 transition-all text-zinc-400 hover:text-white relative overflow-hidden group"
-                            onClick={() => signOut()}
-                            title="Sign Out"
+                            onClick={() => router.push("/settings?tab=account")}
+                            title="Account Settings"
                         >
                             {session.user.image ? (
                                 <img src={session.user.image} alt={session.user.name || "User"} className="w-full h-full object-cover" />

@@ -17,7 +17,7 @@ export default function SignupPage() {
     };
 
     const handleGoogleSignUp = () => {
-        signIn("google", { callbackUrl: "/" });
+        signIn("google");
     };
 
     const isReady = name.length > 0 && email.length > 0 && password.length > 0;
@@ -55,7 +55,7 @@ export default function SignupPage() {
                         </div>
 
                         {/* Social Login */}
-                        <button 
+                        <button
                             onClick={handleGoogleSignUp}
                             className="w-full flex items-center justify-center gap-3 bg-white text-black h-13 py-3.5 rounded-2xl font-black text-sm hover:bg-zinc-200 transition-all active:scale-[0.98] mb-5 group"
                         >

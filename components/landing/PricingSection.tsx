@@ -19,7 +19,7 @@ export const PricingSection: React.FC = () => {
             });
 
             if (res.status === 401) {
-                window.location.href = "/login?callbackUrl=/"; // Redirect to login if unauthorized
+                window.location.href = "/login?callbackUrl=/dash"; // Redirect to login if unauthorized
                 return;
             }
 

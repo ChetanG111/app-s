@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Zap } from 'lucide-react';
+import { Zap, Plus } from 'lucide-react';
+import Link from 'next/link';
 
 interface TopNavProps {
     projectName: string;
@@ -56,6 +57,14 @@ export const TopNav: React.FC<TopNavProps> = ({ projectName, setProjectName, cre
                     <span className="text-xs font-bold text-white">{credits}</span>
                     <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Credits</span>
                 </div>
+
+                <Link
+                    href="/settings?tab=billing"
+                    className="ml-1 flex items-center gap-1 px-3 py-1.5 bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition-colors cursor-pointer"
+                >
+                    <Plus size={12} strokeWidth={3} />
+                    <span className="text-[10px] font-black uppercase tracking-wider">Get Credits</span>
+                </Link>
             </div>
         </div>
     );

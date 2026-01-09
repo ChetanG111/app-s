@@ -19,7 +19,8 @@ export async function rateLimit(key: string, limit: number, windowSeconds: numbe
             });
             return { success: true, remaining: limit - (record.count + 1) };
         } else {
-            // Upsert to handle race conditions best effort
+            // Upsert to handle race conditions best effort. 
+            // Note: We use upsert to ensure we either update the existing record or create a new one safely.
             await prisma.rateLimit.upsert({
                 where: { key },
                 update: {
