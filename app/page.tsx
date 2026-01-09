@@ -40,6 +40,7 @@ export default function Home() {
     const [customBgPrompt, setCustomBgPrompt] = useState("");
     const [projectName, setProjectName] = useState("App-1");
     const [isGenerating, setIsGenerating] = useState(false);
+    const [currentStep, setCurrentStep] = useState<string | null>(null);
     const [generateBackground, setGenerateBackground] = useState(true);
     const [exportConfig, setExportConfig] = useState<{ isOpen: boolean; url: string | null }>({
         isOpen: false,
@@ -54,6 +55,7 @@ export default function Home() {
         }
 
         setIsGenerating(true);
+        setCurrentStep("Creating overlay");
 
         try {
             const response = await fetch("/api/generate", {
@@ -71,14 +73,46 @@ export default function Home() {
                 }),
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || "Generation failed");
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "Generation failed");
+            }
 
-            showNotification("Mockup generated successfully!", "success");
+            // Handle streaming response
+            const reader = response.body?.getReader();
+            if (!reader) throw new Error("Could not read response stream");
+
+            const decoder = new TextDecoder();
+            let done = false;
+
+            while (!done) {
+                const { value, done: doneReading } = await reader.read();
+                done = doneReading;
+                if (value) {
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split("\n").filter(l => l.trim());
+
+                    for (const line of lines) {
+                        try {
+                            const data = JSON.parse(line);
+                            if (data.type === 'progress') {
+                                setCurrentStep(data.step);
+                            } else if (data.type === 'final') {
+                                showNotification("Mockup generated successfully!", "success");
+                            } else if (data.type === 'error') {
+                                throw new Error(data.error);
+                            }
+                        } catch (e) {
+                            console.error("Error parsing stream chunk:", e);
+                        }
+                    }
+                }
+            }
         } catch (err: any) {
             showNotification(err.message, "error");
         } finally {
             setIsGenerating(false);
+            setCurrentStep(null);
         }
     };
 
@@ -206,6 +240,7 @@ export default function Home() {
                     <GenerateView
                         uploadedImage={uploadedImage}
                         isGenerating={isGenerating}
+                        currentStep={currentStep}
                         handleGenerate={handleGenerate}
                         onNotify={showNotification}
                         onConfirm={confirm}

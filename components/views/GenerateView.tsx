@@ -5,6 +5,7 @@ import { NotificationType } from '../Notification';
 interface GenerateViewProps {
     uploadedImage: string | null;
     isGenerating: boolean;
+    currentStep: string | null;
     handleGenerate: () => Promise<void>;
     onNotify: (message: string, type: NotificationType) => void;
     onConfirm: (options: { title: string; message: string; isDanger?: boolean; onConfirm: () => void }) => void;
@@ -14,6 +15,7 @@ interface GenerateViewProps {
 export const GenerateView: React.FC<GenerateViewProps> = ({
     uploadedImage,
     isGenerating,
+    currentStep,
     handleGenerate,
     onNotify,
     onConfirm,
@@ -21,6 +23,38 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
 }) => {
     const [history, setHistory] = useState<any[]>([]);
     const [viewingImage, setViewingImage] = useState<string | null>(null);
+
+    // Simplified 4-state UI sequence
+    const uiSteps = [
+        "Creating Overlay",
+        "Background Generation",
+        "Adding Text",
+        "Verifying"
+    ];
+
+    /**
+     * Map complex backend states to our simple 4-state UI.
+     * This prevents the "jumping" sensation by consolidating multiple steps.
+     */
+    const getCurrentStepIndex = () => {
+        if (!currentStep) return 0;
+
+        switch (currentStep) {
+            case "Creating overlay":
+            case "Verifying": // Treat the first verification as part of the overlay creation
+                return 0;
+            case "Generating background":
+                return 1;
+            case "Adding text":
+                return 2;
+            case "Cleaning up":
+                return 3; // Show "Verifying" in UI for the final cleanup/save phase
+            default:
+                return 0;
+        }
+    };
+
+    const stepIndex = getCurrentStepIndex();
 
     const fetchHistory = async () => {
         try {
@@ -36,7 +70,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
         if (!isGenerating) {
             fetchHistory();
         }
-    }, [isGenerating]); // Refresh history whenever generation state changes (especially when it finishes)
+    }, [isGenerating]);
 
     const onGenerateClick = async () => {
         await handleGenerate();
@@ -78,18 +112,13 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                     className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 animate-in fade-in duration-300"
                     onClick={handleCloseViewer}
                 >
-                    {/* Backdrop Blur Layer */}
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl" />
-
-                    {/* Close Button */}
                     <button
                         onClick={handleCloseViewer}
                         className="absolute top-8 right-8 z-[110] p-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full text-white transition-all hover:scale-110 active:scale-95"
                     >
                         <X size={24} />
                     </button>
-
-                    {/* Image Container */}
                     <div
                         className="relative z-[110] max-w-full max-h-full flex items-center justify-center animate-in zoom-in duration-400"
                         onClick={(e) => e.stopPropagation()}
@@ -99,13 +128,11 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                             alt="Full screen preview"
                             className="max-w-full max-h-[85vh] object-contain rounded-2xl"
                         />
-
                     </div>
                 </div>
             )}
 
             <div className="flex flex-col items-center gap-8 w-full">
-                {/* History Gallery + Generate Card */}
                 <div className="w-full">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -117,51 +144,65 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        {/* The Generate Card - Always present at the start of the grid */}
                         <button
                             onClick={onGenerateClick}
                             disabled={isGenerating || !uploadedImage}
                             className={`
                                 relative aspect-[9/16] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center transition-all duration-500 group
                                 ${isGenerating
-                                    ? 'border-blue-500/50 bg-blue-500/5 cursor-wait'
+                                    ? 'border-zinc-800 bg-black/10 opacity-40 cursor-wait'
                                     : !uploadedImage
                                         ? 'border-zinc-800 bg-black/20 opacity-60 cursor-not-allowed'
                                         : 'border-zinc-800 hover:border-zinc-500 bg-black/40 hover:bg-white/5 cursor-pointer'
                                 }
                             `}
                         >
-                            {isGenerating ? (
-                                <>
-                                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
-                                    <span className="text-blue-400 font-bold text-sm animate-pulse text-center px-4">Creating your mockup...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-white/5">
-                                        <Plus className="text-zinc-500 group-hover:text-white" size={32} strokeWidth={2} />
-                                    </div>
-                                    <span className="text-zinc-400 group-hover:text-white font-bold text-lg">Generate</span>
-                                    {!uploadedImage && <span className="text-zinc-600 text-[10px] uppercase tracking-widest mt-2">Upload Required</span>}
-                                </>
-                            )}
+                            <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-white/5">
+                                <Plus className="text-zinc-500 group-hover:text-white" size={32} strokeWidth={2} />
+                            </div>
+                            <span className="text-zinc-400 group-hover:text-white font-bold text-lg">Generate</span>
+                            {!uploadedImage && <span className="text-zinc-600 text-[10px] uppercase tracking-widest mt-2">Upload Required</span>}
                         </button>
 
-                        {/* History Items */}
+                        {isGenerating && (
+                            <div className="relative aspect-[9/16] bg-zinc-900/50 rounded-[2.5rem] overflow-hidden border-2 border-blue-500/20 animate-pulse">
+                                <div className="absolute inset-0 animate-shimmer" />
+                                <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                                    <div className="w-10 h-10 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4" />
+                                    <p className="text-blue-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Generating</p>
+                                    <p className="text-white font-medium text-sm transition-all duration-500">{uiSteps[stepIndex]}...</p>
+                                    <div className="flex gap-1 mt-3">
+                                        {uiSteps.map((_, i) => (
+                                            <div
+                                                key={i}
+                                                className={`h-1.5 rounded-full transition-all duration-700 ${i <= stepIndex ? 'w-6 bg-blue-500 opacity-100' : 'w-1 bg-zinc-800 opacity-40'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {history.map((file) => (
                             <div
                                 key={file.name}
                                 onClick={() => setViewingImage(file.url)}
                                 className="group relative aspect-[9/16] bg-zinc-900 rounded-[2.5rem] overflow-hidden transition-all duration-300 border-2 border-transparent hover:border-zinc-700 cursor-pointer"
                             >
+                                <div className="absolute inset-0 animate-shimmer opacity-100 group-hover:opacity-40 transition-opacity" />
                                 <img
                                     src={file.url}
                                     alt={file.name}
-                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                    onLoad={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.opacity = '1';
+                                        const skeleton = target.parentElement?.querySelector('.animate-shimmer') as HTMLElement;
+                                        if (skeleton) skeleton.style.display = 'none';
+                                    }}
+                                    style={{ opacity: 0 }}
+                                    className="w-full h-full object-cover transition-opacity duration-700"
                                 />
-
                                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
                                 <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                                     <button
                                         onClick={(e) => {
@@ -184,7 +225,6 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                                         <Trash2 size={16} />
                                     </button>
                                 </div>
-
                                 <div className="absolute bottom-6 inset-x-0 px-6 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <p className="text-[11px] text-zinc-400 font-mono bg-black/60 backdrop-blur-sm py-1.5 px-3 rounded-full w-fit">
                                         {new Date(file.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
