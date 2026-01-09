@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Check } from 'lucide-react';
+import { isImageLoaded, markImageLoaded } from '@/lib/imageCache';
 
 const LAYOUT_STYLES = [
     { id: 'Basic', name: 'Basic', image: '/templates/layouts/Basic.png' },
@@ -13,6 +14,26 @@ interface StyleViewProps {
 }
 
 export const StyleView: React.FC<StyleViewProps> = ({ selectedStyle, onSelect }) => {
+    // Track loading state for each image - initialize based on cache
+    const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(() => {
+        const initial: Record<string, boolean> = {};
+        LAYOUT_STYLES.forEach(style => {
+            // If already loaded in cache, don't show loading state
+            initial[style.id] = !isImageLoaded(style.image);
+        });
+        return initial;
+    });
+
+    const handleImageLoad = (styleId: string, imageSrc: string) => {
+        markImageLoaded(imageSrc);
+        setLoadingStates(prev => ({ ...prev, [styleId]: false }));
+    };
+
+    // Also handle errors - hide shimmer even if image fails
+    const handleImageError = (styleId: string) => {
+        setLoadingStates(prev => ({ ...prev, [styleId]: false }));
+    };
+
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-6xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto pt-16 pb-24">
             <h1 className="text-white text-4xl font-black mb-12 tracking-tight text-center">
@@ -22,6 +43,7 @@ export const StyleView: React.FC<StyleViewProps> = ({ selectedStyle, onSelect })
             <div className="flex flex-wrap items-center justify-center gap-12 w-full">
                 {LAYOUT_STYLES.map((style) => {
                     const isSelected = selectedStyle === style.id;
+                    const isLoading = loadingStates[style.id];
                     return (
                         <div
                             key={style.id}
@@ -34,10 +56,16 @@ export const StyleView: React.FC<StyleViewProps> = ({ selectedStyle, onSelect })
                                 }
                             `}
                         >
+                            {/* Shimmer skeleton - only shows on first load */}
+                            {isLoading && (
+                                <div className="absolute inset-0 animate-shimmer z-10" />
+                            )}
                             <img
                                 src={style.image}
                                 alt={style.name}
-                                className="h-[520px] w-auto block object-contain"
+                                onLoad={() => handleImageLoad(style.id, style.image)}
+                                onError={() => handleImageError(style.id)}
+                                className={`h-[520px] w-auto block object-contain transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
                             />
 
                             {isSelected && (

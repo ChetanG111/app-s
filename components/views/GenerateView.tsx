@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Download, Trash2 } from 'lucide-react';
 import { NotificationType } from '../Notification';
+import { isImageLoaded, markImageLoaded } from '@/lib/imageCache';
 
 interface GenerateViewProps {
     uploadedImage: string | null;
@@ -29,6 +30,17 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
 }) => {
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [viewingImage, setViewingImage] = useState<string | null>(null);
+    const [loadedOutputImages, setLoadedOutputImages] = useState<Set<string>>(new Set());
+
+    const handleOutputImageLoad = (url: string) => {
+        markImageLoaded(url);
+        setLoadedOutputImages(prev => new Set(prev).add(url));
+    };
+
+    // Handle image load errors - still mark as "loaded" to hide shimmer
+    const handleOutputImageError = (url: string) => {
+        setLoadedOutputImages(prev => new Set(prev).add(url));
+    };
 
     // Simplified 4-state UI sequence
     const uiSteps = [
@@ -189,55 +201,57 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                             </div>
                         )}
 
-                        {history.map((file) => (
-                            <div
-                                key={file.name}
-                                onClick={() => setViewingImage(file.url)}
-                                className="group relative aspect-[9/16] bg-zinc-900 rounded-[2.5rem] overflow-hidden transition-all duration-300 border-2 border-transparent hover:border-zinc-700 cursor-pointer"
-                            >
-                                <div className="absolute inset-0 animate-shimmer opacity-100 group-hover:opacity-40 transition-opacity" />
-                                <img
-                                    src={file.url}
-                                    alt={file.name}
-                                    onLoad={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.opacity = '1';
-                                        const skeleton = target.parentElement?.querySelector('.animate-shimmer') as HTMLElement;
-                                        if (skeleton) skeleton.style.display = 'none';
-                                    }}
-                                    style={{ opacity: 0 }}
-                                    className="w-full h-full object-cover transition-opacity duration-700"
-                                />
-                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onExport(file.url);
-                                        }}
-                                        className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-black transition-all hover:scale-110 active:scale-95"
-                                        title="Export"
-                                    >
-                                        <Download size={16} />
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDelete(file.url);
-                                        }}
-                                        className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-red-500 hover:text-white hover:border-red-500 transition-all hover:scale-110 active:scale-95"
-                                        title="Delete"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                        {history.map((file) => {
+                            // Check both local state and global cache
+                            const isLoaded = loadedOutputImages.has(file.url) || isImageLoaded(file.url);
+                            return (
+                                <div
+                                    key={file.name}
+                                    onClick={() => setViewingImage(file.url)}
+                                    className="group relative aspect-[9/16] bg-zinc-900 rounded-[2.5rem] overflow-hidden transition-all duration-300 border-2 border-transparent hover:border-zinc-700 cursor-pointer"
+                                >
+                                    {/* Shimmer skeleton - only shows on first load */}
+                                    {!isLoaded && (
+                                        <div className="absolute inset-0 animate-shimmer z-10" />
+                                    )}
+                                    <img
+                                        src={file.url}
+                                        alt={file.name}
+                                        onLoad={() => handleOutputImageLoad(file.url)}
+                                        onError={() => handleOutputImageError(file.url)}
+                                        className={`w-full h-full object-cover transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                                    />
+                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onExport(file.url);
+                                            }}
+                                            className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-black transition-all hover:scale-110 active:scale-95"
+                                            title="Export"
+                                        >
+                                            <Download size={16} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(file.url);
+                                            }}
+                                            className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-red-500 hover:text-white hover:border-red-500 transition-all hover:scale-110 active:scale-95"
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="absolute bottom-6 inset-x-0 px-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <p className="text-[11px] text-zinc-400 font-mono bg-black/60 backdrop-blur-sm py-1.5 px-3 rounded-full w-fit">
+                                            {new Date(file.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="absolute bottom-6 inset-x-0 px-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <p className="text-[11px] text-zinc-400 font-mono bg-black/60 backdrop-blur-sm py-1.5 px-3 rounded-full w-fit">
-                                        {new Date(file.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {history.length === 0 && !isGenerating && (

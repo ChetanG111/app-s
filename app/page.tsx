@@ -27,6 +27,10 @@ import { BackgroundView } from '../components/views/BackgroundView';
 import { GenerateView } from '../components/views/GenerateView';
 import { UserNav } from '../components/UserNav';
 
+import useSWR, { mutate } from 'swr';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function Home() {
     const { notification, showNotification, hideNotification } = useNotification();
     const { confirmConfig, confirm, closeConfirm, handleConfirm } = useConfirmation();
@@ -42,25 +46,19 @@ export default function Home() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentStep, setCurrentStep] = useState<string | null>(null);
     const [generateBackground, setGenerateBackground] = useState(true);
-    const [credits, setCredits] = useState(0);
+    
+    // Use SWR for credits to prevent flicker and handle caching
+    const { data: creditsData } = useSWR('/api/credits', fetcher, {
+        revalidateOnFocus: true,
+        dedupingInterval: 2000,
+    });
+    const credits = creditsData?.credits ?? 0;
+
     const [exportConfig, setExportConfig] = useState<{ isOpen: boolean; url: string | null }>({
         isOpen: false,
         url: null
     });
 
-    const fetchCredits = async () => {
-        try {
-            const res = await fetch("/api/credits");
-            const data = await res.json();
-            setCredits(data.credits);
-        } catch (error) {
-            console.error("Failed to fetch credits:", error);
-        }
-    };
-
-    useEffect(() => {
-        fetchCredits();
-    }, []);
 
     const handleGenerate = async () => {
         if (!uploadedImage) {
@@ -134,7 +132,7 @@ export default function Home() {
         } finally {
             setIsGenerating(false);
             setCurrentStep(null);
-            fetchCredits(); // Refresh credits
+            mutate('/api/credits'); // Refresh credits
         }
     };
 

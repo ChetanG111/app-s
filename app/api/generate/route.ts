@@ -5,8 +5,7 @@ import fs from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
-import { revalidateTag } from "next/cache";
+import prisma, { withRetry } from "@/lib/prisma";
 
 const BACKGROUND_STYLE_MAP: Record<string, string> = {
     'charcoal': 'modern Black to light grey gradient',
@@ -80,13 +79,13 @@ export async function POST(req: NextRequest) {
                 }
 
                 // Deduct credit atomically and verify sufficiency
-                const updateResult = await prisma.user.updateMany({
-                    where: { 
-                        id: userId,
+                const updateResult = await withRetry(() => prisma.user.updateMany({
+                    where: {
+                        id: userId!,
                         credits: { gt: 0 }
                     },
                     data: { credits: { decrement: 1 } }
-                });
+                }));
 
                 if (updateResult.count === 0) {
                     sendUpdate({ type: 'error', error: "Insufficient credits" });
@@ -175,7 +174,7 @@ export async function POST(req: NextRequest) {
                 await fs.writeFile(path.join(outputDir, finalFilename), Buffer.from(finalImageBase64, 'base64'));
 
                 // Save to database
-                await prisma.screenshot.create({
+                await withRetry(() => prisma.screenshot.create({
                     data: {
                         userId: userId!,
                         url: `/api/images/${finalFilename}`,
@@ -188,11 +187,7 @@ export async function POST(req: NextRequest) {
                             color
                         }
                     }
-                });
-
-                // Invalidate cache
-                revalidateTag(`user-${userId}-credits`);
-                revalidateTag(`user-${userId}-screenshots`);
+                }));
 
                 sendUpdate({
                     type: 'final',
@@ -204,14 +199,14 @@ export async function POST(req: NextRequest) {
                 controller.close();
             } catch (error) {
                 console.error("GENERATION ERROR:", error);
-                
+
                 // Refund credit if we deducted it but failed
                 if (creditsDeducted && userId) {
                     try {
-                        await prisma.user.update({
-                            where: { id: userId },
+                        await withRetry(() => prisma.user.update({
+                            where: { id: userId! },
                             data: { credits: { increment: 1 } }
-                        });
+                        }));
                         console.log("Credit refunded due to error");
                     } catch (refundError) {
                         console.error("CRITICAL: Failed to refund credit:", refundError);

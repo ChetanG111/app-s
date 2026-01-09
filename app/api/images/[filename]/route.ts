@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import prisma, { withRetry } from "@/lib/prisma";
 import fs from "fs/promises";
 import path from "path";
 import { existsSync } from "fs";
@@ -24,14 +24,14 @@ export async function GET(
 
         // Check ownership in DB
         // We search by checking if ANY record exists for this user with this filename in the url
-        const screenshot = await prisma.screenshot.findFirst({
+        const screenshot = await withRetry(() => prisma.screenshot.findFirst({
             where: {
-                userId: session.user.id,
+                userId: session.user!.id,
                 url: {
                     contains: filename
                 }
             }
-        });
+        }));
 
         if (!screenshot) {
             return new NextResponse("Not Found", { status: 404 });
@@ -42,17 +42,17 @@ export async function GET(
         const publicPath = path.join(process.cwd(), "public", "outputs", filename);
 
         let fileBuffer: Buffer;
-        
+
         if (existsSync(privatePath)) {
             fileBuffer = await fs.readFile(privatePath);
         } else if (existsSync(publicPath)) {
-             // Fallback for old images
+            // Fallback for old images
             fileBuffer = await fs.readFile(publicPath);
         } else {
-             return new NextResponse("File not found on server", { status: 404 });
+            return new NextResponse("File not found on server", { status: 404 });
         }
 
-        return new NextResponse(fileBuffer, {
+        return new NextResponse(fileBuffer as unknown as BodyInit, {
             headers: {
                 "Content-Type": "image/png",
                 "Cache-Control": "private, max-age=31536000, immutable"

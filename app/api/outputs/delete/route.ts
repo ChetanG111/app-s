@@ -3,8 +3,7 @@ import fs from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
-import { revalidateTag } from "next/cache";
+import prisma, { withRetry } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
     try {
@@ -22,28 +21,27 @@ export async function POST(req: NextRequest) {
         const privateDir = path.join(process.cwd(), "private", "outputs");
         const publicDir = path.join(process.cwd(), "public", "outputs");
 
-        const deletedFiles = [];
-        let hasDeletions = false;
+        const deletedFiles: string[] = [];
 
         for (const filename of filenames) {
             // Secure filename
-            const safeFilename = path.basename(filename); 
-            
+            const safeFilename = path.basename(filename);
+
             // Find record belonging to user
-            const screenshot = await prisma.screenshot.findFirst({
+            const screenshot = await withRetry(() => prisma.screenshot.findFirst({
                 where: {
-                    userId: session.user.id,
+                    userId: session.user!.id,
                     url: {
                         contains: safeFilename
                     }
                 }
-            });
+            }));
 
             if (screenshot) {
                 // Delete from DB
-                await prisma.screenshot.delete({
+                await withRetry(() => prisma.screenshot.delete({
                     where: { id: screenshot.id }
-                });
+                }));
 
                 // Delete from Private
                 const privatePath = path.join(privateDir, safeFilename);
@@ -56,14 +54,9 @@ export async function POST(req: NextRequest) {
                 if (existsSync(publicPath)) {
                     await fs.unlink(publicPath);
                 }
-                
-                deletedFiles.push(safeFilename);
-                hasDeletions = true;
-            }
-        }
 
-        if (hasDeletions) {
-             revalidateTag(`user-${session.user.id}-screenshots`);
+                deletedFiles.push(safeFilename);
+            }
         }
 
         return NextResponse.json({ success: true, deleted: deletedFiles });
