@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useSession, signIn } from 'next-auth/react';
 
 interface LandingNavProps {
     onScrollTo?: (section: string) => void;
@@ -12,6 +13,8 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onScrollTo }) => {
         e.preventDefault();
         onScrollTo?.(section);
     };
+
+    const { data: session } = useSession();
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 p-4">
@@ -41,7 +44,13 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onScrollTo }) => {
                             Pricing
                         </button>
                         <Link
-                            href="/dash"
+                            href={session ? "/dash" : "#"}
+                            onClick={(e) => {
+                                if (!session) {
+                                    e.preventDefault();
+                                    signIn(undefined, { callbackUrl: '/dash' });
+                                }
+                            }}
                             className="ml-2 px-5 py-2 text-sm font-bold text-black bg-white hover:bg-zinc-200 transition-all rounded-xl active:scale-95"
                         >
                             Dashboard

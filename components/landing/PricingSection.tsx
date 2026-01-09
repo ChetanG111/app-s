@@ -4,10 +4,18 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Check, Zap } from 'lucide-react';
 
+import { useSession, signIn } from 'next-auth/react';
+
 export const PricingSection: React.FC = () => {
+    const { data: session } = useSession();
     const [isLoading, setIsLoading] = React.useState<string | null>(null);
 
     const handleCheckout = async (plan: "starter" | "pro") => {
+        if (!session) {
+            signIn(undefined, { callbackUrl: '/settings?tab=billing' });
+            return;
+        }
+
         console.log("handleCheckout called with plan:", plan); // Debug log
         setIsLoading(plan);
         try {

@@ -7,8 +7,11 @@ import { HeroSection } from '@/components/landing/HeroSection';
 import { ShowcaseSection } from '@/components/landing/ShowcaseSection';
 import { PricingSection } from '@/components/landing/PricingSection';
 
+import { useSession, signIn } from 'next-auth/react';
+
 export default function LandingPage() {
     const router = useRouter();
+    const { data: session } = useSession();
     const showcaseRef = useRef<HTMLDivElement>(null);
     const pricingRef = useRef<HTMLDivElement>(null);
 
@@ -24,7 +27,13 @@ export default function LandingPage() {
         <main className="relative min-h-screen text-white overflow-x-hidden">
             <LandingNav onScrollTo={handleScrollTo} />
 
-            <HeroSection onStartCreating={() => router.push('/dash')} />
+            <HeroSection onStartCreating={() => {
+                if (session) {
+                    router.push('/dash');
+                } else {
+                    signIn(undefined, { callbackUrl: '/dash' });
+                }
+            }} />
 
             <div ref={showcaseRef}>
                 <ShowcaseSection />
