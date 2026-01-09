@@ -15,47 +15,92 @@ enum Tier {
 }
 
 model User {
-  id              String       @id @default(cuid())
-  email           String       @unique
-  name            String?
-  credits         Int          @default(0)
-  totalMoneySpent Float        @default(0)
-  currentTier     Tier         @default(FREE)
-  
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  // App Specific Fields
+  credits         Int   @default(0)
+  totalMoneySpent Float @default(0)
+  currentTier     Tier  @default(FREE)
+
   // Relations
-  screenshots     Screenshot[]
-  purchases       Purchase[]
-  
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  
+  screenshots Screenshot[]
+  purchases   Purchase[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Whop Integration Fields
-  whopUserId      String?      @unique
+  whopUserId String? @unique
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
 }
 
 model Purchase {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
-  
-  tier          Tier
-  amount        Float
-  creditsAdded  Int
-  
-  provider      String   @default("WHOP") // e.g., WHOP, STRIPE
-  providerId    String   @unique          // External transaction/session ID
-  
-  createdAt     DateTime @default(now())
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  tier         Tier
+  amount       Float
+  creditsAdded Int
+
+  provider   String @default("WHOP") // e.g., WHOP, STRIPE
+  providerId String @unique // External transaction/session ID
+
+  createdAt DateTime @default(now())
 }
 
 model Screenshot {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  
-  url         String   // URL to the stored image (S3/Vercel Blob/Supabase)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  url         String // URL to the stored image (S3/Vercel Blob/Supabase)
   projectName String?
-  settings    Json?    // Store generation settings (font, colors, layout)
-  
-  createdAt   DateTime @default(now())
+  settings    Json? // Store generation settings (font, colors, layout)
+
+  createdAt DateTime @default(now())
 }

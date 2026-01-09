@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Mail, ArrowRight, Chrome, Lock, Sparkles } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -12,6 +13,10 @@ export default function LoginPage() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         console.log("Login submitted:", { email, password });
+    };
+
+    const handleGoogleSignIn = () => {
+        signIn("google", { callbackUrl: "/" });
     };
 
     const isReady = email.length > 0 && password.length > 0;
@@ -49,7 +54,10 @@ export default function LoginPage() {
                         </div>
 
                         {/* Social Login */}
-                        <button className="w-full flex items-center justify-center gap-3 bg-white text-black h-13 py-3.5 rounded-2xl font-black text-sm hover:bg-zinc-200 transition-all active:scale-[0.98] mb-5 group">
+                        <button 
+                            onClick={handleGoogleSignIn}
+                            className="w-full flex items-center justify-center gap-3 bg-white text-black h-13 py-3.5 rounded-2xl font-black text-sm hover:bg-zinc-200 transition-all active:scale-[0.98] mb-5 group"
+                        >
                             <Chrome size={20} className="text-black" />
                             <span>
                                 Sign in with Google
