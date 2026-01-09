@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import {
-    User,
+    User as UserIcon,
     CreditCard,
     HelpCircle,
     ArrowLeft,
@@ -32,7 +33,7 @@ interface TabItem {
 // --- Configuration ---
 
 const TABS: TabItem[] = [
-    { id: 'account', label: 'Account', icon: User, description: 'Personal information and security' },
+    { id: 'account', label: 'Account', icon: UserIcon, description: 'Personal information and security' },
     { id: 'billing', label: 'Billing & Plans', icon: CreditCard, description: 'Manage your subscription and usage' },
     { id: 'help', label: 'Help & About', icon: HelpCircle, description: 'Support, documentation, and legal' },
 ];
@@ -40,6 +41,10 @@ const TABS: TabItem[] = [
 // --- Sub-Components ---
 
 const AccountView = () => {
+    const { data: session } = useSession();
+    const user = session?.user;
+    const isOAuth = user?.image?.includes('googleusercontent.com') || !!user?.image; // Basic check for OAuth avatar
+
     return (
         <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="mb-10">
@@ -49,21 +54,35 @@ const AccountView = () => {
 
             {/* Avatar Section */}
             <div className="mb-10 flex items-center gap-6">
-                <div className="relative group cursor-pointer">
+                <div className={`relative group ${isOAuth ? 'cursor-default' : 'cursor-pointer'}`}>
                     <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-zinc-700 overflow-hidden">
-                        <User size={40} className="text-zinc-500" />
+                        {user?.image ? (
+                            <img src={user.image} alt={user.name || "Avatar"} className="w-full h-full object-cover" />
+                        ) : (
+                            <UserIcon size={40} className="text-zinc-500" />
+                        )}
                     </div>
-                    <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Upload size={20} className="text-white" />
-                    </div>
+                    {!isOAuth && (
+                        <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Upload size={20} className="text-white" />
+                        </div>
+                    )}
                 </div>
                 <div>
-                    <button className="bg-white text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-zinc-200 transition-colors mb-2">
-                        Change Avatar
-                    </button>
-                    <p className="text-zinc-500 text-xs">
-                        JPG, GIF or PNG. 1MB max.
-                    </p>
+                    {!isOAuth ? (
+                        <>
+                            <button className="bg-white text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-zinc-200 transition-colors mb-2">
+                                Change Avatar
+                            </button>
+                            <p className="text-zinc-500 text-xs">
+                                JPG, GIF or PNG. 1MB max.
+                            </p>
+                        </>
+                    ) : (
+                        <p className="text-zinc-500 text-sm italic">
+                            Avatar managed via Google Account
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -73,16 +92,18 @@ const AccountView = () => {
                     <label className="text-sm font-medium text-zinc-300">Display Name</label>
                     <input
                         type="text"
-                        defaultValue="Demo User"
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
+                        defaultValue={user?.name || ""}
+                        readOnly={isOAuth}
+                        className={`w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none transition-all ${isOAuth ? 'opacity-60 cursor-not-allowed' : 'focus:border-white/20 focus:ring-1 focus:ring-white/20'}`}
                     />
                 </div>
                 <div className="grid gap-2">
                     <label className="text-sm font-medium text-zinc-300">Email Address</label>
                     <input
                         type="email"
-                        defaultValue="user@example.com"
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
+                        defaultValue={user?.email || ""}
+                        readOnly
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white opacity-60 cursor-not-allowed outline-none"
                     />
                 </div>
             </div>
