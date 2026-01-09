@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
                 // 6. Cleanup & Final Save
                 sendUpdate({ type: 'progress', step: "Cleaning up" });
                 const finalFilename = `mockup-${timestamp}.png`;
-                const outputDir = path.join(process.cwd(), "public", "outputs");
+                const outputDir = path.join(process.cwd(), "private", "outputs");
                 if (!existsSync(outputDir)) {
                     await fs.mkdir(outputDir, { recursive: true });
                 }
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
                 await prisma.screenshot.create({
                     data: {
                         userId: userId!,
-                        url: `/outputs/${finalFilename}`,
+                        url: `/api/images/${finalFilename}`,
                         projectName: "Generated Mockup", // You can pass this from frontend later
                         settings: {
                             style,
@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
 
                 sendUpdate({
                     type: 'final',
-                    image: `/outputs/${finalFilename}`,
+                    image: `/api/images/${finalFilename}`,
                     step1: `/intermediate/step1-${timestamp}.png`,
                     step2: `/intermediate/step2-${timestamp}.png`
                 });

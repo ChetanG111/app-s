@@ -1,27 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
+import fs from "fs/promises";
+import { existsSync } from "fs";
 import path from "path";
+import { auth } from "@/auth";
+import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const { filenames } = await req.json();
 
         if (!filenames || !Array.isArray(filenames)) {
             return NextResponse.json({ error: "Filenames array is required" }, { status: 400 });
         }
 
-        const outputsDir = path.join(process.cwd(), "public", "outputs");
+        const privateDir = path.join(process.cwd(), "private", "outputs");
+        const publicDir = path.join(process.cwd(), "public", "outputs");
 
-        filenames.forEach(filename => {
-            const filePath = path.join(outputsDir, filename.replace('/outputs/', ''));
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
+        const deletedFiles = [];
+
+        for (const filename of filenames) {
+            // Secure filename
+            const safeFilename = path.basename(filename); 
+            
+            // Find record belonging to user
+            const screenshot = await prisma.screenshot.findFirst({
+                where: {
+                    userId: session.user.id,
+                    url: {
+                        contains: safeFilename
+                    }
+                }
+            });
+
+            if (screenshot) {
+                // Delete from DB
+                await prisma.screenshot.delete({
+                    where: { id: screenshot.id }
+                });
+
+                // Delete from Private
+                const privatePath = path.join(privateDir, safeFilename);
+                if (existsSync(privatePath)) {
+                    await fs.unlink(privatePath);
+                }
+
+                // Delete from Public (Legacy cleanup)
+                const publicPath = path.join(publicDir, safeFilename);
+                if (existsSync(publicPath)) {
+                    await fs.unlink(publicPath);
+                }
+                
+                deletedFiles.push(safeFilename);
             }
-        });
+        }
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, deleted: deletedFiles });
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error("Delete error:", error);
         return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
