@@ -301,7 +301,7 @@ const TextView: React.FC<TextViewProps> = ({ headline, setHeadline }) => {
                         ref={inputRef}
                         type="text"
                         value={headline}
-                        onChange={(e) => setHeadline(e.target.value.slice(0, 50))}
+                        onChange={(e) => setHeadline(e.target.value.replace(/\p{Extended_Pictographic}/gu, '').slice(0, 50))}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         placeholder="Enter your headline here..."
@@ -561,7 +561,7 @@ const BackgroundView: React.FC<BackgroundViewProps> = ({
                             <input
                                 type="text"
                                 value={customValue}
-                                onChange={(e) => setCustomValue(e.target.value.slice(0, 100))}
+                                onChange={(e) => setCustomValue(e.target.value.replace(/\p{Extended_Pictographic}/gu, '').slice(0, 100))}
                                 onFocus={() => setIsFocused(true)}
                                 onBlur={() => setIsFocused(false)}
                                 placeholder="Enter custom prompt or hex..."
