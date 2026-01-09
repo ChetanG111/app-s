@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
@@ -313,7 +313,7 @@ const HelpView = () => {
 
 // --- Main Page Component ---
 
-export default function SettingsPage() {
+function SettingsContent() {
     const searchParams = useSearchParams();
     const tabParam = searchParams.get('tab');
     const validTabs: TabId[] = ['account', 'billing', 'help'];
@@ -444,5 +444,13 @@ export default function SettingsPage() {
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function SettingsPage() {
+    return (
+        <Suspense fallback={<div className="flex w-screen h-screen bg-black items-center justify-center text-white">Loading...</div>}>
+            <SettingsContent />
+        </Suspense>
     );
 }
