@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateScreenStep, generateTextStep, generateBackgroundStep } from "@/services/gemini";
-import fs from "fs";
+import { generateScreenStep, generateBackgroundStep, verifyImage } from "@/services/gemini";
+import { addTextOverlay } from "@/services/typography";
+import fs from "fs/promises"; // Use promises API
+import { existsSync } from "fs"; // Keep sync exists for simple checks or use async access
 import path from "path";
 
 const BACKGROUND_STYLE_MAP: Record<string, string> = {
@@ -9,6 +11,9 @@ const BACKGROUND_STYLE_MAP: Record<string, string> = {
     'dark_slate': 'dark slate gray minimalist surface',
 };
 
+// ... (helper functions remain same) ...
+
+// Helper to extract raw base64 from Gemini response
 function extractImageBase64(result: any): string | null {
     const candidates = result.candidates;
     if (candidates?.[0]?.content?.parts) {
@@ -21,6 +26,9 @@ function extractImageBase64(result: any): string | null {
 }
 
 export async function POST(req: NextRequest) {
+    // Trigger cleanup asynchronously (DISABLED for now)
+    // cleanupOldFiles();
+
     try {
         const {
             screenshot,
@@ -28,7 +36,7 @@ export async function POST(req: NextRequest) {
             backgroundId = 'charcoal',
             customBackground = '',
             headline = '',
-            font = 'standard',
+            font = 'Sans-serif',
             color = 'white',
             skipBackground = false
         } = await req.json();
@@ -37,123 +45,110 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Screenshot is required" }, { status: 400 });
         }
 
-        // Read the template image from public folder
+        // 1. Prepare Files
         const templatePath = path.join(process.cwd(), "public", "templates", "layouts", `${style}.png`);
-        if (!fs.existsSync(templatePath)) {
+        
+        // Use sync exists for simplicity in checking file presence, or try/catch read
+        if (!existsSync(templatePath)) {
             return NextResponse.json({ error: `Template style '${style}' not found` }, { status: 404 });
         }
-
-        const templateBuffer = fs.readFileSync(templatePath);
+        const templateBuffer = await fs.readFile(templatePath);
         const templateBase64 = `data:image/png;base64,${templateBuffer.toString("base64")}`;
 
         const timestamp = Date.now();
         const intermediateDir = path.join(process.cwd(), "public", "intermediate");
-        if (!fs.existsSync(intermediateDir)) {
-            fs.mkdirSync(intermediateDir, { recursive: true });
+        if (!existsSync(intermediateDir)) {
+            await fs.mkdir(intermediateDir, { recursive: true });
         }
 
-        // STEP 1: Generate mockup on plain white background (Screen Overlay)
+        // 2. STEP 1: Screen Replacement (AI)
         console.log("Generating Step 1: Screen Overlay...");
-        const step1Result = await generateScreenStep(screenshot, templateBase64);
-        const step1Base64 = extractImageBase64(step1Result);
+        let step1Result = await generateScreenStep(screenshot, templateBase64);
+        let step1Base64 = extractImageBase64(step1Result);
 
         if (!step1Base64) {
-            return NextResponse.json({
-                error: "Step 1 failed: Model did not return an image.",
-                raw: step1Result
-            }, { status: 500 });
+             return NextResponse.json({ error: "Step 1 failed: No image returned." }, { status: 500 });
         }
 
-        // Save Step 1 intermediate result
-        fs.writeFileSync(path.join(intermediateDir, `step1-${timestamp}.png`), Buffer.from(step1Base64, 'base64'));
-
-        // STEP 2: Generate Text Overlay
-        let step2Base64 = step1Base64;
-        if (headline) {
-            console.log("Generating Step 2: Text Overlay...");
-            const step2Result = await generateTextStep(step1Base64, headline, font, color);
-            const extractedStep2 = extractImageBase64(step2Result);
-
-            if (!extractedStep2) {
-                return NextResponse.json({
-                    error: "Step 2 failed: Model did not return an image.",
-                    raw: step2Result
-                }, { status: 500 });
+        // 3. Verification Step 1
+        console.log("Verifying Step 1...");
+        const verification = await verifyImage(step1Base64);
+        if (!verification.passed) {
+            console.warn("Step 1 Validation Failed:", verification.reason, "- Retrying...");
+            // Retry once
+            step1Result = await generateScreenStep(screenshot, templateBase64);
+            step1Base64 = extractImageBase64(step1Result);
+            if (!step1Base64) {
+                 return NextResponse.json({ error: "Step 1 Retry failed." }, { status: 500 });
             }
-            step2Base64 = extractedStep2;
-            // Save Step 2 intermediate result
-            fs.writeFileSync(path.join(intermediateDir, `step2-${timestamp}.png`), Buffer.from(step2Base64, 'base64'));
-        } else {
-            console.log("Skipping Step 2: No headline provided.");
+            
+            // Verify the retry result too
+            const retryVerification = await verifyImage(step1Base64);
+            if (!retryVerification.passed) {
+                console.warn("Step 1 Retry also failed validation:", retryVerification.reason);
+                // We proceed anyway to avoid blocking the user, but log it.
+            }
         }
 
-        // STEP 3: Generate background for the mockup
-        let finalImageBase64 = step2Base64;
-        const finalFilename = `mockup-${timestamp}.png`;
+        // Save Step 1
+        await fs.writeFile(path.join(intermediateDir, `step1-${timestamp}.png`), Buffer.from(step1Base64, 'base64'));
 
+        // 4. STEP 2: Background (AI)
+        let step2Base64 = step1Base64;
         if (!skipBackground) {
-            // Determine background prompt
             const backgroundPrompt = backgroundId === 'custom'
                 ? customBackground
                 : (BACKGROUND_STYLE_MAP[backgroundId] || BACKGROUND_STYLE_MAP['charcoal']);
 
-            console.log(`Generating Step 3: Background with style '${backgroundId}'...`);
-            const finalResult = await generateBackgroundStep(step2Base64, backgroundPrompt);
-            const extractedBase64 = extractImageBase64(finalResult);
+            console.log(`Generating Step 2: Background (${backgroundId})...`);
+            const step2Result = await generateBackgroundStep(step1Base64, backgroundPrompt);
+            const extractedBase64 = extractImageBase64(step2Result);
 
-            if (!extractedBase64) {
-                return NextResponse.json({
-                    error: "Step 3 failed: Model did not return an image.",
-                    raw: finalResult
-                }, { status: 500 });
+            if (extractedBase64) {
+                step2Base64 = extractedBase64;
+                
+                // Verify Background
+                const bgVerification = await verifyImage(step2Base64);
+                if (!bgVerification.passed) {
+                     console.warn("Background Verification Failed:", bgVerification.reason, "- Retrying...");
+                     const retryResult = await generateBackgroundStep(step1Base64, backgroundPrompt);
+                     const retryBase64 = extractImageBase64(retryResult);
+                     if (retryBase64) step2Base64 = retryBase64;
+                }
+            } else {
+                console.warn("Background Step failed to return image, using Step 1 result.");
             }
-            finalImageBase64 = extractedBase64;
-        } else {
-            console.log("Skipping Step 3 as requested.");
+        }
+        
+        // Save Step 2
+        await fs.writeFile(path.join(intermediateDir, `step2-${timestamp}.png`), Buffer.from(step2Base64, 'base64'));
+
+        // 5. STEP 3: Typography (Code/Sharp)
+        let finalImageBase64 = step2Base64;
+        if (headline) {
+            console.log("Generating Step 3: Text Overlay (Sharp)...");
+            // addTextOverlay returns base64 (raw)
+            finalImageBase64 = await addTextOverlay(step2Base64, headline, font, color);
         }
 
-        // Save final image to disk
+        // 6. Save Final
+        const finalFilename = `mockup-${timestamp}.png`;
         const outputDir = path.join(process.cwd(), "public", "outputs");
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
+        if (!existsSync(outputDir)) {
+            await fs.mkdir(outputDir, { recursive: true });
         }
-
-        fs.writeFileSync(path.join(outputDir, finalFilename), Buffer.from(finalImageBase64, 'base64'));
+        await fs.writeFile(path.join(outputDir, finalFilename), Buffer.from(finalImageBase64, 'base64'));
 
         return NextResponse.json({
             image: `/outputs/${finalFilename}`,
             step1: `/intermediate/step1-${timestamp}.png`,
-            step2: headline ? `/intermediate/step2-${timestamp}.png` : null
+            step2: `/intermediate/step2-${timestamp}.png`
         });
 
     } catch (error: any) {
-        // Log the full error to the console for debugging
-        console.error("CRITICAL GENERATION ERROR:", error);
-
-        let userMessage = "Something went wrong during generation. Please try again.";
-        let statusCode = 500;
-
-        // Handle specific Gemini/Google AI errors
-        const errorMsg = error.message || "";
-        const status = error.status || (error.response?.status);
-
-        if (status === 503 || errorMsg.includes("503") || errorMsg.includes("overloaded")) {
-            userMessage = "The AI is currently under high load and is taking a breather. Please wait 10-20 seconds and try again.";
-            statusCode = 503;
-        } else if (status === 429 || errorMsg.includes("429") || errorMsg.includes("quota")) {
-            userMessage = "Slow down! You've hit the generation limit. Please wait a minute before trying again.";
-            statusCode = 429;
-        } else if (status === 400 && errorMsg.includes("safety")) {
-            userMessage = "The AI filters blocked this generation. Try using a different screenshot or a simpler background prompt.";
-            statusCode = 400;
-        } else if (errorMsg.includes("API key")) {
-            userMessage = "Invalid API configuration. Please check your Gemini API key.";
-            statusCode = 401;
-        }
-
+        console.error("GENERATION ERROR:", error);
         return NextResponse.json({
-            error: userMessage,
-            rawError: process.env.NODE_ENV === 'development' ? errorMsg : undefined
-        }, { status: statusCode });
+            error: error.message || "Processing failed",
+        }, { status: 500 });
     }
 }
