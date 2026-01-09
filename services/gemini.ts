@@ -13,7 +13,7 @@ You must keep all backgrounds minimalist to ensure the app UI remains the focal 
 const NEGATIVE_CONSTRAINTS = `
 NEGATIVE_CONSTRAINTS: No extra objects, no watermarks, no blurry text, 
 no skin textures, no realistic human hands, no artifacts on the phone edges, 
-no distortion of the UI screenshot, no banding in gradients.
+no distortion of the UI screenshot, no banding in colors.
 `;
 
 /**
@@ -35,7 +35,7 @@ function extractBase64(response: any): string | null {
  * Uses strict masking logic.
  */
 export async function generateScreenStep(screenshotBase64: string, templateBase64: string) {
-    const model = genAI.getGenerativeModel({ 
+    const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash-image",
         systemInstruction: SYSTEM_INSTRUCTION
     });
@@ -90,7 +90,7 @@ export async function generateScreenStep(screenshotBase64: string, templateBase6
  * Also cleans up placeholder text to prepare for Typography step.
  */
 export async function generateBackgroundStep(mockupBase64: string, stylePrompt: string) {
-    const model = genAI.getGenerativeModel({ 
+    const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash-image",
         systemInstruction: SYSTEM_INSTRUCTION
     });
@@ -125,8 +125,8 @@ export async function generateBackgroundStep(mockupBase64: string, stylePrompt: 
  * Checks for critical failures.
  */
 export async function verifyImage(imageBase64: string): Promise<{ passed: boolean; reason?: string }> {
-    const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-flash-image" 
+    const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash-image"
     });
 
     const prompt = `
@@ -152,21 +152,21 @@ export async function verifyImage(imageBase64: string): Promise<{ passed: boolea
                 }
             }
         ]);
-        
+
         const text = result.response.text();
         // Robust JSON extraction
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             return JSON.parse(jsonMatch[0]);
         }
-        
+
         // Fallback if no JSON found but text exists
         console.warn("Verification returned non-JSON:", text);
-        return { passed: true }; 
-        
+        return { passed: true };
+
     } catch (e) {
         console.error("Verification failed to run:", e);
         // Fail open
-        return { passed: true }; 
+        return { passed: true };
     }
 }

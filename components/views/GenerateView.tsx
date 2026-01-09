@@ -194,7 +194,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
 
                         {isGenerating && (
                             <div className="relative aspect-[9/16] bg-zinc-900/50 rounded-[2.5rem] overflow-hidden border-2 border-blue-500/20 animate-pulse">
-                                <div className="absolute inset-0 animate-shimmer" />
+                                <div className="absolute inset-0 bg-black/20" />
                                 <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
                                     <div className="w-10 h-10 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4" />
                                     <p className="text-blue-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Generating</p>
@@ -222,9 +222,9 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                                     onClick={() => setViewingImage(file.url)}
                                     className="group relative aspect-[9/16] bg-zinc-900 rounded-[2.5rem] overflow-hidden transition-all duration-300 border-2 border-transparent hover:border-zinc-700 cursor-pointer"
                                 >
-                                    {/* Shimmer skeleton - only shows on first load for priority images */}
+                                    {/* Loading state - simple background */}
                                     {!isLoaded && isPriority && (
-                                        <div className="absolute inset-0 animate-shimmer z-10" />
+                                        <div className="absolute inset-0 bg-zinc-900 z-10" />
                                     )}
                                     <img
                                         src={file.url}

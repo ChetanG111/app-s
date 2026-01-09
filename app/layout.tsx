@@ -6,8 +6,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "shots88 - Screenshot Generator",
-    description: "Professional screenshot mockups in seconds",
+    title: "shots88 - Premium Screenshot Generator",
+    description: "Professional, high-quality app store mockups for your next big release",
 };
 
 export default function RootLayout({

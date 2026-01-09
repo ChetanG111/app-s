@@ -19,7 +19,7 @@ export const TopNav: React.FC<TopNavProps> = ({ projectName, setProjectName, cre
                 {/* Logo/Icon Area */}
                 <div className="flex items-center gap-3">
                     <div className="relative w-8 h-4 bg-zinc-800 rounded-full flex items-center justify-center overflow-hidden border border-white/10">
-                        <div className="absolute inset-0 bg-gradient-to-r from-zinc-700 to-zinc-900 opacity-50" />
+                        <div className="absolute inset-0 bg-white/5" />
                         <div className="w-4 h-4 bg-white/20 rounded-full blur-[2px]" />
                     </div>
 

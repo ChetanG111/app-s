@@ -56,9 +56,9 @@ export const StyleView: React.FC<StyleViewProps> = ({ selectedStyle, onSelect })
                                 }
                             `}
                         >
-                            {/* Shimmer skeleton - only shows on first load */}
+                            {/* Loading state - simple background */}
                             {isLoading && (
-                                <div className="absolute inset-0 animate-shimmer z-10" />
+                                <div className="absolute inset-0 bg-[#0c0c0c] z-10" />
                             )}
                             <img
                                 src={style.image}

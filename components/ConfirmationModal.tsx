@@ -46,7 +46,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                         className="relative w-full max-w-md bg-[#0c0c0c] border border-white/10 rounded-[2rem] p-8 shadow-2xl overflow-hidden"
                     >
                         {/* Subtle background detail */}
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                        <div className="absolute top-0 left-0 w-full h-1 bg-white/5" />
 
                         <div className="flex flex-col items-center text-center">
                             <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-6 ${isDanger ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-white/5 text-white border border-white/10'
@@ -71,8 +71,8 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                                 <button
                                     onClick={onConfirm}
                                     className={`flex-1 h-12 rounded-xl font-bold transition-all active:scale-95 ${isDanger
-                                            ? 'bg-red-600 hover:bg-red-500 text-white'
-                                            : 'bg-white hover:bg-zinc-200 text-black'
+                                        ? 'bg-red-600 hover:bg-red-500 text-white'
+                                        : 'bg-white hover:bg-zinc-200 text-black'
                                         }`}
                                 >
                                     {confirmLabel}

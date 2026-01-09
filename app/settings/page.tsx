@@ -119,7 +119,7 @@ const AccountView = ({ onDelete }: { onDelete: () => void }) => {
                 <p className="text-zinc-400 text-sm mb-6">
                     Permanently delete your account and all of your content. This action cannot be undone.
                 </p>
-                <button 
+                <button
                     onClick={onDelete}
                     className="text-red-400 hover:text-white hover:bg-red-600 border border-red-500/30 hover:border-red-600 px-4 py-2 rounded-lg text-sm font-medium transition-all"
                 >
@@ -138,7 +138,7 @@ const BillingView = ({ credits }: { credits: number }) => {
                     <h2 className="text-3xl font-black text-white mb-2 tracking-tight">Billing & Plans</h2>
                     <p className="text-zinc-400">Add credits to your account to keep generating mockups.</p>
                 </div>
-                
+
                 <div className="text-right">
                     <div className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Available Balance</div>
                     <div className="flex items-center gap-2 justify-end">
@@ -278,25 +278,25 @@ const HelpView = () => {
             <div className="mb-12">
                 <h3 className="text-lg font-bold text-white mb-4">Contact</h3>
                 <div className="space-y-3">
-                     <button className="w-full flex items-center justify-between p-4 bg-zinc-900/30 border border-zinc-800 rounded-xl hover:bg-zinc-900 transition-colors group">
+                    <button className="w-full flex items-center justify-between p-4 bg-zinc-900/30 border border-zinc-800 rounded-xl hover:bg-zinc-900 transition-colors group">
                         <div className="flex items-center gap-3">
                             <Mail size={18} className="text-zinc-400 group-hover:text-white transition-colors" />
                             <span className="text-zinc-300 group-hover:text-white transition-colors">Email Support</span>
                         </div>
                         <ExternalLink size={16} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
-                     </button>
-                     <button className="w-full flex items-center justify-between p-4 bg-zinc-900/30 border border-zinc-800 rounded-xl hover:bg-zinc-900 transition-colors group">
+                    </button>
+                    <button className="w-full flex items-center justify-between p-4 bg-zinc-900/30 border border-zinc-800 rounded-xl hover:bg-zinc-900 transition-colors group">
                         <div className="flex items-center gap-3">
                             <AlertTriangle size={18} className="text-zinc-400 group-hover:text-white transition-colors" />
                             <span className="text-zinc-300 group-hover:text-white transition-colors">Report a Bug</span>
                         </div>
                         <ExternalLink size={16} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
-                     </button>
+                    </button>
                 </div>
             </div>
 
-             {/* Footer Info */}
-             <div className="flex flex-col gap-4 border-t border-zinc-800 pt-8">
+            {/* Footer Info */}
+            <div className="flex flex-col gap-4 border-t border-zinc-800 pt-8">
                 <div className="flex items-center gap-4 text-xs text-zinc-500">
                     <span>Shots v1.0.0</span>
                     <span className="w-1 h-1 bg-zinc-800 rounded-full" />
@@ -304,7 +304,7 @@ const HelpView = () => {
                     <span className="w-1 h-1 bg-zinc-800 rounded-full" />
                     <a href="#" className="hover:text-zinc-300 transition-colors">Terms of Service</a>
                 </div>
-             </div>
+            </div>
         </div>
     );
 };
@@ -341,7 +341,7 @@ export default function SettingsPage() {
                 try {
                     const res = await fetch("/api/user/delete", { method: "DELETE" });
                     if (!res.ok) throw new Error("Failed to delete account");
-                    
+
                     showNotification("Account deleted successfully", "success");
                     // Sign out and redirect
                     setTimeout(() => signOut({ callbackUrl: "/" }), 1000);
@@ -371,13 +371,13 @@ export default function SettingsPage() {
                 onConfirm={handleConfirm}
                 onCancel={closeConfirm}
             />
-            
+
             {/* Floating Sidebar */}
             <aside className="w-[300px] h-full flex flex-col bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden shrink-0 z-10">
                 {/* Header / Back Button */}
                 <div className="p-8 pb-4">
-                    <Link 
-                        href="/" 
+                    <Link
+                        href="/dash"
                         className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-medium mb-8 group"
                     >
                         <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
@@ -397,8 +397,8 @@ export default function SettingsPage() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`
                                     w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left transition-all duration-300 group relative border
-                                    ${isActive 
-                                        ? 'bg-white/10 text-white border-white/10 shadow-lg' 
+                                    ${isActive
+                                        ? 'bg-white/10 text-white border-white/10 shadow-lg'
                                         : 'border-transparent text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
                                     }
                                 `}
@@ -417,7 +417,7 @@ export default function SettingsPage() {
 
                 {/* Sidebar Footer */}
                 <div className="p-6 border-t border-white/5">
-                    <button 
+                    <button
                         onClick={() => signOut({ callbackUrl: "/" })}
                         className="w-full flex items-center justify-center gap-3 px-4 py-4 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all text-sm font-bold group border border-transparent hover:border-red-500/20"
                     >
@@ -431,9 +431,9 @@ export default function SettingsPage() {
             <main className="flex-1 h-full bg-[#0c0c0c]/80 backdrop-blur-xl border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden relative z-10">
                 <div className="h-full overflow-y-auto scroll-smooth">
                     <div className="max-w-4xl mx-auto py-16 px-12">
-                       {activeTab === 'account' && <AccountView onDelete={handleDeleteAccount} />}
-                       {activeTab === 'billing' && <BillingView credits={credits} />}
-                       {activeTab === 'help' && <HelpView />}
+                        {activeTab === 'account' && <AccountView onDelete={handleDeleteAccount} />}
+                        {activeTab === 'billing' && <BillingView credits={credits} />}
+                        {activeTab === 'help' && <HelpView />}
                     </div>
                 </div>
             </main>

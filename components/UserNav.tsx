@@ -43,7 +43,7 @@ export const UserNav: React.FC = () => {
                             {session.user.image ? (
                                 <img src={session.user.image} alt={session.user.name || "User"} className="w-full h-full object-cover" />
                             ) : (
-                                <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                             )}
                             {!session.user.image && <User size={16} />}
                         </button>
