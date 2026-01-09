@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Tier {
+  FREE
+  STARTER
+  PRO
+}
+
+model User {
+  id              String       @id @default(cuid())
+  email           String       @unique
+  name            String?
+  credits         Int          @default(0)
+  totalMoneySpent Float        @default(0)
+  currentTier     Tier         @default(FREE)
+  
+  // Relations
+  screenshots     Screenshot[]
+  purchases       Purchase[]
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  // Whop Integration Fields
+  whopUserId      String?      @unique
+}
+
+model Purchase {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  
+  tier          Tier
+  amount        Float
+  creditsAdded  Int
+  
+  provider      String   @default("WHOP") // e.g., WHOP, STRIPE
+  providerId    String   @unique          // External transaction/session ID
+  
+  createdAt     DateTime @default(now())
+}
+
+model Screenshot {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  url         String   // URL to the stored image (S3/Vercel Blob/Supabase)
+  projectName String?
+  settings    Json?    // Store generation settings (font, colors, layout)
+  
+  createdAt   DateTime @default(now())
+}
