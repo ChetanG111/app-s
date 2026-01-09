@@ -4,9 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Mail, ArrowRight, Chrome, Lock, Sparkles } from 'lucide-react';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense, useEffect } from 'react';
 
-export default function LoginPage() {
+function LoginPageContent() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -15,8 +17,19 @@ export default function LoginPage() {
         console.log("Login submitted:", { email, password });
     };
 
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const { data: session } = useSession();
+    const callbackUrl = searchParams.get('callbackUrl') || "/dash";
+
+    useEffect(() => {
+        if (session) {
+            router.push(callbackUrl);
+        }
+    }, [session, router, callbackUrl]);
+
     const handleGoogleSignIn = () => {
-        signIn("google");
+        signIn("google", { callbackUrl });
     };
 
     const isReady = email.length > 0 && password.length > 0;
@@ -133,5 +146,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <LoginPageContent />
+        </Suspense>
     );
 }

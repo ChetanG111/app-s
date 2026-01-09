@@ -17,7 +17,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={inter.className}>
+            <body className={`${inter.className} antialiased bg-[#050505] text-white`}>
                 <SessionProvider>
                     <div className="grid-container" />
                     {children}
