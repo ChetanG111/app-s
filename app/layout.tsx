@@ -6,7 +6,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "shots88 - Premium Screenshot Generator",
+    title: "shots88",
     description: "Professional, high-quality app store mockups for your next big release",
 };
 

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { dodoClient } from "@/lib/dodo";
 import { auth } from "@/auth";
+import { z } from "zod";
+
+const CheckoutSchema = z.object({
+    plan: z.enum(["starter", "pro"]),
+});
 
 export async function POST(req: Request) {
     console.log("Create Checkout Route Hit");
@@ -15,7 +20,14 @@ export async function POST(req: Request) {
             );
         }
 
-        const { plan } = await req.json(); // "starter" | "pro"
+        const body = await req.json();
+        const parseResult = CheckoutSchema.safeParse(body);
+
+        if (!parseResult.success) {
+            return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+        }
+
+        const { plan } = parseResult.data;
 
         // TODO: Replace with actual product IDs from Dodo Payments dashboard
         const productId =

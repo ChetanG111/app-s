@@ -12,7 +12,23 @@ export async function POST(req: Request) {
 
         if (event.type === "payment.succeeded") {
             const { data } = event;
-            const metadata = data.metadata;
+            const paymentId = data.payment_id;
+
+            // SECURITY: Verify the payment status with Dodo directly to prevent webhook spoofing
+            let verifiedPayment;
+            try {
+                verifiedPayment = await dodoClient.payments.retrieve(paymentId);
+            } catch (err) {
+                console.error("Failed to verify payment with Dodo:", err);
+                return NextResponse.json({ error: "Verification failed" }, { status: 400 });
+            }
+
+            if (verifiedPayment.status !== 'succeeded') {
+                console.error(`Payment ${paymentId} is not succeeded (status: ${verifiedPayment.status})`);
+                return NextResponse.json({ error: "Payment not succeeded" }, { status: 400 });
+            }
+
+            const metadata = verifiedPayment.metadata; // Use valid metadata from source
             const userId = metadata?.userId;
 
             if (!userId) {
@@ -21,13 +37,8 @@ export async function POST(req: Request) {
             }
 
             // Determine credits based on amount or product ID
-            // Ideally check product_cart, but simplified here:
-            // This assumes we can get the amount from the payment object
-            // Dodo's payload structure needs to be verified. 
-            // Assuming data contains payment info similar to what we set up.
-
-            // Getting amount from the first item if possible, or total amount
-            const amount = data.total_amount; // Verify this field name in Dodo docs
+            // Getting amount from the verified payment
+            const amount = verifiedPayment.total_amount;
 
             // Fallback logic if we can't inspect product directly easily from this payload without types:
             // 1000 ($10) -> 10 credits
@@ -77,7 +88,7 @@ export async function POST(req: Request) {
                         creditsAdded: creditsToAdd,
                         tier: tier as any,
                         provider: "DODO",
-                        providerId: data.payment_id || "unknown",
+                        providerId: verifiedPayment.payment_id || paymentId,
                     }
                 });
 

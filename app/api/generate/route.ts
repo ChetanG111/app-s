@@ -6,12 +6,25 @@ import { existsSync } from "fs";
 import path from "path";
 import { auth } from "@/auth";
 import prisma, { withRetry } from "@/lib/prisma";
+import { z } from "zod";
+import { rateLimit } from "@/lib/ratelimit";
 
 const BACKGROUND_STYLE_MAP: Record<string, string> = {
     'charcoal': 'modern Black to light grey gradient',
     'deep_indigo': 'deep indigo to purple vibrant gradient',
     'dark_slate': 'dark slate gray minimalist surface',
 };
+
+const GenerateRequestSchema = z.object({
+    screenshot: z.string().min(1, "Screenshot is required"),
+    style: z.enum(['Basic', 'Rotated', 'Rotated-left-facing']).default('Basic'),
+    backgroundId: z.string().optional().default('charcoal'),
+    customBackground: z.string().optional(),
+    headline: z.string().max(100).optional(),
+    font: z.string().optional(),
+    color: z.string().optional(),
+    skipBackground: z.boolean().optional(),
+});
 
 interface CandidatePart {
     inlineData?: {
@@ -63,20 +76,41 @@ export async function POST(req: NextRequest) {
                 }
                 userId = session.user.id;
 
+                // 0.1 Rate Limit (Safeguard)
+                const limitResult = await rateLimit(`generate:${userId}`, 10, 60); // 10 reqs/min
+                if (!limitResult.success) {
+                    sendUpdate({ type: 'error', error: "Rate limit exceeded. Please wait." });
+                    controller.close();
+                    return;
+                }
+
+                // 0.2 Parse & Validate Body
+                const rawBody = await req.json();
+
+                // Payload Size Check (approx)
+                if (JSON.stringify(rawBody).length > 6 * 1024 * 1024) {
+                    sendUpdate({ type: 'error', error: "Payload too large. Use an image under 5MB." });
+                    controller.close();
+                    return;
+                }
+
+                const parseResult = GenerateRequestSchema.safeParse(rawBody);
+                if (!parseResult.success) {
+                    sendUpdate({ type: 'error', error: parseResult.error.issues[0].message });
+                    controller.close();
+                    return;
+                }
+
                 const {
                     screenshot,
-                    style = 'Basic',
-                    backgroundId = 'charcoal',
-                    customBackground = '',
-                    headline = '',
-                    font = 'Sans-serif',
-                    color = 'white',
-                    skipBackground = false
-                } = await req.json();
-
-                if (!screenshot) {
-                    throw new Error("Screenshot is required");
-                }
+                    style,
+                    backgroundId,
+                    customBackground,
+                    headline,
+                    font,
+                    color,
+                    skipBackground
+                } = parseResult.data;
 
                 // Deduct credit atomically and verify sufficiency
                 const updateResult = await withRetry(() => prisma.user.updateMany({

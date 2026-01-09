@@ -91,6 +91,8 @@ model Purchase {
   providerId String @unique // External transaction/session ID
 
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Screenshot {
@@ -103,4 +105,12 @@ model Screenshot {
   settings    Json? // Store generation settings (font, colors, layout)
 
   createdAt DateTime @default(now())
+  
+  @@index([userId])
+}
+
+model RateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
 }
