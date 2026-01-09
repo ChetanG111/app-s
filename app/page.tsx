@@ -131,6 +131,8 @@ export default function Home() {
                 <div className="flex flex-col items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-full p-2">
                     {icons.map((item, index) => {
                         const isSelected = selectedIndex === index;
+                        const isDisabled = !uploadedImage && index !== 0 && index !== (icons.length - 1);
+
                         return (
                             <div key={item.id} className="relative">
                                 {isSelected && (
@@ -148,6 +150,7 @@ export default function Home() {
                                 <SidebarIcon
                                     Icon={item.icon}
                                     isSelected={isSelected}
+                                    isDisabled={isDisabled}
                                     onClick={() => setSelectedIndex(index)}
                                 />
                                 {item.id === 'generate' && isGenerating && (
@@ -216,10 +219,21 @@ export default function Home() {
                     <div className="absolute bottom-10 left-0 right-0 flex justify-center pl-24 pointer-events-none">
                         <button
                             onClick={handleNext}
-                            className="pointer-events-auto flex items-center gap-3 bg-white hover:bg-zinc-200 text-black px-12 py-4 rounded-full font-bold transition-all duration-300 group active:scale-95"
+                            disabled={selectedIndex === 0 && !uploadedImage}
+                            className={`
+                                pointer-events-auto flex items-center gap-3 px-12 py-4 rounded-full font-bold transition-all duration-300 group active:scale-95
+                                ${selectedIndex === 0 && !uploadedImage
+                                    ? 'bg-white/5 text-white/20 border border-white/5 cursor-not-allowed'
+                                    : 'bg-white hover:bg-zinc-200 text-black shadow-lg shadow-black/20'
+                                }
+                            `}
                         >
                             Continue
-                            <ChevronDown size={20} strokeWidth={3} className="transition-transform duration-300 group-hover:translate-y-0.5" />
+                            <ChevronDown
+                                size={20}
+                                strokeWidth={3}
+                                className={`transition-transform duration-300 ${selectedIndex === 0 && !uploadedImage ? 'opacity-20' : 'group-hover:translate-y-0.5'}`}
+                            />
                         </button>
                     </div>
                 )}
