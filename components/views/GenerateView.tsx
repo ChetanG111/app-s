@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Download, Trash2 } from 'lucide-react';
 import { NotificationType } from '../Notification';
 import { isImageLoaded, markImageLoaded } from '@/lib/imageCache';
+import useSWR from 'swr';
+
+const PRIORITY_COUNT = 7; // First 7 images load instantly
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 interface GenerateViewProps {
     uploadedImage: string | null;
@@ -28,9 +33,23 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
     onConfirm,
     onExport
 }) => {
-    const [history, setHistory] = useState<HistoryItem[]>([]);
     const [viewingImage, setViewingImage] = useState<string | null>(null);
-    const [loadedOutputImages, setLoadedOutputImages] = useState<Set<string>>(new Set());
+    const [loadedOutputImages, setLoadedOutputImages] = useState<Set<string>>(() => {
+        // Initialize from global cache to prevent shimmer on revisit
+        const cached = new Set<string>();
+        return cached;
+    });
+
+    // Use SWR for instant output loading with caching
+    const { data: outputsData, mutate: mutateOutputs } = useSWR<{ files: HistoryItem[] }>(
+        '/api/outputs',
+        fetcher,
+        {
+            revalidateOnFocus: false,
+            dedupingInterval: 2000,
+        }
+    );
+    const history = outputsData?.files ?? [];
 
     const handleOutputImageLoad = (url: string) => {
         markImageLoaded(url);
@@ -74,25 +93,16 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
 
     const stepIndex = getCurrentStepIndex();
 
-    const fetchHistory = async () => {
-        try {
-            const res = await fetch("/api/outputs");
-            const data = await res.json();
-            if (data.files) setHistory(data.files);
-        } catch (err) {
-            console.error("Failed to fetch history:", err);
-        }
-    };
-
+    // Refresh outputs when generation completes
     useEffect(() => {
         if (!isGenerating) {
-            fetchHistory();
+            mutateOutputs();
         }
-    }, [isGenerating]);
+    }, [isGenerating, mutateOutputs]);
 
     const onGenerateClick = async () => {
         await handleGenerate();
-        fetchHistory();
+        mutateOutputs();
     };
 
     const handleDelete = async (fileUrl: string) => {
@@ -109,7 +119,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                     });
 
                     if (response.ok) {
-                        fetchHistory();
+                        mutateOutputs();
                         onNotify("Image deleted successfully", "success");
                     }
                 } catch (err) {
@@ -201,25 +211,28 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                             </div>
                         )}
 
-                        {history.map((file) => {
+                        {history.map((file, index) => {
                             // Check both local state and global cache
                             const isLoaded = loadedOutputImages.has(file.url) || isImageLoaded(file.url);
+                            // First 7 images get priority loading, rest are lazy-loaded
+                            const isPriority = index < PRIORITY_COUNT;
                             return (
                                 <div
                                     key={file.name}
                                     onClick={() => setViewingImage(file.url)}
                                     className="group relative aspect-[9/16] bg-zinc-900 rounded-[2.5rem] overflow-hidden transition-all duration-300 border-2 border-transparent hover:border-zinc-700 cursor-pointer"
                                 >
-                                    {/* Shimmer skeleton - only shows on first load */}
-                                    {!isLoaded && (
+                                    {/* Shimmer skeleton - only shows on first load for priority images */}
+                                    {!isLoaded && isPriority && (
                                         <div className="absolute inset-0 animate-shimmer z-10" />
                                     )}
                                     <img
                                         src={file.url}
                                         alt={file.name}
+                                        loading={isPriority ? "eager" : "lazy"}
                                         onLoad={() => handleOutputImageLoad(file.url)}
                                         onError={() => handleOutputImageError(file.url)}
-                                        className={`w-full h-full object-cover transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                                        className={`w-full h-full object-cover transition-opacity duration-500 ${isLoaded || !isPriority ? 'opacity-100' : 'opacity-0'}`}
                                     />
                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                     <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-300 translate-y-2 group-hover:translate-y-0">
