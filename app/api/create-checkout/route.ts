@@ -29,11 +29,15 @@ export async function POST(req: Request) {
 
         const { plan } = parseResult.data;
 
-        // TODO: Replace with actual product IDs from Dodo Payments dashboard
         const productId =
             plan === "starter"
-                ? "pdt_0NVu1GoDWvrHbmpYnWPqg"
-                : "pdt_0NVu1QNqXWuauKyiRtbBD";
+                ? process.env.DODO_PRODUCT_ID_STARTER
+                : process.env.DODO_PRODUCT_ID_PRO;
+
+        if (!productId) {
+            console.error("Missing product ID for plan:", plan);
+            return NextResponse.json({ error: "Product configuration missing" }, { status: 500 });
+        }
 
         const checkoutSession = await dodoClient.checkoutSessions.create({
             product_cart: [
