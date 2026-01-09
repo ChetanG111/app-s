@@ -315,7 +315,7 @@ const TextView: React.FC<TextViewProps> = ({ headline, setHeadline }) => {
                         ref={inputRef}
                         type="text"
                         value={headline}
-                        onChange={(e) => setHeadline(e.target.value.replace(/\p{Extended_Pictographic}/gu, '').slice(0, 50))}
+                        onChange={(e) => setHeadline(e.target.value.slice(0, 50))}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         placeholder="Enter your headline here..."
@@ -575,7 +575,7 @@ const BackgroundView: React.FC<BackgroundViewProps> = ({
                             <input
                                 type="text"
                                 value={customValue}
-                                onChange={(e) => setCustomValue(e.target.value.replace(/\p{Extended_Pictographic}/gu, '').slice(0, 100))}
+                                onChange={(e) => setCustomValue(e.target.value.slice(0, 100))}
                                 onFocus={() => setIsFocused(true)}
                                 onBlur={() => setIsFocused(false)}
                                 placeholder="Enter custom prompt or hex..."
@@ -609,7 +609,6 @@ const BackgroundView: React.FC<BackgroundViewProps> = ({
 interface GenerateViewProps {
     uploadedImage: string | null;
     isGenerating: boolean;
-    generationStep: string;
     handleGenerate: () => Promise<void>;
     onNotify: (message: string, type: NotificationType) => void;
 }
@@ -617,7 +616,6 @@ interface GenerateViewProps {
 const GenerateView: React.FC<GenerateViewProps> = ({
     uploadedImage,
     isGenerating,
-    generationStep,
     handleGenerate,
     onNotify
 }) => {
@@ -726,55 +724,28 @@ const GenerateView: React.FC<GenerateViewProps> = ({
                             onClick={onGenerateClick}
                             disabled={isGenerating || !uploadedImage}
                             className={`
-                                relative aspect-[9/16] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center transition-all duration-500 group overflow-hidden
+                                relative aspect-[9/16] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center transition-all duration-500 group
                                 ${isGenerating
-                                    ? 'border-zinc-800/50 bg-black cursor-wait shadow-[0_0_80px_rgba(0,0,0,0.5)]'
+                                    ? 'border-blue-500/50 bg-blue-500/5 cursor-wait'
                                     : !uploadedImage
-                                        ? 'border-zinc-800 bg-black/20 cursor-not-allowed'
+                                        ? 'border-zinc-900 bg-black/20 opacity-40 cursor-not-allowed'
                                         : 'border-zinc-800 hover:border-zinc-500 bg-black/40 hover:bg-white/5 cursor-pointer'
                                 }
                             `}
                         >
                             {isGenerating ? (
-                                <div className="flex flex-col items-center justify-center gap-8 animate-in fade-in duration-500">
-                                    {/* Elegant Tail Spinner */}
-                                    <div className="relative w-16 h-16">
-                                        <div className="absolute inset-0 border-[3px] border-white/5 rounded-full" />
-                                        <motion.div
-                                            className="absolute inset-0 border-[3px] border-white rounded-full border-t-transparent border-l-transparent border-r-white"
-                                            animate={{ rotate: 360 }}
-                                            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                                        />
-                                        <motion.div
-                                            className="absolute inset-0 border-[3px] border-white/20 rounded-full border-b-transparent border-r-transparent"
-                                            animate={{ rotate: 360 }}
-                                            transition={{ duration: 0.8, repeat: Infinity, ease: "linear", delay: -0.1 }}
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col items-center gap-3">
-                                        <motion.p
-                                            key={generationStep}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="text-white text-lg font-bold tracking-tight text-center px-6"
-                                        >
-                                            {generationStep === 'overlaying' && "Overlaying images..."}
-                                            {generationStep === 'text' && "Pasting text..."}
-                                            {generationStep === 'background' && "Generating background..."}
-                                            {generationStep === 'cleanup' && "Cleaning up images..."}
-                                        </motion.p>
-                                        <p className="text-zinc-600 text-[10px] font-black uppercase tracking-[0.3em]">Processing</p>
-                                    </div>
-                                </div>
+                                <>
+                                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
+                                    <span className="text-blue-400 font-bold text-sm animate-pulse text-center px-4">Creating your mockup...</span>
+                                </>
                             ) : (
-                                <div className={`flex flex-col items-center transition-opacity duration-300 ${!uploadedImage ? 'opacity-30' : 'opacity-100'}`}>
+                                <>
                                     <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-white/5">
                                         <Plus className="text-zinc-500 group-hover:text-white" size={32} strokeWidth={2} />
                                     </div>
                                     <span className="text-zinc-400 group-hover:text-white font-bold text-lg">Generate</span>
                                     {!uploadedImage && <span className="text-zinc-600 text-[10px] uppercase tracking-widest mt-2">Upload Required</span>}
-                                </div>
+                                </>
                             )}
                         </button>
 
@@ -848,7 +819,6 @@ export default function Home() {
     const [customBgPrompt, setCustomBgPrompt] = useState("");
     const [projectName, setProjectName] = useState("App-1");
     const [isGenerating, setIsGenerating] = useState(false);
-    const [generationStep, setGenerationStep] = useState("overlaying");
     const [generateBackground, setGenerateBackground] = useState(true);
 
     const handleGenerate = async () => {
@@ -859,7 +829,6 @@ export default function Home() {
         }
 
         setIsGenerating(true);
-        setGenerationStep("overlaying");
 
         try {
             const response = await fetch("/api/generate", {
@@ -877,30 +846,10 @@ export default function Home() {
                 }),
             });
 
-            if (!response.ok) throw new Error("Generation failed");
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Generation failed");
 
-            const reader = response.body?.getReader();
-            const decoder = new TextDecoder();
-
-            if (reader) {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split("\n").filter(Boolean);
-
-                    for (const line of lines) {
-                        const data = JSON.parse(line);
-                        if (data.step) setGenerationStep(data.step);
-                        if (data.error) throw new Error(data.error);
-                        if (data.done) {
-                            setGenerationStep('cleanup');
-                            showNotification("Mockup generated successfully!", "success");
-                        }
-                    }
-                }
-            }
+            showNotification("Mockup generated successfully!", "success");
         } catch (err: any) {
             showNotification(err.message, "error");
         } finally {
@@ -1012,7 +961,6 @@ export default function Home() {
                     <GenerateView
                         uploadedImage={uploadedImage}
                         isGenerating={isGenerating}
-                        generationStep={generationStep}
                         handleGenerate={handleGenerate}
                         onNotify={showNotification}
                     />
