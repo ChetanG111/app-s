@@ -274,10 +274,13 @@ export default function Dashboard() {
                     <div className="absolute bottom-10 left-0 right-0 flex justify-center pl-24 pointer-events-none">
                         <button
                             onClick={handleNext}
-                            disabled={selectedIndex === 0 && !uploadedImage}
+                            disabled={
+                                (selectedIndex === 0 && !uploadedImage) ||
+                                (selectedIndex === 5 && selectedBg === 'custom' && !customBgPrompt.trim())
+                            }
                             className={`
                                 pointer-events-auto flex items-center gap-3 px-12 py-4 rounded-full font-bold transition-all duration-300 group active:scale-95
-                                ${selectedIndex === 0 && !uploadedImage
+                                ${(selectedIndex === 0 && !uploadedImage) || (selectedIndex === 5 && selectedBg === 'custom' && !customBgPrompt.trim())
                                     ? 'bg-white/5 text-white/20 border border-white/5 cursor-not-allowed'
                                     : 'bg-white hover:bg-zinc-200 text-black shadow-lg shadow-black/20'
                                 }
@@ -287,7 +290,11 @@ export default function Dashboard() {
                             <ChevronDown
                                 size={20}
                                 strokeWidth={3}
-                                className={`transition-transform duration-300 ${selectedIndex === 0 && !uploadedImage ? 'opacity-20' : 'group-hover:translate-y-0.5'}`}
+                                className={`transition-transform duration-300 ${
+                                    (selectedIndex === 0 && !uploadedImage) || (selectedIndex === 5 && selectedBg === 'custom' && !customBgPrompt.trim())
+                                        ? 'opacity-20'
+                                        : 'group-hover:translate-y-0.5'
+                                }`}
                             />
                         </button>
                     </div>

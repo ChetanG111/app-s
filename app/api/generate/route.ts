@@ -195,8 +195,10 @@ export async function POST(req: NextRequest) {
                 if (!skipBackground) {
                     sendUpdate({ type: 'progress', step: "Generating background" });
                     const backgroundPrompt = backgroundId === 'custom'
-                        ? (customBackground || '')
+                        ? (customBackground?.trim() || 'modern minimalist background')
                         : (BACKGROUND_STYLE_MAP[backgroundId] || BACKGROUND_STYLE_MAP['charcoal']);
+
+                    console.log(`Generating with background prompt: "${backgroundPrompt}"`);
 
                     const step2Result = await generateBackgroundStep(step1Base64, backgroundPrompt);
                     const extractedBase64 = extractImageBase64(step2Result);
