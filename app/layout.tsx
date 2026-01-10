@@ -18,7 +18,10 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${inter.className} antialiased bg-[#050505] text-white`}>
-                <SessionProvider>
+                <SessionProvider
+                    refetchInterval={5 * 60} // Revalidate session every 5 minutes
+                    refetchOnWindowFocus={false} // Don't block on window focus
+                >
                     <div className="grid-container" />
                     {children}
                 </SessionProvider>

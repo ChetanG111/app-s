@@ -38,29 +38,32 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
     onNext
 }) => {
     const [isFocused, setIsFocused] = useState(false);
+    const isDev = process.env.NODE_ENV === 'development';
 
     return (
-        <div className="flex flex-col items-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
+        <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
             <div className="flex flex-col items-center w-full shrink-0 mb-8">
                 <h1 className="text-white text-5xl font-black mb-6 tracking-tight text-center">
                     Background Style
                 </h1>
 
-                {/* Dev Mode Toggle */}
-                <div
-                    onClick={() => onGenerateBackgroundChange(!generateBackground)}
-                    className="flex items-center gap-3 bg-[#0c0c0c]/60 backdrop-blur-md border border-white/5 px-4 py-2 rounded-2xl cursor-pointer hover:border-white/20 transition-all group"
-                >
-                    <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${generateBackground ? 'bg-blue-500' : 'bg-zinc-800'}`}>
-                        <div className={`absolute top-1 w-2 h-2 bg-white rounded-full transition-all duration-300 ${generateBackground ? 'left-5' : 'left-1'}`} />
+                {/* Dev Mode Toggle - only visible in development */}
+                {isDev && (
+                    <div
+                        onClick={() => onGenerateBackgroundChange(!generateBackground)}
+                        className="flex items-center gap-3 bg-[#0c0c0c]/60 backdrop-blur-md border border-white/5 px-4 py-2 rounded-2xl cursor-pointer hover:border-white/20 transition-all group"
+                    >
+                        <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${generateBackground ? 'bg-blue-500' : 'bg-zinc-800'}`}>
+                            <div className={`absolute top-1 w-2 h-2 bg-white rounded-full transition-all duration-300 ${generateBackground ? 'left-5' : 'left-1'}`} />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                            Generate AI Background {generateBackground ? '(ON)' : '(OFF)'}
+                        </span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                        Generate AI Background {generateBackground ? '(ON)' : '(OFF)'}
-                    </span>
-                </div>
+                )}
             </div>
 
-            <div className="w-full max-w-md flex flex-col gap-2.5 px-4 pb-20">
+            <div className="w-full max-w-md flex flex-col items-center gap-2.5 px-4 pb-20">
                 {BACKGROUND_OPTIONS.map((option) => (
                     <button
                         key={option.id}

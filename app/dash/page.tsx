@@ -2,17 +2,18 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-    ImagePlus, 
-    Smartphone, 
-    Type, 
-    TextCursor, 
-    Droplet, 
-    Layers, 
-    Sparkles, 
-    ChevronDown 
+import {
+    ImagePlus,
+    Smartphone,
+    Type,
+    TextCursor,
+    Droplet,
+    Layers,
+    Sparkles,
+    ChevronDown
 } from 'lucide-react';
 import { useSession } from "next-auth/react";
+import { useRouter } from 'next/navigation';
 import useSWR, { mutate } from 'swr';
 
 import { NotificationToast, useNotification } from '@/components/Notification';
@@ -33,10 +34,11 @@ import { GenerateView } from '@/components/views/GenerateView';
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function Dashboard() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
+    const router = useRouter();
     const { notification, showNotification, hideNotification } = useNotification();
     const { confirmConfig, confirm, closeConfirm, handleConfirm } = useConfirmation();
-    
+
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
     const [selectedStyle, setSelectedStyle] = useState("Basic");
@@ -50,12 +52,31 @@ export default function Dashboard() {
     const [currentStep, setCurrentStep] = useState<string | null>(null);
     const [generateBackground, setGenerateBackground] = useState(true);
 
-    // Use SWR for credits to prevent flicker and handle caching
+    // Use SWR with stale-while-revalidate for instant page loads
     const { data: creditsData } = useSWR('/api/credits', fetcher, {
-        revalidateOnFocus: true,
-        dedupingInterval: 2000,
+        revalidateOnFocus: false,
+        dedupingInterval: 30000, // Cache for 30 seconds
     });
     const credits = creditsData?.credits ?? 0;
+
+    // Redirect if not authenticated (after checking)
+    React.useEffect(() => {
+        if (status === 'unauthenticated') {
+            router.push('/login');
+        }
+    }, [status, router]);
+
+    // Show loading indicator while checking session
+    if (status === 'loading') {
+        return (
+            <div className="flex w-screen h-screen bg-[#050505] items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <p className="text-zinc-500 text-sm font-medium">Loading...</p>
+                </div>
+            </div>
+        );
+    }
 
     const [exportConfig, setExportConfig] = useState<{ isOpen: boolean; url: string | null }>({
         isOpen: false,
@@ -130,17 +151,17 @@ export default function Dashboard() {
         } finally {
             setIsGenerating(false);
             setCurrentStep(null);
-            mutate('/api/credits'); 
+            mutate('/api/credits');
         }
     };
 
     const icons = [
         { id: 'upload', icon: ImagePlus },
         { id: 'style', icon: Smartphone },
+        { id: 'background', icon: Layers },
         { id: 'text', icon: Type },
         { id: 'font', icon: TextCursor },
         { id: 'color', icon: Droplet },
-        { id: 'background', icon: Layers },
         { id: 'generate', icon: Sparkles },
     ];
 
@@ -174,7 +195,7 @@ export default function Dashboard() {
                 onClose={() => setExportConfig({ ...exportConfig, isOpen: false })}
                 onNotify={showNotification}
             />
-            
+
             {/* Top Navigation */}
             <TopNav projectName={projectName} setProjectName={setProjectName} credits={credits} />
             <UserNav />
@@ -235,30 +256,6 @@ export default function Dashboard() {
                 )}
 
                 {selectedIndex === 2 && (
-                    <TextView 
-                        value={headline} 
-                        onChange={setHeadline} 
-                        onNext={handleNext} 
-                    />
-                )}
-
-                {selectedIndex === 3 && (
-                    <FontView 
-                        selected={selectedFont} 
-                        onSelect={setSelectedFont} 
-                        onNext={handleNext} 
-                    />
-                )}
-
-                {selectedIndex === 4 && (
-                    <ColorView 
-                        selected={selectedColor} 
-                        onSelect={setSelectedColor} 
-                        onNext={handleNext} 
-                    />
-                )}
-
-                {selectedIndex === 5 && (
                     <BackgroundView
                         selected={selectedBg}
                         onSelect={setSelectedBg}
@@ -266,6 +263,30 @@ export default function Dashboard() {
                         onCustomPromptChange={setCustomBgPrompt}
                         generateBackground={generateBackground}
                         onGenerateBackgroundChange={setGenerateBackground}
+                        onNext={handleNext}
+                    />
+                )}
+
+                {selectedIndex === 3 && (
+                    <TextView
+                        value={headline}
+                        onChange={setHeadline}
+                        onNext={handleNext}
+                    />
+                )}
+
+                {selectedIndex === 4 && (
+                    <FontView
+                        selected={selectedFont}
+                        onSelect={setSelectedFont}
+                        onNext={handleNext}
+                    />
+                )}
+
+                {selectedIndex === 5 && (
+                    <ColorView
+                        selected={selectedColor}
+                        onSelect={setSelectedColor}
                         onNext={handleNext}
                     />
                 )}

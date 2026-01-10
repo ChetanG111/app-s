@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import useSWR from 'swr';
 import { ConfirmationModal, useConfirmation } from '@/components/ConfirmationModal';
 import { NotificationToast, useNotification } from '@/components/Notification';
 import {
@@ -61,12 +62,12 @@ const AccountView = ({ onDelete }: { onDelete: () => void }) => {
                 <div className={`relative group ${isOAuth ? 'cursor-default' : 'cursor-pointer'}`}>
                     <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-zinc-700 overflow-hidden">
                         {user?.image ? (
-                            <Image 
-                                src={user.image} 
-                                alt={user.name || "Avatar"} 
+                            <Image
+                                src={user.image}
+                                alt={user.name || "Avatar"}
                                 width={96}
                                 height={96}
-                                className="w-full h-full object-cover" 
+                                className="w-full h-full object-cover"
                             />
                         ) : (
                             <UserIcon size={40} className="text-zinc-500" />
@@ -327,22 +328,17 @@ function SettingsContent() {
     const initialTab = (tabParam && validTabs.includes(tabParam as TabId)) ? (tabParam as TabId) : 'account';
 
     const [activeTab, setActiveTab] = useState<TabId>(initialTab);
-    const [credits, setCredits] = useState(0);
     const { notification, showNotification, hideNotification } = useNotification();
     const { confirmConfig, confirm, closeConfirm, handleConfirm } = useConfirmation();
 
-    React.useEffect(() => {
-        const fetchCredits = async () => {
-            try {
-                const res = await fetch("/api/credits");
-                const data = await res.json();
-                setCredits(data.credits);
-            } catch (error) {
-                console.error("Failed to fetch credits:", error);
-            }
-        };
-        fetchCredits();
-    }, []);
+    // Use SWR with stale-while-revalidate for instant page loads
+    const fetcher = (url: string) => fetch(url).then(res => res.json());
+    const { data: creditsData } = useSWR('/api/credits', fetcher, {
+        revalidateOnFocus: false,
+        revalidateOnMount: true,
+        dedupingInterval: 30000, // Cache for 30 seconds
+    });
+    const credits = creditsData?.credits ?? 0;
 
     const handleDeleteAccount = () => {
         confirm({

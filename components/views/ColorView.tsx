@@ -29,33 +29,44 @@ export const ColorView: React.FC<ColorViewProps> = ({ selected, onSelect, onNext
             </h1>
 
             <div className="w-full max-w-md mb-auto flex flex-col gap-4 px-4">
-                {COLOR_OPTIONS.map((option) => (
-                    <button
-                        key={option.id}
-                        onClick={() => onSelect(option.id)}
-                        className={`
-              w-full h-16 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
-              ${selected === option.id
-                                ? 'bg-white text-black border-white scale-[1.02]'
-                                : 'bg-[#0c0c0c]/80 border-zinc-800 text-zinc-400 hover:border-zinc-500 hover:text-white'
-                            }
-            `}
-                    >
-                        <div className="flex items-center gap-4">
-                            {option.isAI ? (
-                                <Zap size={20} className={selected === option.id ? 'text-blue-600' : 'text-zinc-500'} />
-                            ) : (
-                                <div className={`w-6 h-6 rounded-full border ${option.colorClass}`} />
-                            )}
-                            <span>{option.label}</span>
-                        </div>
-                        {selected === option.id && (
-                            <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
-                                <Check size={14} className="text-white" strokeWidth={4} />
+                {COLOR_OPTIONS.map((option) => {
+                    const isDisabled = option.isAI;
+                    return (
+                        <button
+                            key={option.id}
+                            onClick={() => !isDisabled && onSelect(option.id)}
+                            disabled={isDisabled}
+                            className={`
+                                w-full h-16 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
+                                ${isDisabled
+                                    ? 'bg-[#0c0c0c]/60 border-zinc-700 text-zinc-400 cursor-not-allowed'
+                                    : selected === option.id
+                                        ? 'bg-white text-black border-white scale-[1.02]'
+                                        : 'bg-[#0c0c0c]/80 border-zinc-800 text-zinc-400 hover:border-zinc-500 hover:text-white'
+                                }
+                            `}
+                        >
+                            <div className="flex items-center gap-4">
+                                {option.isAI ? (
+                                    <Zap size={20} className="text-zinc-400" />
+                                ) : (
+                                    <div className={`w-6 h-6 rounded-full border ${option.colorClass}`} />
+                                )}
+                                <span>{option.label}</span>
+                                {option.isAI && (
+                                    <span className="text-[10px] font-bold uppercase tracking-widest bg-zinc-800 text-zinc-500 px-2 py-1 rounded-full">
+                                        Coming Soon
+                                    </span>
+                                )}
                             </div>
-                        )}
-                    </button>
-                ))}
+                            {selected === option.id && !isDisabled && (
+                                <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
+                                    <Check size={14} className="text-white" strokeWidth={4} />
+                                </div>
+                            )}
+                        </button>
+                    );
+                })}
 
 
 

@@ -1,20 +1,28 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
 import { useSession, signIn } from 'next-auth/react';
 
 interface LandingNavProps {
     onScrollTo?: (section: string) => void;
+    onDashboardClick?: () => void;
 }
 
-export const LandingNav: React.FC<LandingNavProps> = ({ onScrollTo }) => {
+export const LandingNav: React.FC<LandingNavProps> = ({ onScrollTo, onDashboardClick }) => {
     const handleNavClick = (e: React.MouseEvent, section: string) => {
         e.preventDefault();
         onScrollTo?.(section);
     };
 
     const { data: session } = useSession();
+
+    const handleDashboardClick = () => {
+        if (session) {
+            onDashboardClick?.();
+        } else {
+            signIn(undefined, { callbackUrl: '/dash' });
+        }
+    };
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 p-4">
@@ -43,18 +51,12 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onScrollTo }) => {
                         >
                             Pricing
                         </button>
-                        <Link
-                            href={session ? "/dash" : "#"}
-                            onClick={(e) => {
-                                if (!session) {
-                                    e.preventDefault();
-                                    signIn(undefined, { callbackUrl: '/dash' });
-                                }
-                            }}
+                        <button
+                            onClick={handleDashboardClick}
                             className="ml-2 px-5 py-2 text-sm font-bold text-black bg-white hover:bg-zinc-200 transition-all rounded-xl active:scale-95"
                         >
                             Dashboard
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </div>

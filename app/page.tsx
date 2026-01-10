@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LandingNav } from '@/components/LandingNav';
 import { HeroSection } from '@/components/landing/HeroSection';
@@ -14,6 +14,7 @@ export default function LandingPage() {
     const { data: session } = useSession();
     const showcaseRef = useRef<HTMLDivElement>(null);
     const pricingRef = useRef<HTMLDivElement>(null);
+    const [isNavigating, setIsNavigating] = useState(false);
 
     const handleScrollTo = (section: string) => {
         if (section === 'showcase' && showcaseRef.current) {
@@ -23,17 +24,32 @@ export default function LandingPage() {
         }
     };
 
+    const handleStartCreating = () => {
+        if (session) {
+            setIsNavigating(true);
+            router.push('/dash');
+        } else {
+            signIn(undefined, { callbackUrl: '/dash' });
+        }
+    };
+
+    // Full-screen loading overlay while navigating
+    if (isNavigating) {
+        return (
+            <div className="fixed inset-0 bg-[#050505] z-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <p className="text-zinc-500 text-sm font-medium">Loading dashboard...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <main className="relative min-h-screen text-white overflow-x-hidden">
-            <LandingNav onScrollTo={handleScrollTo} />
+            <LandingNav onScrollTo={handleScrollTo} onDashboardClick={handleStartCreating} />
 
-            <HeroSection onStartCreating={() => {
-                if (session) {
-                    router.push('/dash');
-                } else {
-                    signIn(undefined, { callbackUrl: '/dash' });
-                }
-            }} />
+            <HeroSection onStartCreating={handleStartCreating} />
 
             <div ref={showcaseRef}>
                 <ShowcaseSection />

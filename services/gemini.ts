@@ -41,13 +41,16 @@ export async function generateBackgroundStep(mockupBase64: string, stylePrompt: 
     });
 
     const prompt = `
-    TASK: Replace the background of the image with a new style: "${stylePrompt}".
+    TASK: Replace ONLY the background area of this image. Style: "${stylePrompt}".
     
-    INSTRUCTIONS:
-    1. SEGMENT the phone and its screen content as the "Foreground".
-    2. REPLACE everything behind the phone (the "Background") with the new style.
-    3. REMOVE all text from the background (like "TEXT HERE"). The background must be clean.
-    4. Ensure the UI on the phone screen remains sharp and untouched.
+    CRITICAL RULES - READ CAREFULLY:
+    1. The PHONE DEVICE is UNTOUCHABLE. Do NOT modify, alter, distort, or regenerate the phone in any way.
+    2. The SCREEN CONTENT inside the phone is UNTOUCHABLE. Do NOT change any pixels on the phone's display.
+    3. ONLY replace the area BEHIND and AROUND the phone (the background/empty space).
+    4. Remove any placeholder text like "TEXT HERE" from the background area only.
+    5. The phone must remain pixel-perfect - same position, same angle, same appearance.
+    
+    Think of it as: Cut out the phone, replace the wallpaper behind it, paste the phone back exactly as it was.
     
     ${NEGATIVE_CONSTRAINTS}
     `;
