@@ -76,63 +76,62 @@ export default function Dashboard() {
         setCurrentStep("Creating overlay");
 
         try {
-            const response = await fetch("/api/generate", {
+            // STEP 1: Warp (Deducts Credit)
+            const res1 = await fetch("/api/generate/step1-warp", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     screenshot: uploadedImage,
-                    style: selectedStyle,
+                    style: selectedStyle
+                }),
+            });
+            const data1 = await res1.json();
+            if (!res1.ok) throw new Error(data1.error || "Step 1 failed");
+
+            // STEP 2: Background
+            if (generateBackground) {
+                 setCurrentStep("Generating background");
+            }
+            const res2 = await fetch("/api/generate/step2-background", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    image: data1.image,
                     backgroundId: selectedBg,
                     customBackground: customBgPrompt,
-                    headline,
-                    font: selectedFont,
-                    color: selectedColor,
                     skipBackground: !generateBackground
                 }),
             });
+            const data2 = await res2.json();
+            if (!res2.ok) throw new Error(data2.error || "Step 2 failed");
 
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || "Generation failed");
-            }
+            // STEP 3: Text & Save
+            setCurrentStep("Adding text");
+            const res3 = await fetch("/api/generate/step3-text", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    image: data2.image,
+                    headline,
+                    font: selectedFont,
+                    color: selectedColor,
+                    // Metadata for DB
+                    style: selectedStyle,
+                    backgroundId: selectedBg
+                }),
+            });
+            const data3 = await res3.json();
+            if (!res3.ok) throw new Error(data3.error || "Step 3 failed");
 
-            // Handle streaming response
-            const reader = response.body?.getReader();
-            if (!reader) throw new Error("Could not read response stream");
+            showNotification("Mockup generated successfully!", "success");
 
-            const decoder = new TextDecoder();
-            let done = false;
-
-            while (!done) {
-                const { value, done: doneReading } = await reader.read();
-                done = doneReading;
-                if (value) {
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split("\n").filter(l => l.trim());
-
-                    for (const line of lines) {
-                        try {
-                            const data = JSON.parse(line);
-                            if (data.type === 'progress') {
-                                setCurrentStep(data.step);
-                            } else if (data.type === 'final') {
-                                showNotification("Mockup generated successfully!", "success");
-                            } else if (data.type === 'error') {
-                                throw new Error(data.error);
-                            }
-                        } catch (e) {
-                            console.error("Error parsing stream chunk:", e);
-                        }
-                    }
-                }
-            }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Generation failed";
             showNotification(errorMessage, "error");
         } finally {
             setIsGenerating(false);
             setCurrentStep(null);
-            mutate('/api/credits'); // Refresh credits
+            mutate('/api/credits'); 
         }
     };
 
