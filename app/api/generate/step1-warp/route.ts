@@ -196,14 +196,16 @@ export async function POST(req: NextRequest) {
         const message = error instanceof Error ? error.message : "Warp failed";
 
         if (userId && transactionId) {
+            const uid = userId;
+            const tid = transactionId;
             // Use withRetry to ensure credits are not lost if DB is briefly unavailable
             await withRetry(() => prisma.$transaction([
                 prisma.user.update({
-                    where: { id: userId },
+                    where: { id: uid },
                     data: { credits: { increment: 1 } }
                 }),
                 prisma.creditTransaction.update({
-                    where: { id: transactionId },
+                    where: { id: tid },
                     data: { status: "FAILED" }
                 })
             ])).catch(e => console.error("CRITICAL: Credit refund failed", e));

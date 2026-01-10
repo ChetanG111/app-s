@@ -112,14 +112,16 @@ export async function POST(req: NextRequest) {
                 const payload = token ? await verifyToken(token).catch(() => null) : null;
                 const transactionId = payload?.transactionId;
 
-                if (transactionId) {
+                if (transactionId && userId) {
+                    const uid = userId;
+                    const tid = transactionId;
                     await withRetry(() => prisma.$transaction([
                         prisma.user.update({
-                            where: { id: userId },
+                            where: { id: uid },
                             data: { credits: { increment: 1 } }
                         }),
                         prisma.creditTransaction.update({
-                            where: { id: transactionId },
+                            where: { id: tid },
                             data: { status: "FAILED" }
                         })
                     ])).catch(e => console.error("CRITICAL: Credit refund failed", e));
