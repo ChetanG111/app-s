@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import { 
-    Image as ImageIcon, 
     Type, 
     Palette, 
     Layout, 
     ImagePlus, 
     Wand2,
     Settings,
-    History
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { mutate } from "swr";

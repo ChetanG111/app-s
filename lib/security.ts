@@ -7,6 +7,7 @@ const SECRET = new TextEncoder().encode(
 
 const ALG = "HS256";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function signToken(payload: any): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: ALG })
@@ -15,6 +16,7 @@ export async function signToken(payload: any): Promise<string> {
     .sign(SECRET);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function verifyToken(token: string): Promise<any | null> {
   try {
     const { payload } = await jwtVerify(token, SECRET);

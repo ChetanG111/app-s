@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addTextOverlay } from "@/services/typography";
 import { auth } from "@/auth";
-import prisma, { withRetry } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
 import { verifyToken } from "@/lib/security";
 import { rateLimit } from "@/lib/ratelimit";

@@ -6,7 +6,7 @@ import { existsSync } from "fs";
 // @ts-expect-error - opencv-wasm has no types
 import cv from "opencv-wasm";
 import { auth } from "@/auth";
-import prisma, { withRetry } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { signToken } from "@/lib/security";
 import { rateLimit } from "@/lib/ratelimit";
 
@@ -67,9 +67,10 @@ export async function POST(req: NextRequest) {
             });
         });
         transactionId = result.id;
-    } catch (error: any) {
+    } catch (error: unknown) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return NextResponse.json({ error: (error as any).message || "Payment failed" }, { status: 402 });
+        const message = (error as any).message || "Payment failed";
+        return NextResponse.json({ error: message }, { status: 402 });
     }
 
     const _cv = await getCv();
