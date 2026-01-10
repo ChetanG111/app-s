@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     const _cv = await getCv();
 
     // 4. Load Template
-    const templatePath = path.join(process.cwd(), "public", "templates", "layouts", `${style}.png`);
+    const templatePath = path.join(process.cwd(), "public", "layouts", `${style}.png`);
     if (!existsSync(templatePath)) {
         throw new Error(`Template '${style}' not found`);
     }

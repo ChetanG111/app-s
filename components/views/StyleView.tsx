@@ -4,9 +4,9 @@ import { Check } from 'lucide-react';
 import { isImageLoaded, markImageLoaded } from '@/lib/imageCache';
 
 const LAYOUT_STYLES = [
-    { id: 'Basic', name: 'Basic', image: '/templates/layouts/Basic.png' },
-    { id: 'Rotated', name: 'Rotated', image: '/templates/layouts/Rotated.png' },
-    { id: 'Rotated-left-facing', name: 'Rotated Left', image: '/templates/layouts/Rotated-left-facing.png' },
+    { id: 'Basic', name: 'Basic', image: '/previews/Basic.png' },
+    { id: 'Rotated', name: 'Rotated', image: '/previews/Rotated.png' },
+    { id: 'Rotated-left-facing', name: 'Rotated Left', image: '/previews/Rotated-left-facing.png' },
 ];
 
 interface StyleViewProps {
