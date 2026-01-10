@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
+  debug: process.env.NODE_ENV === "development",
   adapter: PrismaAdapter(prisma),
   providers: [
     Google({
@@ -18,16 +19,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   events: {
     async createUser({ user }) {
-      if (user.id) {
-        await prisma.creditTransaction.create({
-          data: {
-            userId: user.id,
-            amount: 3,
-            type: "WELCOME_BONUS",
-            status: "COMPLETED",
-            metadata: { message: "3 free credits for new account" }
-          }
-        });
+      try {
+        if (user.id) {
+          await prisma.creditTransaction.create({
+            data: {
+              userId: user.id,
+              amount: 3,
+              type: "WELCOME_BONUS",
+              status: "COMPLETED",
+              metadata: { message: "3 free credits for new account" }
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error in createUser event:", error);
+        // Do not throw, so the user can still sign in even if credits fail initially
       }
     }
   },
