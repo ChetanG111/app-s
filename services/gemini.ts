@@ -23,7 +23,7 @@ function extractBase64(response: any): string | null {
     const candidates = response.candidates;
     if (candidates?.[0]?.content?.parts) {
         const imagePart = candidates[0].content.parts.find((p: any) => p.inlineData);
-        if (imagePart) {
+        if (imagePart?.inlineData) {
             return imagePart.inlineData.data;
         }
     }

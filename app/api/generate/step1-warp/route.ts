@@ -112,7 +112,14 @@ export async function POST(req: NextRequest) {
       .toFormat('raw')
       .toBuffer({ resolveWithObject: true });
 
-    let shotMat, tempMat, srcTri, dstTri, M, warped, tempHsv, mask;
+    let shotMat: any = null;
+    let tempMat: any = null;
+    let srcTri: any = null;
+    let dstTri: any = null;
+    let M: any = null;
+    let warped: any = null;
+    let tempHsv: any = null;
+    let mask: any = null;
     let finalBuffer;
 
     try {

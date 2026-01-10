@@ -250,12 +250,8 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                                 <div
                                     key={file.name}
                                     onClick={() => setViewingImage(file.url)}
-                                    className="group relative aspect-[9/16] bg-zinc-900 rounded-[2.5rem] overflow-hidden transition-all duration-300 border-2 border-transparent hover:border-zinc-700 cursor-pointer"
+                                    className="group relative aspect-[9/16] bg-zinc-900/50 rounded-[2.5rem] overflow-hidden transition-all duration-300 border-2 border-transparent hover:border-zinc-700 cursor-pointer"
                                 >
-                                    {/* Loading state - simple background */}
-                                    {!isLoaded && isPriority && (
-                                        <div className="absolute inset-0 bg-zinc-900 z-10" />
-                                    )}
                                     <Image
                                         src={file.url}
                                         alt={file.name}
@@ -263,7 +259,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                                         priority={isPriority}
                                         onLoad={() => handleOutputImageLoad(file.url)}
                                         onError={() => handleOutputImageError(file.url)}
-                                        className={`object-cover transition-opacity duration-500 ${isLoaded || !isPriority ? 'opacity-100' : 'opacity-0'}`}
+                                        className={`object-cover transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
                                         unoptimized
                                     />
                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
