@@ -93,12 +93,7 @@ export const StyleView: React.FC<StyleViewProps> = ({ selected, onSelect, onNext
                 })}
             </div>
 
-            <button
-                onClick={onNext}
-                className="mt-12 bg-white text-black px-12 py-4 rounded-full font-bold hover:bg-zinc-200 transition-all active:scale-95"
-            >
-                Continue
-            </button>
+
         </div>
     );
 };

@@ -145,12 +145,7 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
                     </div>
                 )}
 
-                <button
-                    onClick={onNext}
-                    className="mt-8 bg-white text-black px-12 py-4 rounded-full font-bold hover:bg-zinc-200 transition-all active:scale-95"
-                >
-                    Continue
-                </button>
+
 
                 <p className="text-zinc-500 text-sm mt-6 text-center shrink-0">
                     The background sets the mood for your entire screenshot.

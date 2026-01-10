@@ -53,12 +53,7 @@ export const TextView: React.FC<TextViewProps> = ({ value, onChange, onNext }) =
                     `} />
                 </motion.div>
 
-                <button
-                    onClick={onNext}
-                    className="mt-16 bg-white text-black px-12 py-4 rounded-full font-bold hover:bg-zinc-200 transition-all active:scale-95"
-                >
-                    Continue
-                </button>
+
 
                 <p className="text-zinc-500 text-sm mt-16 text-center max-w-md">
                     This text will appear at the top of your generated mockup. Make it punchy and clear.

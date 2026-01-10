@@ -57,12 +57,7 @@ export const ColorView: React.FC<ColorViewProps> = ({ selected, onSelect, onNext
                     </button>
                 ))}
 
-                <button
-                    onClick={onNext}
-                    className="mt-8 bg-white text-black px-12 py-4 rounded-full font-bold hover:bg-zinc-200 transition-all active:scale-95"
-                >
-                    Continue
-                </button>
+
 
                 <p className="text-zinc-500 text-sm mt-12 text-center">
                     Pick a color that pops against your background.

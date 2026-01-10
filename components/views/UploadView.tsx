@@ -67,7 +67,7 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, 
                 {currentImage ? "Screenshot uploaded" : "Upload a screenshot of your app"}
             </h1>
 
-            <div className="relative mb-[60px] mt-16 flex justify-center w-full">
+            <div className="relative mb-32 mt-16 flex justify-center w-full">
                 <div
                     onClick={handleBoxClick}
                     onDragOver={handleDragOver}
@@ -120,14 +120,7 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, 
                 </div>
             </div>
 
-            {currentImage && (
-                <button
-                    onClick={onNext}
-                    className="mt-8 bg-white text-black px-12 py-4 rounded-full font-bold hover:bg-zinc-200 transition-all active:scale-95"
-                >
-                    Continue
-                </button>
-            )}
+
         </div>
     );
 };

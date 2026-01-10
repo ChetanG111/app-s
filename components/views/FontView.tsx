@@ -48,12 +48,7 @@ export const FontView: React.FC<FontViewProps> = ({ selected, onSelect, onNext }
                     </button>
                 ))}
 
-                <button
-                    onClick={onNext}
-                    className="mt-8 bg-white text-black px-12 py-4 rounded-full font-bold hover:bg-zinc-200 transition-all active:scale-95"
-                >
-                    Continue
-                </button>
+
 
                 <p className="text-zinc-500 text-sm mt-12 text-center">
                     Choose a font that matches your app&apos;s brand identity.
