@@ -11,6 +11,7 @@ import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { signToken } from "@/lib/security";
 import { rateLimit } from "@/lib/ratelimit";
+import { LAYOUT_COORDS } from "@/lib/data";
 
 // Singleton to load OpenCV once
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,12 +91,7 @@ export async function POST(req: NextRequest) {
     const templateBuffer = await fs.readFile(templatePath);
 
     // 5. Load Coordinates
-    const layoutPath = path.join(process.cwd(), "coords", "layout.json");
-    if (!existsSync(layoutPath)) {
-         throw new Error("Layout file missing");
-    }
-    const layoutData = JSON.parse(await fs.readFile(layoutPath, 'utf-8'));
-    const corners = layoutData[style]; 
+    const corners = LAYOUT_COORDS[style]; 
 
     if (!corners) {
         throw new Error("Layout coords not found for this style");
