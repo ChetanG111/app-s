@@ -6,26 +6,17 @@ import prisma from "@/lib/prisma";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "jwt",
+  },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      // Force state-only check to bypass PKCE cookie issues on Vercel
+      // Only check state to avoid PKCE cookie parsing issues on some environments
       checks: ["state"],
     }),
   ],
-  // Ensure cookies are shared across subdomains if necessary
-  cookies: {
-    pkceCodeVerifier: {
-      name: "next-auth.pkce.code_verifier",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-  },
   pages: {
     signIn: "/login",
   },
@@ -45,18 +36,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       } catch (error) {
         console.error("Error in createUser event:", error);
-        // Do not throw, so the user can still sign in even if credits fail initially
       }
     }
   },
   callbacks: {
-    session({ session, user }) {
-      if (session.user) {
-        // @ts-expect-error -- credits is a custom field on User
-        session.user.credits = user.credits;
-        session.user.id = user.id;
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
+        // Fetch credits from DB since we're using JWT strategy
+        const user = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: { credits: true }
+        });
+        if (user) {
+          // @ts-expect-error -- credits is a custom field on User
+          session.user.credits = user.credits;
+        }
       }
       return session;
     },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    }
   },
 });
