@@ -14,6 +14,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/login",
   },
+  events: {
+    async createUser({ user }) {
+      if (user.id) {
+        await prisma.creditTransaction.create({
+          data: {
+            userId: user.id,
+            amount: 3,
+            type: "WELCOME_BONUS",
+            status: "COMPLETED",
+            metadata: { message: "3 free credits for new account" }
+          }
+        });
+      }
+    }
+  },
   callbacks: {
     session({ session, user }) {
       if (session.user) {

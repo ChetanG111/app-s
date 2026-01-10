@@ -24,7 +24,7 @@ model User {
   sessions      Session[]
 
   // App Specific Fields
-  credits         Int   @default(0)
+  credits         Int   @default(3)
   totalMoneySpent Float @default(0)
   currentTier     Tier  @default(FREE)
 
