@@ -1,8 +1,11 @@
+
 import { NextRequest, NextResponse } from "next/server";
-import { generateBackgroundStep } from "@/services/gemini";
+import { generateBackgroundStep as genBg } from "@/services/gemini";
 import { auth } from "@/auth";
 import { verifyToken, signToken } from "@/lib/security";
 import { rateLimit } from "@/lib/ratelimit";
+import crypto from "crypto";
+import prisma from "@/lib/prisma";
 
 const BACKGROUND_STYLE_MAP: Record<string, string> = {
     'charcoal': 'modern Black to light grey gradient',
@@ -24,12 +27,13 @@ function extractImageBase64(result: any): string | null {
 }
 
 export async function POST(req: NextRequest) {
+    let userId: string | null = null;
     try {
         const session = await auth();
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
-        const userId = session.user.id;
+        userId = session.user.id;
 
         // 1. Rate Limit
         const { success } = await rateLimit(`gen-step2:${userId}`, 10, 60);
@@ -45,6 +49,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing security token" }, { status: 403 });
         }
         const payload = await verifyToken(token);
+        // Verify Step 1, User, Transaction
         if (!payload || payload.userId !== userId || payload.step !== 1 || !payload.transactionId) {
             return NextResponse.json({ error: "Invalid or expired token" }, { status: 403 });
         }
@@ -53,11 +58,22 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing image" }, { status: 400 });
         }
 
-        // Generate NEXT Token (Step 2)
-        const nextToken = await signToken({ userId, step: 2, transactionId: payload.transactionId });
+        // 3. Image Hash Verification
+        if (payload.imageHash) {
+            const incomingHash = crypto.createHash('sha256').update(image).digest('hex');
+            if (incomingHash !== payload.imageHash) {
+                 return NextResponse.json({ error: "Image integrity check failed" }, { status: 403 });
+            }
+        }
+
+        // Generate NEXT Token Data
+        const transactionId = payload.transactionId;
 
         // If skip, just return the image
         if (skipBackground) {
+            // Keep same hash
+            const incomingHash = crypto.createHash('sha256').update(image).digest('hex');
+            const nextToken = await signToken({ userId, step: 2, transactionId, imageHash: incomingHash });
             return NextResponse.json({ image, token: nextToken, success: true });
         }
 
@@ -67,12 +83,17 @@ export async function POST(req: NextRequest) {
 
         console.log(`Step 2: Generating background with prompt: "${backgroundPrompt}"`);
 
-        const result = await generateBackgroundStep(image.split(',')[1] || image, backgroundPrompt);
+        const result = await genBg(image.split(',')[1] || image, backgroundPrompt);
         const newBase64 = extractImageBase64(result);
 
         if (!newBase64) {
              throw new Error("Gemini returned no image");
         }
+
+        // Hash the output
+        const outputHash = crypto.createHash('sha256').update(newBase64).digest('hex');
+        
+        const nextToken = await signToken({ userId, step: 2, transactionId, imageHash: outputHash });
 
         return NextResponse.json({ 
             image: newBase64, 
@@ -82,6 +103,30 @@ export async function POST(req: NextRequest) {
 
     } catch (error: unknown) {
         console.error("Step 2 Background Error:", error);
+        
+        // Attempt Refund if AI failed
+        if (userId) {
+             try {
+                const body = await req.clone().json().catch(() => ({}));
+                const token = body.token;
+                const payload = token ? await verifyToken(token).catch(() => null) : null;
+                const transactionId = payload?.transactionId;
+
+                await prisma.$transaction([
+                    prisma.user.update({
+                        where: { id: userId },
+                        data: { credits: { increment: 1 } }
+                    }),
+                    ...(transactionId ? [
+                        prisma.creditTransaction.update({
+                            where: { id: transactionId },
+                            data: { status: "FAILED" }
+                        })
+                    ] : [])
+                ]);
+             } catch(e) { console.error("Refund failed", e); }
+        }
+
         const message = error instanceof Error ? error.message : "Background generation failed";
         return NextResponse.json({ error: message }, { status: 500 });
     }

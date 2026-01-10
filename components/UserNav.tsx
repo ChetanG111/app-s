@@ -3,6 +3,7 @@
 import React from 'react';
 import { Home, Settings, User } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
@@ -43,7 +44,13 @@ export const UserNav: React.FC = () => {
                             title="Account Settings"
                         >
                             {session.user.image ? (
-                                <img src={session.user.image} alt={session.user.name || "User"} className="w-full h-full object-cover" />
+                                <Image 
+                                    src={session.user.image} 
+                                    alt={session.user.name || "User"} 
+                                    width={36} 
+                                    height={36} 
+                                    className="w-full h-full object-cover" 
+                                />
                             ) : (
                                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                             )}

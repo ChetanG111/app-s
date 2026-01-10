@@ -1,8 +1,9 @@
 "use client";
 
 import React from 'react';
+import { X, Download, Check, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Copy, FileImage, FileType } from 'lucide-react';
+import Image from 'next/image';
 
 interface ExportModalProps {
     isOpen: boolean;
@@ -117,10 +118,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
                         {/* Image Preview Area */}
                         <div className="relative w-full aspect-[9/16] max-h-[400px] mb-10 bg-zinc-900/50 rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center">
-                            <img
+                            <Image
                                 src={imageUrl}
                                 alt="Export Preview"
-                                className="h-full w-auto object-contain"
+                                fill
+                                className="object-contain"
+                                unoptimized
                             />
                         </div>
 

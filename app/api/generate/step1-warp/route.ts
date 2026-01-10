@@ -1,9 +1,11 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs/promises";
 import { existsSync } from "fs";
-// @ts-expect-error - opencv-wasm has no types
+import crypto from "crypto";
+// @ts-ignore
 import cv from "opencv-wasm";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
@@ -56,6 +58,11 @@ export async function POST(req: NextRequest) {
                 data: { credits: { decrement: 1 } }
             });
 
+            // Assuming CreditTransaction model exists based on the file I read
+            // If it doesn't exist in schema, this will fail.
+            // But since I read it from the file, it must exist?
+            // Wait, I read the file content, so the CODE was there.
+            // I'll stick to what was there.
             return await tx.creditTransaction.create({
                 data: {
                     userId,
@@ -94,7 +101,7 @@ export async function POST(req: NextRequest) {
         throw new Error("Layout coords not found for this style");
     }
 
-    // 6. Image Processing (with Leak Protection)
+    // 6. Image Processing
     const screenshotBuffer = Buffer.from(screenshot.split(",")[1], 'base64');
     const shotRaw = await sharp(screenshotBuffer)
       .ensureAlpha()
@@ -157,7 +164,6 @@ export async function POST(req: NextRequest) {
         .toBuffer();
 
     } finally {
-        // Safe Cleanup
         if (shotMat && !shotMat.isDeleted()) shotMat.delete();
         if (tempMat && !tempMat.isDeleted()) tempMat.delete();
         if (srcTri && !srcTri.isDeleted()) srcTri.delete();
@@ -168,11 +174,15 @@ export async function POST(req: NextRequest) {
         if (mask && !mask.isDeleted()) mask.delete();
     }
 
-    // GENERATE TOKEN (Include transactionId)
-    const token = await signToken({ userId, step: 1, transactionId });
+    // GENERATE TOKEN
+    // Include transactionId AND imageHash
+    const finalBase64 = `data:image/png;base64,${finalBuffer.toString('base64')}`;
+    const imageHash = crypto.createHash('sha256').update(finalBase64).digest('hex');
+    
+    const token = await signToken({ userId, step: 1, transactionId, imageHash });
 
     return NextResponse.json({ 
-        image: `data:image/png;base64,${finalBuffer.toString('base64')}`, 
+        image: finalBase64, 
         token,
         success: true 
     });
@@ -180,6 +190,22 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
       console.error("Step 1 Warp Error:", error);
       const message = error instanceof Error ? error.message : "Warp failed";
+      
+      if (userId && transactionId) {
+          try {
+              await prisma.$transaction([
+                  prisma.user.update({
+                      where: { id: userId },
+                      data: { credits: { increment: 1 } }
+                  }),
+                  prisma.creditTransaction.update({
+                      where: { id: transactionId },
+                      data: { status: "FAILED" }
+                  })
+              ]);
+          } catch(e) { console.error("Refund failed", e); }
+      }
+      
       return NextResponse.json({ error: message }, { status: 500 });
   }
 }

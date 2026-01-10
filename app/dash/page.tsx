@@ -13,15 +13,15 @@ import { useSession } from "next-auth/react";
 import { mutate } from "swr";
 import { useNotification } from "@/components/Notification";
 
-import UploadView from "@/components/views/UploadView";
-import StyleView from "@/components/views/StyleView";
-import BackgroundView from "@/components/views/BackgroundView";
-import TextView from "@/components/views/TextView";
-import FontView from "@/components/views/FontView";
-import ColorView from "@/components/views/ColorView";
-import GenerateView from "@/components/views/GenerateView";
-import TopNav from "@/components/TopNav";
-import SidebarIcon from "@/components/SidebarIcon";
+import { UploadView } from "@/components/views/UploadView";
+import { StyleView } from "@/components/views/StyleView";
+import { BackgroundView } from "@/components/views/BackgroundView";
+import { TextView } from "@/components/views/TextView";
+import { FontView } from "@/components/views/FontView";
+import { ColorView } from "@/components/views/ColorView";
+import { GenerateView } from "@/components/views/GenerateView";
+import { TopNav } from "@/components/TopNav";
+import { SidebarIcon } from "@/components/SidebarIcon";
 
 export default function Dashboard() {
     const { data: session } = useSession();

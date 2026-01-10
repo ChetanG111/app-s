@@ -1,10 +1,12 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import { addTextOverlay } from "@/services/typography";
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import prisma, { withRetry } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
 import { verifyToken } from "@/lib/security";
 import { rateLimit } from "@/lib/ratelimit";
+import crypto from "crypto";
 
 // Init Supabase (Service Role for admin uploads)
 const supabase = createClient(
@@ -13,12 +15,13 @@ const supabase = createClient(
 );
 
 export async function POST(req: NextRequest) {
+    let userId: string | null = null;
     try {
         const session = await auth();
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
-        const userId = session.user.id;
+        userId = session.user.id;
 
         // 1. Rate Limit
         const { success } = await rateLimit(`gen-step3:${userId}`, 10, 60);
@@ -28,7 +31,7 @@ export async function POST(req: NextRequest) {
 
         const body = await req.json();
         const { 
-            image, // base64
+            image, 
             headline, 
             font, 
             color,
@@ -50,16 +53,24 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing image" }, { status: 400 });
         }
 
-        // 3. Add Text
-        let finalImageBase64 = image;
-        if (headline) {
-            const cleanBase64 = image.split(',').pop()!;
-            finalImageBase64 = await addTextOverlay(cleanBase64, headline, font, color);
-        } else {
-             finalImageBase64 = image.split(',').pop()!;
+        // 3. Image Hash Verification
+        if (payload.imageHash) {
+            const incomingHash = crypto.createHash('sha256').update(image).digest('hex');
+            if (incomingHash !== payload.imageHash) {
+                 return NextResponse.json({ error: "Image integrity check failed" }, { status: 403 });
+            }
         }
 
-        // 4. Upload to Supabase Storage
+        // 4. Add Text
+        let finalImageBase64 = image;
+        if (headline) {
+            const cleanBase64 = image.split(',').pop();
+            finalImageBase64 = await addTextOverlay(cleanBase64, headline, font, color);
+        } else {
+             finalImageBase64 = image.split(',').pop();
+        }
+
+        // 5. Upload to Supabase Storage
         const timestamp = Date.now();
         const finalFilename = `mockup-${timestamp}.png`;
         const buffer = Buffer.from(finalImageBase64, 'base64');
@@ -77,18 +88,18 @@ export async function POST(req: NextRequest) {
             throw new Error("Failed to upload image to storage");
         }
 
-        // 5. Get Public URL
+        // 6. Get Public URL
         const { data: { publicUrl } } = supabase
             .storage
             .from('outputs')
             .getPublicUrl(finalFilename);
 
-        // 6. Save to DB & Complete Transaction
-        await prisma.$transaction(async (tx) => {
-            // Save Screenshot
+        // 7. Save to DB & Complete Transaction
+        await withRetry(() => prisma.$transaction(async (tx) => {
+            // Create Screenshot Record
             await tx.screenshot.create({
                 data: {
-                    userId: userId,
+                    userId: userId!,
                     url: publicUrl,
                     projectName: "Generated Mockup",
                     settings: {
@@ -102,11 +113,12 @@ export async function POST(req: NextRequest) {
             });
 
             // Mark Transaction as Completed
+            // Assuming CreditTransaction model exists based on Step 1
             await tx.creditTransaction.update({
                 where: { id: payload.transactionId },
                 data: { status: "COMPLETED" }
             });
-        });
+        }));
 
         return NextResponse.json({ 
             image: `data:image/png;base64,${finalImageBase64}`,
@@ -116,6 +128,30 @@ export async function POST(req: NextRequest) {
 
     } catch (error: unknown) {
         console.error("Step 3 Text Error:", error);
+        
+        // Refund Credit
+        if (userId) {
+            try {
+                const body = await req.clone().json().catch(() => ({}));
+                const token = body.token;
+                const payload = token ? await verifyToken(token).catch(() => null) : null;
+                const transactionId = payload?.transactionId;
+
+                await prisma.$transaction([
+                    prisma.user.update({
+                        where: { id: userId },
+                        data: { credits: { increment: 1 } }
+                    }),
+                    ...(transactionId ? [
+                        prisma.creditTransaction.update({
+                            where: { id: transactionId },
+                            data: { status: "FAILED" }
+                        })
+                    ] : [])
+                ]);
+            } catch(e) { console.error("Refund failed", e); }
+        }
+        
         const message = error instanceof Error ? error.message : "Text overlay failed";
         return NextResponse.json({ error: message }, { status: 500 });
     }
