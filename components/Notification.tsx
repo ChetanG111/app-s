@@ -26,12 +26,14 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
 }) => {
     useEffect(() => {
         if (isVisible) {
+            // Error messages persist longer (15s) so users can read and report
+            const duration = type === 'error' ? 15000 : 5000;
             const timer = setTimeout(() => {
                 onClose();
-            }, 5000);
+            }, duration);
             return () => clearTimeout(timer);
         }
-    }, [isVisible, onClose]);
+    }, [isVisible, type, onClose]);
 
     if (!isVisible) return null;
 

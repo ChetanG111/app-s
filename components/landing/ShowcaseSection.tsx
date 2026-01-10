@@ -71,17 +71,25 @@ export const ShowcaseSection: React.FC = () => {
                 >
                     <div className="bg-zinc-900/30 border border-zinc-800 rounded-3xl p-8 overflow-hidden">
                         <div className="grid grid-cols-3 gap-4">
-                            {[1, 2, 3].map((i) => (
+                            {[
+                                '/previews/shot-2026-01-10-4447.png',
+                                '/previews/Rotated.png',
+                                '/previews/shot-2026-01-10-2886.png'
+                            ].map((src, i) => (
                                 <div
                                     key={i}
-                                    className="aspect-[9/19] bg-zinc-900 rounded-2xl flex items-center justify-center"
+                                    className="aspect-[9/19] bg-zinc-900 rounded-2xl overflow-hidden"
                                 >
-                                    <div className="w-16 h-16 bg-zinc-800 rounded-xl animate-pulse" />
+                                    <img
+                                        src={src}
+                                        alt={`Mockup example ${i + 1}`}
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
                             ))}
                         </div>
                         <p className="text-center text-zinc-600 text-sm mt-6">
-                            Your generated mockups will appear here
+                            Example outputs from our mockup generator
                         </p>
                     </div>
                 </motion.div>

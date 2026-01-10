@@ -11,9 +11,9 @@ You must keep all backgrounds minimalist to ensure the app UI remains the focal 
 `;
 
 const NEGATIVE_CONSTRAINTS = `
-NEGATIVE_CONSTRAINTS: No extra objects, no watermarks, no blurry text, 
+NEGATIVE_CONSTRAINTS: No extra objects, no watermarks, no blurry text, no shadows, no drop shadows,
 no skin textures, no realistic human hands, no artifacts on the phone edges, 
-no distortion of the UI screenshot, no banding in colors.
+no distortion of the UI screenshot, no banding in colors, no text on background.
 `;
 
 /**
@@ -49,6 +49,9 @@ export async function generateBackgroundStep(mockupBase64: string, stylePrompt: 
     3. ONLY replace the area BEHIND and AROUND the phone (the background/empty space).
     4. Remove any placeholder text like "TEXT HERE" from the background area only.
     5. The phone must remain pixel-perfect - same position, same angle, same appearance.
+    6. DO NOT ADD ANY TEXT TO THE BACKGROUND. No labels, no color codes, no hex values, no watermarks, no words of any kind.
+    
+    The style description is for your reference only - do NOT write it on the image.
     
     Think of it as: Cut out the phone, replace the wallpaper behind it, paste the phone back exactly as it was.
     

@@ -51,11 +51,18 @@ export default function Dashboard() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentStep, setCurrentStep] = useState<string | null>(null);
     const [generateBackground, setGenerateBackground] = useState(true);
+    const [latestGeneratedImage, setLatestGeneratedImage] = useState<{ image: string; url: string } | null>(null);
+    const [exportConfig, setExportConfig] = useState<{ isOpen: boolean; url: string | null }>({
+        isOpen: false,
+        url: null
+    });
 
-    // Use SWR with stale-while-revalidate for instant page loads
+    // Aggressive caching: fetch once, only refetch after generation via mutate()
     const { data: creditsData } = useSWR('/api/credits', fetcher, {
         revalidateOnFocus: false,
-        dedupingInterval: 30000, // Cache for 30 seconds
+        revalidateOnReconnect: false,
+        revalidateIfStale: false,
+        dedupingInterval: 60000, // Dedupe for 1 minute
     });
     const credits = creditsData?.credits ?? 0;
 
@@ -77,11 +84,6 @@ export default function Dashboard() {
             </div>
         );
     }
-
-    const [exportConfig, setExportConfig] = useState<{ isOpen: boolean; url: string | null }>({
-        isOpen: false,
-        url: null
-    });
 
     const handleGenerate = async () => {
         if (!uploadedImage) {
@@ -144,6 +146,11 @@ export default function Dashboard() {
             const data3 = await res3.json();
             if (!res3.ok) throw new Error(data3.error || "Step 3 failed");
 
+            // Store for instant display (base64 + supabase URL)
+            if (data3.image && data3.url) {
+                setLatestGeneratedImage({ image: data3.image, url: data3.url });
+            }
+
             showNotification("Mockup generated successfully!", "success");
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Generation failed";
@@ -152,6 +159,7 @@ export default function Dashboard() {
             setIsGenerating(false);
             setCurrentStep(null);
             mutate('/api/credits');
+            mutate('/api/outputs'); // Refresh outputs list
         }
     };
 
@@ -297,6 +305,7 @@ export default function Dashboard() {
                         onGenerate={handleGenerate}
                         isGenerating={isGenerating}
                         currentStep={currentStep}
+                        latestGeneratedImage={latestGeneratedImage}
                         settings={{
                             style: selectedStyle,
                             background: selectedBg,

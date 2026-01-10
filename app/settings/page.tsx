@@ -331,12 +331,13 @@ function SettingsContent() {
     const { notification, showNotification, hideNotification } = useNotification();
     const { confirmConfig, confirm, closeConfirm, handleConfirm } = useConfirmation();
 
-    // Use SWR with stale-while-revalidate for instant page loads
+    // Use same SWR key as dashboard - shares cache automatically
     const fetcher = (url: string) => fetch(url).then(res => res.json());
     const { data: creditsData } = useSWR('/api/credits', fetcher, {
         revalidateOnFocus: false,
-        revalidateOnMount: true,
-        dedupingInterval: 30000, // Cache for 30 seconds
+        revalidateOnReconnect: false,
+        revalidateIfStale: false,
+        dedupingInterval: 60000,
     });
     const credits = creditsData?.credits ?? 0;
 

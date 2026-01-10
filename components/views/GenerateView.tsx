@@ -11,9 +11,10 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 interface GenerateViewProps {
     uploadedImage: string | null;
-    onGenerate: () => Promise<void>;
+    onGenerate: () => Promise<{ image?: string; url?: string } | void>;
     isGenerating: boolean;
     currentStep: string | null;
+    latestGeneratedImage?: { image: string; url: string } | null; // For instant display
     settings: {
         style: string;
         background: string;
@@ -35,29 +36,55 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
     onGenerate,
     isGenerating,
     currentStep,
+    latestGeneratedImage,
     settings,
     onNotify,
     onConfirm,
     onExport
 }) => {
     const [viewingImage, setViewingImage] = useState<string | null>(null);
+    const [optimisticImage, setOptimisticImage] = useState<{ image: string; url: string } | null>(null);
     const [loadedOutputImages, setLoadedOutputImages] = useState<Set<string>>(() => {
         // Initialize from global cache to prevent shimmer on revisit
         const cached = new Set<string>();
         return cached;
     });
 
+    // Update optimistic image when a new one is generated
+    React.useEffect(() => {
+        if (latestGeneratedImage) {
+            setOptimisticImage(latestGeneratedImage);
+            // Mark as loaded immediately since we have the base64
+            setLoadedOutputImages(prev => new Set(prev).add(latestGeneratedImage.url));
+        }
+    }, [latestGeneratedImage]);
 
-    // Use SWR for instant output loading with caching
+
+    // Aggressive caching: fetch once, only refetch after generation via mutateOutputs()
     const { data: outputsData, mutate: mutateOutputs } = useSWR<{ files: HistoryItem[] }>(
         '/api/outputs',
         fetcher,
         {
             revalidateOnFocus: false,
-            dedupingInterval: 2000,
+            revalidateOnReconnect: false,
+            revalidateIfStale: false,
+            dedupingInterval: 60000, // Dedupe for 1 minute
         }
     );
-    const history = outputsData?.files ?? [];
+
+    // Merge optimistic image with fetched history for instant display
+    const fetchedHistory = outputsData?.files ?? [];
+    const history = React.useMemo(() => {
+        if (!optimisticImage) return fetchedHistory;
+        // Check if optimistic image is already in fetched history
+        const alreadyExists = fetchedHistory.some(h => h.url === optimisticImage.url);
+        if (alreadyExists) return fetchedHistory;
+        // Prepend optimistic image
+        return [
+            { name: 'Latest', url: optimisticImage.url, createdAt: new Date().toISOString() },
+            ...fetchedHistory
+        ];
+    }, [fetchedHistory, optimisticImage]);
 
     const handleOutputImageLoad = (url: string) => {
         markImageLoaded(url);
