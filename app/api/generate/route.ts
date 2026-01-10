@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateScreenStep, generateBackgroundStep, verifyImage } from "@/services/gemini";
+import { generateBackgroundStep } from "@/services/gemini";
 import { addTextOverlay } from "@/services/typography";
 import fs from "fs/promises";
 import { existsSync } from "fs";
@@ -8,6 +8,7 @@ import { auth } from "@/auth";
 import prisma, { withRetry } from "@/lib/prisma";
 import { z } from "zod";
 import { rateLimit } from "@/lib/ratelimit";
+import { spawn } from "child_process";
 
 const BACKGROUND_STYLE_MAP: Record<string, string> = {
     'charcoal': 'modern Black to light grey gradient',
@@ -134,8 +135,6 @@ export async function POST(req: NextRequest) {
                 if (!existsSync(templatePath)) {
                     throw new Error(`Template style '${style}' not found`);
                 }
-                const templateBuffer = await fs.readFile(templatePath);
-                const templateBase64 = `data:image/png;base64,${templateBuffer.toString("base64")}`;
 
                 const timestamp = Date.now();
                 const intermediateDir = path.join(process.cwd(), "public", "intermediate");
@@ -143,28 +142,53 @@ export async function POST(req: NextRequest) {
                     await fs.mkdir(intermediateDir, { recursive: true });
                 }
 
-                // 2. STEP 1: Screen Replacement (AI)
-                let step1Result = await generateScreenStep(screenshot, templateBase64);
-                let step1Base64 = extractImageBase64(step1Result);
+                // 2. STEP 1: Screen Replacement (Python)
+                // Save incoming screenshot to temp file
+                const tempInputPath = path.join(intermediateDir, `temp-input-${timestamp}.png`);
+                const screenshotBuffer = Buffer.from(screenshot.split(",")[1], 'base64');
+                await fs.writeFile(tempInputPath, screenshotBuffer);
 
-                if (!step1Base64) {
-                    throw new Error("Step 1 failed: No image returned.");
+                const step1OutputPath = path.join(intermediateDir, `step1-${timestamp}.png`);
+                const layoutPath = path.join(process.cwd(), "coords", "layout.json");
+                const runScriptPath = path.join(process.cwd(), "run.py");
+
+                // Execute Python script
+                // Adjust 'python' to 'python3' if needed for your environment, 
+                // but 'python' is usually safe on Windows/Standard envs.
+                const pythonCommand = process.platform === "win32" ? "python" : "python3"; 
+                
+                await new Promise<void>((resolve, reject) => {
+                    const pyProcess = spawn(pythonCommand, [
+                        runScriptPath,
+                        '--screenshot', tempInputPath,
+                        '--template', templatePath,
+                        '--layout', layoutPath,
+                        '--output', step1OutputPath
+                    ]);
+
+                    let stderrData = "";
+                    pyProcess.stderr.on('data', (data) => {
+                        stderrData += data.toString();
+                    });
+
+                    pyProcess.on('close', (code) => {
+                        if (code !== 0) {
+                            reject(new Error(`Python script failed with code ${code}: ${stderrData}`));
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+
+                // Read the output from Python
+                if (!existsSync(step1OutputPath)) {
+                    throw new Error("Python script did not generate output file.");
                 }
+                const step1Buffer = await fs.readFile(step1OutputPath);
+                const step1Base64 = step1Buffer.toString('base64');
 
-                // 3. Verification Step 1
-                sendUpdate({ type: 'progress', step: "Verifying" });
-                const verification = await verifyImage(step1Base64);
-                if (!verification.passed) {
-                    console.warn("Step 1 Validation Failed, retrying...");
-                    step1Result = await generateScreenStep(screenshot, templateBase64);
-                    step1Base64 = extractImageBase64(step1Result);
-                    if (!step1Base64) {
-                        throw new Error("Step 1 retry failed.");
-                    }
-                }
-
-                // Save Step 1
-                await fs.writeFile(path.join(intermediateDir, `step1-${timestamp}.png`), Buffer.from(step1Base64, 'base64'));
+                // Clean up temp input
+                await fs.unlink(tempInputPath).catch(() => {});
 
                 // 4. STEP 2: Background (AI)
                 let step2Base64 = step1Base64;
@@ -179,13 +203,6 @@ export async function POST(req: NextRequest) {
 
                     if (extractedBase64) {
                         step2Base64 = extractedBase64;
-                        // Verify Background
-                        const bgVerification = await verifyImage(step2Base64);
-                        if (!bgVerification.passed) {
-                            const retryResult = await generateBackgroundStep(step1Base64, backgroundPrompt);
-                            const retryBase64 = extractImageBase64(retryResult);
-                            if (retryBase64) step2Base64 = retryBase64;
-                        }
                     }
                 }
 
