@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { LandingNav } from '@/components/LandingNav';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { ShowcaseSection } from '@/components/landing/ShowcaseSection';
@@ -69,8 +70,8 @@ export default function LandingPage() {
                         <span className="text-zinc-500 text-sm font-medium">shots88</span>
                     </div>
                     <div className="flex items-center gap-6 text-xs text-zinc-600">
-                        <a href="#" className="hover:text-zinc-400 transition-colors">Privacy Policy</a>
-                        <a href="#" className="hover:text-zinc-400 transition-colors">Terms of Service</a>
+                        <Link href="/privacy" className="hover:text-zinc-400 transition-colors">Privacy Policy</Link>
+                        <Link href="/terms" className="hover:text-zinc-400 transition-colors">Terms of Service</Link>
                         <span>© 2026 shots88. All rights reserved.</span>
                     </div>
                 </div>

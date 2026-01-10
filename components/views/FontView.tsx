@@ -8,9 +8,9 @@ interface FontOption {
 }
 
 const FONT_OPTIONS: FontOption[] = [
-    { id: 'standard', label: 'Standard Sans', className: 'font-sans' },
-    { id: 'handwritten', label: 'Handwritten', className: 'font-serif italic' },
-    { id: 'modern', label: 'Modern Geometric', className: 'font-mono uppercase tracking-widest' },
+    { id: 'standard', label: 'Inter (Bold)', className: 'font-sans font-bold' },
+    { id: 'handwritten', label: 'Caveat (Brush)', className: 'font-handwriting font-bold text-2xl' },
+    { id: 'modern', label: 'Poppins (Bold)', className: 'font-modern font-bold tracking-wider' },
 ];
 
 interface FontViewProps {

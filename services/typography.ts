@@ -1,10 +1,31 @@
 import sharp from 'sharp';
+import fs from 'fs';
+import path from 'path';
 
-// Map font IDs to actual CSS font-family names
+// Load fonts into memory (Base64) to embed in SVG
+const loadFont = (filename: string) => {
+    try {
+        const fontPath = path.join(process.cwd(), 'public', 'fonts', filename);
+        if (fs.existsSync(fontPath)) {
+            return fs.readFileSync(fontPath).toString('base64');
+        }
+    } catch (e) {
+        console.error("Error loading font:", filename, e);
+    }
+    return null;
+};
+
+const FONTS = {
+    'Inter': loadFont('Inter-Bold.ttf'),
+    'Caveat': loadFont('Caveat-Bold.ttf'),
+    'Poppins': loadFont('Poppins-Bold.ttf')
+};
+
+// Map font IDs to font-family names used in CSS
 const FONT_MAP: Record<string, string> = {
-    'standard': 'Inter, Helvetica, Arial, sans-serif',
-    'handwritten': 'Georgia, Palatino, serif',
-    'modern': 'SF Mono, Menlo, Monaco, monospace',
+    'standard': 'Inter',
+    'handwritten': 'Caveat',
+    'modern': 'Poppins',
 };
 
 /**
@@ -36,13 +57,31 @@ export async function addTextOverlay(
         if (headline.length > 60) fontSize = Math.floor(width * 0.045);
 
         const safeHeadline = headline.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        // Map font ID to actual font-family, fallback to sans-serif
-        const fontFamily = FONT_MAP[font] || FONT_MAP['standard'];
+
+        // Get generic font family name or default to Inter
+        const fontFamilyName = FONT_MAP[font] || 'Inter';
+        // Get the actual Base64 data if available
+        const fontData = FONTS[fontFamilyName as keyof typeof FONTS] || FONTS['Inter'];
+
+        // Construct @font-face CSS
+        let fontFaceCss = '';
+        if (fontData) {
+            fontFaceCss = `
+                @font-face {
+                    font-family: '${fontFamilyName}';
+                    src: url(data:font/ttf;base64,${fontData}) format('truetype');
+                    font-weight: bold;
+                    font-style: normal;
+                }
+            `;
+        } else {
+            console.warn(`Font data missing for ${fontFamilyName}, falling back to system fonts.`);
+        }
 
         // Split text into lines
         // We calculate max chars per line based on font size approx.
-        // Approx char width is 0.6 * fontSize.
-        const maxCharsPerLine = Math.floor(textWidth / (fontSize * 0.6));
+        // Approx char width is 0.5 * fontSize for these variable fonts.
+        const maxCharsPerLine = Math.floor(textWidth / (fontSize * 0.5));
 
         const words = safeHeadline.split(' ');
         const lines: string[] = [];
@@ -58,8 +97,8 @@ export async function addTextOverlay(
         });
         lines.push(currentLine.trim());
 
-        const lineHeight = fontSize * 1.3;
-        // Start text roughly at 8% height, but can adjust based on line count to not go too low
+        const lineHeight = fontSize * 1.2;
+        // Start text roughly at 8% height
         const startY = Math.floor(height * 0.08) + fontSize;
 
         const textElements = lines.map((line, i) =>
@@ -67,15 +106,14 @@ export async function addTextOverlay(
         ).join('\n');
 
         // SVG Template
-        // Added font stack for Emojis: Segoe UI Emoji (Windows), Apple Color Emoji (Mac), Noto Color Emoji (Linux)
         const svgImage = `
-        <svg width="${width}" height="${height}">
+        <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
-                    <feOffset dx="0" dy="2" result="offsetblur" />
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="4" />
+                    <feOffset dx="0" dy="4" result="offsetblur" />
                     <feComponentTransfer>
-                        <feFuncA type="linear" slope="0.5" />
+                        <feFuncA type="linear" slope="0.7" />
                     </feComponentTransfer>
                     <feMerge>
                         <feMergeNode />
@@ -84,14 +122,15 @@ export async function addTextOverlay(
                 </filter>
             </defs>
             <style>
+                ${fontFaceCss}
                 .title { 
                     fill: ${color}; 
                     font-size: ${fontSize}px; 
-                    font-family: ${fontFamily}, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; 
-                    font-weight: 800;
+                    font-family: '${fontFamilyName}', 'Segoe UI', sans-serif; 
+                    font-weight: bold;
                     text-anchor: middle;
                     filter: url(#shadow);
-                    letter-spacing: -0.01em;
+                    letter-spacing: -0.02em;
                 }
             </style>
             ${textElements}

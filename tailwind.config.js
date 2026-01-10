@@ -6,7 +6,13 @@ module.exports = {
         "./components/**/*.{js,ts,jsx,tsx,mdx}",
     ],
     theme: {
-        extend: {},
+        extend: {
+            fontFamily: {
+                sans: ['var(--font-inter)'],
+                handwriting: ['var(--font-caveat)'],
+                modern: ['var(--font-poppins)'],
+            },
+        },
     },
     plugins: [require("tailwindcss-animate")],
 }
