@@ -1,13 +1,20 @@
 import sharp from 'sharp';
 
+// Map font IDs to actual CSS font-family names
+const FONT_MAP: Record<string, string> = {
+    'standard': 'Inter, Helvetica, Arial, sans-serif',
+    'handwritten': 'Georgia, Palatino, serif',
+    'modern': 'SF Mono, Menlo, Monaco, monospace',
+};
+
 /**
  * Overlays text onto an image using Sharp and SVG.
  * Replaces the "TEXT HERE" placeholder by rendering a text block over the top area.
  */
 export async function addTextOverlay(
-    imageBase64: string, 
-    headline: string, 
-    font: string = 'Sans-serif', 
+    imageBase64: string,
+    headline: string,
+    font: string = 'standard',
     color: string = 'white'
 ): Promise<string> {
     try {
@@ -19,21 +26,24 @@ export async function addTextOverlay(
         // Configuration
         const textWidth = Math.floor(width * 0.85); // Slightly wider
         const textX = Math.floor((width - textWidth) / 2);
-        
+
         // Dynamic Font Size Logic
-        // Base size is 6% of width. Shrink if headline is long.
-        let fontSize = Math.floor(width * 0.06); 
-        if (headline.length > 30) fontSize = Math.floor(width * 0.05);
-        if (headline.length > 50) fontSize = Math.floor(width * 0.04);
+        // Base size is 10% of width (large like template). Shrink progressively for longer text.
+        let fontSize = Math.floor(width * 0.10);
+        if (headline.length > 15) fontSize = Math.floor(width * 0.08);
+        if (headline.length > 25) fontSize = Math.floor(width * 0.065);
+        if (headline.length > 40) fontSize = Math.floor(width * 0.055);
+        if (headline.length > 60) fontSize = Math.floor(width * 0.045);
 
         const safeHeadline = headline.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        const safeFont = font.replace(/"/g, "'");
+        // Map font ID to actual font-family, fallback to sans-serif
+        const fontFamily = FONT_MAP[font] || FONT_MAP['standard'];
 
         // Split text into lines
         // We calculate max chars per line based on font size approx.
         // Approx char width is 0.6 * fontSize.
         const maxCharsPerLine = Math.floor(textWidth / (fontSize * 0.6));
-        
+
         const words = safeHeadline.split(' ');
         const lines: string[] = [];
         let currentLine = '';
@@ -52,7 +62,7 @@ export async function addTextOverlay(
         // Start text roughly at 8% height, but can adjust based on line count to not go too low
         const startY = Math.floor(height * 0.08) + fontSize;
 
-        const textElements = lines.map((line, i) => 
+        const textElements = lines.map((line, i) =>
             `<text x="${width / 2}" y="${startY + (i * lineHeight)}" class="title">${line}</text>`
         ).join('\n');
 
@@ -77,7 +87,7 @@ export async function addTextOverlay(
                 .title { 
                     fill: ${color}; 
                     font-size: ${fontSize}px; 
-                    font-family: ${safeFont}, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; 
+                    font-family: ${fontFamily}, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; 
                     font-weight: 800;
                     text-anchor: middle;
                     filter: url(#shadow);

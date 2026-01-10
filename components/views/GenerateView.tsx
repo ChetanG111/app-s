@@ -164,20 +164,11 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
             {/* Full Screen Image Viewer Modal */}
             {viewingImage && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 animate-in fade-in duration-300"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 animate-in fade-in duration-300 cursor-pointer"
                     onClick={handleCloseViewer}
                 >
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl" />
-                    <button
-                        onClick={handleCloseViewer}
-                        className="absolute top-8 right-8 z-[110] p-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full text-white transition-all hover:scale-110 active:scale-95"
-                    >
-                        <X size={24} />
-                    </button>
-                    <div
-                        className="relative z-[110] max-w-full max-h-full flex items-center justify-center animate-in zoom-in duration-400"
-                        onClick={(e) => e.stopPropagation()}
-                    >
+                    <div className="relative z-[110] max-w-full max-h-full flex items-center justify-center animate-in zoom-in duration-400">
                         <Image
                             src={viewingImage}
                             alt="Full screen preview"
