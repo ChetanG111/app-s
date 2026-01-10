@@ -37,6 +37,31 @@ model User {
 
   // Whop Integration Fields
   whopUserId String? @unique
+
+  // Relations
+  transactions CreditTransaction[]
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model CreditTransaction {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int               // Negative for cost, positive for refund/purchase
+  type      String            // "GENERATION", "REFUND", "PURCHASE"
+  status    TransactionStatus @default(PENDING)
+  metadata  Json?             // Store step info, context
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status, createdAt])
 }
 
 model Account {
