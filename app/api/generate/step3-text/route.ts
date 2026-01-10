@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
                 const transactionId = payload?.transactionId;
 
                 if (transactionId) {
-                    await prisma.$transaction([
+                    await withRetry(() => prisma.$transaction([
                         prisma.user.update({
                             where: { id: userId },
                             data: { credits: { increment: 1 } }
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
                             where: { id: transactionId },
                             data: { status: "FAILED" }
                         })
-                    ]);
+                    ])).catch(e => console.error("CRITICAL: Credit refund failed", e));
                 }
             } catch(e) { console.error("Refund failed", e); }
         }

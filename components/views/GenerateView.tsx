@@ -73,8 +73,8 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
     );
 
     // Merge optimistic image with fetched history for instant display
-    const fetchedHistory = outputsData?.files ?? [];
     const history = React.useMemo(() => {
+        const fetchedHistory = outputsData?.files ?? [];
         if (!optimisticImage) return fetchedHistory;
         // Check if optimistic image is already in fetched history
         const alreadyExists = fetchedHistory.some(h => h.url === optimisticImage.url);
@@ -84,7 +84,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
             { name: 'Latest', url: optimisticImage.url, createdAt: new Date().toISOString() },
             ...fetchedHistory
         ];
-    }, [fetchedHistory, optimisticImage]);
+    }, [outputsData?.files, optimisticImage]);
 
     const handleOutputImageLoad = (url: string) => {
         markImageLoaded(url);

@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { verifyToken, signToken } from "@/lib/security";
 import { rateLimit } from "@/lib/ratelimit";
 import crypto from "crypto";
-import prisma from "@/lib/prisma";
+import prisma, { withRetry } from "@/lib/prisma";
 
 const BACKGROUND_STYLE_MAP: Record<string, string> = {
     'charcoal': 'modern Black to light grey gradient',
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
                 const transactionId = payload?.transactionId;
 
                 if (transactionId) {
-                    await prisma.$transaction([
+                    await withRetry(() => prisma.$transaction([
                         prisma.user.update({
                             where: { id: userId },
                             data: { credits: { increment: 1 } }
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
                             where: { id: transactionId },
                             data: { status: "FAILED" }
                         })
-                    ]);
+                    ])).catch(e => console.error("CRITICAL: Credit refund failed", e));
                 }
              } catch(e) { console.error("Refund failed", e); }
         }

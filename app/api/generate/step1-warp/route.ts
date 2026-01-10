@@ -8,7 +8,7 @@ import crypto from "crypto";
 // @ts-ignore
 import { cv } from "opencv-wasm";
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import prisma, { withRetry } from "@/lib/prisma";
 import { signToken } from "@/lib/security";
 import { rateLimit } from "@/lib/ratelimit";
 import { LAYOUT_COORDS } from "@/lib/data";
