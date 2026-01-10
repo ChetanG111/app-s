@@ -1,27 +1,38 @@
 import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
+import TextToSVG from 'text-to-svg';
 
-// Load fonts into memory (Base64) to embed in SVG
-const loadFont = (filename: string) => {
+// Cache TextToSVG instances
+const fontCache: Record<string, TextToSVG | null> = {
+    'Inter': null,
+    'Caveat': null,
+    'Poppins': null
+};
+
+// Helper to load or get cached font
+const getFont = (family: string): TextToSVG | null => {
+    if (fontCache[family]) return fontCache[family];
+
     try {
-        const fontPath = path.join(process.cwd(), 'public', 'fonts', filename);
+        const fontFile = `${family}-Bold.ttf`;
+        const fontPath = path.join(process.cwd(), 'public', 'fonts', fontFile);
+
         if (fs.existsSync(fontPath)) {
-            return fs.readFileSync(fontPath).toString('base64');
+            console.log(`[Typography] Loading font: ${fontPath}`);
+            const t = TextToSVG.loadSync(fontPath);
+            fontCache[family] = t;
+            return t;
+        } else {
+            console.error(`[Typography] Font file missing: ${fontPath}`);
         }
     } catch (e) {
-        console.error("Error loading font:", filename, e);
+        console.error(`[Typography] Error loading font ${family}:`, e);
     }
     return null;
 };
 
-const FONTS = {
-    'Inter': loadFont('Inter-Bold.ttf'),
-    'Caveat': loadFont('Caveat-Bold.ttf'),
-    'Poppins': loadFont('Poppins-Bold.ttf')
-};
-
-// Map font IDs to font-family names used in CSS
+// Map font IDs to internal family names
 const FONT_MAP: Record<string, string> = {
     'standard': 'Inter',
     'handwritten': 'Caveat',
@@ -29,8 +40,8 @@ const FONT_MAP: Record<string, string> = {
 };
 
 /**
- * Overlays text onto an image using Sharp and SVG.
- * Replaces the "TEXT HERE" placeholder by rendering a text block over the top area.
+ * Overlays text onto an image using Sharp and SVG paths.
+ * Converting text to SVG paths (curves) avoids mismatched font rendering in different environments.
  */
 export async function addTextOverlay(
     imageBase64: string,
@@ -44,68 +55,80 @@ export async function addTextOverlay(
         const width = metadata.width || 1080;
         const height = metadata.height || 1920;
 
-        // Configuration
-        const textWidth = Math.floor(width * 0.85); // Slightly wider
-        const textX = Math.floor((width - textWidth) / 2);
+        // 1. Determine Font
+        const fontFamily = FONT_MAP[font] || 'Inter';
+        let textToSVG = getFont(fontFamily);
 
-        // Dynamic Font Size Logic
-        // Base size is 10% of width (large like template). Shrink progressively for longer text.
+        // Fallback to Inter if requested font fails
+        if (!textToSVG && fontFamily !== 'Inter') {
+            console.warn(`[Typography] Fallback to Inter for ${fontFamily}`);
+            textToSVG = getFont('Inter');
+        }
+
+        if (!textToSVG) {
+            console.error("[Typography] Critical: No fonts available.");
+            return imageBase64;
+        }
+
+        // 2. Sizing Logic
+        // Base size is 10% of width
         let fontSize = Math.floor(width * 0.10);
         if (headline.length > 15) fontSize = Math.floor(width * 0.08);
         if (headline.length > 25) fontSize = Math.floor(width * 0.065);
         if (headline.length > 40) fontSize = Math.floor(width * 0.055);
         if (headline.length > 60) fontSize = Math.floor(width * 0.045);
 
-        const safeHeadline = headline.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-        // Get generic font family name or default to Inter
-        const fontFamilyName = FONT_MAP[font] || 'Inter';
-        // Get the actual Base64 data if available
-        const fontData = FONTS[fontFamilyName as keyof typeof FONTS] || FONTS['Inter'];
-
-        // Construct @font-face CSS
-        let fontFaceCss = '';
-        if (fontData) {
-            fontFaceCss = `
-                @font-face {
-                    font-family: '${fontFamilyName}';
-                    src: url(data:font/ttf;base64,${fontData}) format('truetype');
-                    font-weight: bold;
-                    font-style: normal;
-                }
-            `;
-        } else {
-            console.warn(`Font data missing for ${fontFamilyName}, falling back to system fonts.`);
-        }
-
-        // Split text into lines
-        // We calculate max chars per line based on font size approx.
-        // Approx char width is 0.5 * fontSize for these variable fonts.
+        // 3. Wrapping Logic
+        const textWidth = Math.floor(width * 0.85);
+        // Estimate max chars per line. 
+        // We use a conservative estimate: 0.5 * fontSize average char width 
         const maxCharsPerLine = Math.floor(textWidth / (fontSize * 0.5));
 
-        const words = safeHeadline.split(' ');
+        const words = headline.trim().split(/\s+/);
         const lines: string[] = [];
         let currentLine = '';
 
         words.forEach(word => {
+            // Check potential length
             if ((currentLine + word).length > maxCharsPerLine) {
-                lines.push(currentLine.trim());
+                if (currentLine) lines.push(currentLine.trim());
                 currentLine = word + ' ';
             } else {
                 currentLine += word + ' ';
             }
         });
-        lines.push(currentLine.trim());
+        if (currentLine) lines.push(currentLine.trim());
 
+        // 4. Generate SVG Paths
         const lineHeight = fontSize * 1.2;
-        // Start text roughly at 8% height
-        const startY = Math.floor(height * 0.08) + fontSize;
+        const totalTextHeight = lines.length * lineHeight;
+        const startY = Math.floor(height * 0.08) + fontSize; // First baseline
 
-        const textElements = lines.map((line, i) =>
-            `<text x="${width / 2}" y="${startY + (i * lineHeight)}" class="title">${line}</text>`
-        ).join('\n');
+        const pathElements = lines.map((line, i) => {
+            const y = startY + (i * lineHeight);
 
-        // SVG Template
+            // Get path data 'd' attribute
+            // anchor: 'top' means x,y is top-left usually, 'center' helps with alignment
+            // However, text-to-svg anchor options are: 'center middle', 'top', 'bottom', etc.
+            // Using 'center' horizontally requires correct x.
+
+            // We want text centered at width/2.
+            const options = {
+                x: width / 2,
+                y: y,
+                fontSize: fontSize,
+                anchor: 'center middle', // align center to x, middle to y (approx baseline)
+                attributes: {
+                    fill: color
+                }
+            };
+
+            // Note: getPath methods in text-to-svg return <path d="..." /> string
+            return textToSVG?.getPath(line, options);
+        }).join('\n');
+
+        // 5. Build SVG
+        // We add a drop shadow filter for better visibility
         const svgImage = `
         <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -121,23 +144,13 @@ export async function addTextOverlay(
                     </feMerge>
                 </filter>
             </defs>
-            <style>
-                ${fontFaceCss}
-                .title { 
-                    fill: ${color}; 
-                    font-size: ${fontSize}px; 
-                    font-family: '${fontFamilyName}', 'Segoe UI', sans-serif; 
-                    font-weight: bold;
-                    text-anchor: middle;
-                    filter: url(#shadow);
-                    letter-spacing: -0.02em;
-                }
-            </style>
-            ${textElements}
+            <g filter="url(#shadow)">
+                ${pathElements}
+            </g>
         </svg>
         `;
 
-        // Composite the SVG onto the original image
+        // 6. Composite
         const outputBuffer = await sharp(imageBuffer)
             .composite([
                 {
@@ -152,7 +165,6 @@ export async function addTextOverlay(
         return outputBuffer.toString('base64');
     } catch (error) {
         console.error("Typography Error:", error);
-        // Fallback: Return original image if text fails
         return imageBase64;
     }
 }
