@@ -7,9 +7,10 @@ interface UploadViewProps {
     onUpload: (image: string) => void;
     currentImage: string | null;
     onNext: () => void;
+    onNotify: (message: string, type: NotificationType) => void;
 }
 
-export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, onNext }) => {
+export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, onNext, onNotify }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
 
@@ -25,7 +26,7 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, 
                 img.onload = () => {
                     // Portrait means Height > Width. Reject anything else (Landscape or Square)
                     if (img.width >= img.height) {
-                        // For now we just don't upload, or we could pass onNotify
+                        onNotify("Please upload a portrait screenshot (height must be greater than width).", "warning");
                         if (fileInputRef.current) fileInputRef.current.value = "";
                         return;
                     }
