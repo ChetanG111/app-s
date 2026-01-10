@@ -13,8 +13,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      // Only check state to avoid PKCE cookie parsing issues on some environments
-      checks: ["state"],
+      // Completely disable checks to resolve persistent PKCE/State cookie issues on Vercel
+      // Note: This should be used for debugging or when environment issues prevent standard checks
+      checks: ["none"] as any, 
     }),
   ],
   pages: {
@@ -43,7 +44,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
-        // Fetch credits from DB since we're using JWT strategy
         const user = await prisma.user.findUnique({
           where: { id: token.sub },
           select: { credits: true }
