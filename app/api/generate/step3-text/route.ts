@@ -49,6 +49,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Invalid or expired token" }, { status: 403 });
         }
 
+        const transactionId = payload.transactionId;
+
         if (!image) {
             return NextResponse.json({ error: "Missing image" }, { status: 400 });
         }
@@ -115,7 +117,7 @@ export async function POST(req: NextRequest) {
             // Mark Transaction as Completed
             // Assuming CreditTransaction model exists based on Step 1
             await tx.creditTransaction.update({
-                where: { id: payload.transactionId },
+                where: { id: transactionId },
                 data: { status: "COMPLETED" }
             });
         }));
@@ -137,18 +139,18 @@ export async function POST(req: NextRequest) {
                 const payload = token ? await verifyToken(token).catch(() => null) : null;
                 const transactionId = payload?.transactionId;
 
-                await prisma.$transaction([
-                    prisma.user.update({
-                        where: { id: userId },
-                        data: { credits: { increment: 1 } }
-                    }),
-                    ...(transactionId ? [
+                if (transactionId) {
+                    await prisma.$transaction([
+                        prisma.user.update({
+                            where: { id: userId },
+                            data: { credits: { increment: 1 } }
+                        }),
                         prisma.creditTransaction.update({
                             where: { id: transactionId },
                             data: { status: "FAILED" }
                         })
-                    ] : [])
-                ]);
+                    ]);
+                }
             } catch(e) { console.error("Refund failed", e); }
         }
         

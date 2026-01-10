@@ -73,7 +73,7 @@ export const ShowcaseSection: React.FC = () => {
                         <div className="grid grid-cols-3 gap-4">
                             {[
                                 '/previews/shot-2026-01-10-4447.png',
-                                '/previews/Rotated.png',
+                                '/previews/shot-2026-01-10-3490.jpg',
                                 '/previews/shot-2026-01-10-2886.png'
                             ].map((src, i) => (
                                 <div

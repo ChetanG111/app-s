@@ -45,6 +45,7 @@ export default function Dashboard() {
     const [headline, setHeadline] = useState("");
     const [selectedFont, setSelectedFont] = useState("standard");
     const [selectedColor, setSelectedColor] = useState("white");
+    const [customColor, setCustomColor] = useState("#ffffff");
     const [selectedBg, setSelectedBg] = useState("charcoal");
     const [customBgPrompt, setCustomBgPrompt] = useState("");
     const [projectName, setProjectName] = useState("App-1");
@@ -137,7 +138,7 @@ export default function Dashboard() {
                     image: data2.image,
                     headline,
                     font: selectedFont,
-                    color: selectedColor,
+                    color: selectedColor === 'custom' ? customColor : selectedColor,
                     style: selectedStyle,
                     backgroundId: selectedBg,
                     token: tokenStep2
@@ -295,6 +296,8 @@ export default function Dashboard() {
                     <ColorView
                         selected={selectedColor}
                         onSelect={setSelectedColor}
+                        customColor={customColor}
+                        onCustomColorChange={setCustomColor}
                         onNext={handleNext}
                     />
                 )}

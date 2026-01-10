@@ -1,34 +1,47 @@
-import React from 'react';
-import { Zap, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Zap, Check, Palette } from 'lucide-react';
 
 interface ColorOption {
     id: string;
     label: string;
     colorClass?: string;
     isAI?: boolean;
+    isCustom?: boolean;
 }
 
 const COLOR_OPTIONS: ColorOption[] = [
     { id: 'ai', label: 'AI Suggestions', isAI: true },
-    { id: 'black', label: 'Black', colorClass: 'bg-black border-zinc-700' },
     { id: 'white', label: 'White', colorClass: 'bg-white' },
+    { id: 'black', label: 'Black', colorClass: 'bg-black border-zinc-700' },
     { id: 'blue', label: 'Blue', colorClass: 'bg-blue-600' },
+    { id: 'custom', label: 'Custom', isCustom: true },
 ];
 
 interface ColorViewProps {
     selected: string;
     onSelect: (id: string) => void;
+    customColor: string;
+    onCustomColorChange: (val: string) => void;
     onNext: () => void;
 }
 
-export const ColorView: React.FC<ColorViewProps> = ({ selected, onSelect, onNext }) => {
+export const ColorView: React.FC<ColorViewProps> = ({ 
+    selected, 
+    onSelect, 
+    customColor,
+    onCustomColorChange,
+    onNext 
+}) => {
+    const [isFocused, setIsFocused] = useState(false);
+
     return (
-        <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
             <h1 className="text-white text-5xl font-black mb-auto pt-16 tracking-tight text-center">
                 Headline Color
             </h1>
 
-            <div className="w-full max-w-md mb-auto flex flex-col gap-4 px-4">
+            <div className="w-full max-w-md mb-auto flex flex-col gap-2.5 px-4 pb-20">
                 {COLOR_OPTIONS.map((option) => {
                     const isDisabled = option.isAI;
                     return (
@@ -37,7 +50,7 @@ export const ColorView: React.FC<ColorViewProps> = ({ selected, onSelect, onNext
                             onClick={() => !isDisabled && onSelect(option.id)}
                             disabled={isDisabled}
                             className={`
-                                w-full h-16 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
+                                w-full h-16 shrink-0 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
                                 ${isDisabled
                                     ? 'bg-[#0c0c0c]/60 border-zinc-700 text-zinc-400 cursor-not-allowed'
                                     : selected === option.id
@@ -48,7 +61,9 @@ export const ColorView: React.FC<ColorViewProps> = ({ selected, onSelect, onNext
                         >
                             <div className="flex items-center gap-4">
                                 {option.isAI ? (
-                                    <Zap size={20} className="text-zinc-400" />
+                                    <Zap size={20} className={selected === option.id ? 'text-blue-600' : 'text-zinc-500'} />
+                                ) : option.isCustom ? (
+                                    <Palette size={20} className={selected === option.id ? 'text-indigo-600' : 'text-zinc-500'} />
                                 ) : (
                                     <div className={`w-6 h-6 rounded-full border ${option.colorClass}`} />
                                 )}
@@ -68,7 +83,34 @@ export const ColorView: React.FC<ColorViewProps> = ({ selected, onSelect, onNext
                     );
                 })}
 
+                {selected === 'custom' && (
+                    <div key="custom-color-input" className="mt-4 animate-in slide-in-from-top-4 duration-500 flex flex-col items-center w-full">
+                        <motion.div
+                            animate={customColor.length >= 20 ? { x: [-1, 2, -2, 2, -2, 0] } : {}}
+                            transition={{ duration: 0.4 }}
+                            className={`
+                                relative w-full transition-all duration-500 border-b-2 py-2
+                                ${isFocused ? 'border-white' : 'border-zinc-800'}
+                            `}
+                        >
+                            <input
+                                type="text"
+                                value={customColor}
+                                onChange={(e) => onCustomColorChange(e.target.value)}
+                                onFocus={() => setIsFocused(true)}
+                                onBlur={() => setIsFocused(false)}
+                                placeholder="Enter hex code (e.g. #FF0000)..."
+                                maxLength={20}
+                                className="w-full bg-transparent text-white text-lg font-medium text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
+                            />
 
+                            <div className={`
+                                absolute inset-x-0 -bottom-[1px] h-[1px] bg-white transition-opacity duration-500
+                                ${isFocused ? 'opacity-100' : 'opacity-0'}
+                            `} />
+                        </motion.div>
+                    </div>
+                )}
 
                 <p className="text-zinc-500 text-sm mt-12 text-center">
                     Pick a color that pops against your background.

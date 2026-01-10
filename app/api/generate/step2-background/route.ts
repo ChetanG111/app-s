@@ -54,6 +54,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Invalid or expired token" }, { status: 403 });
         }
 
+        const transactionId = payload.transactionId;
+
         if (!image) {
             return NextResponse.json({ error: "Missing image" }, { status: 400 });
         }
@@ -65,9 +67,6 @@ export async function POST(req: NextRequest) {
                  return NextResponse.json({ error: "Image integrity check failed" }, { status: 403 });
             }
         }
-
-        // Generate NEXT Token Data
-        const transactionId = payload.transactionId;
 
         // If skip, just return the image
         if (skipBackground) {
@@ -107,23 +106,24 @@ export async function POST(req: NextRequest) {
         // Attempt Refund if AI failed
         if (userId) {
              try {
+                // Re-verify token locally in catch block if possible, or use transactionId if it was already set
                 const body = await req.clone().json().catch(() => ({}));
                 const token = body.token;
                 const payload = token ? await verifyToken(token).catch(() => null) : null;
                 const transactionId = payload?.transactionId;
 
-                await prisma.$transaction([
-                    prisma.user.update({
-                        where: { id: userId },
-                        data: { credits: { increment: 1 } }
-                    }),
-                    ...(transactionId ? [
+                if (transactionId) {
+                    await prisma.$transaction([
+                        prisma.user.update({
+                            where: { id: userId },
+                            data: { credits: { increment: 1 } }
+                        }),
                         prisma.creditTransaction.update({
                             where: { id: transactionId },
                             data: { status: "FAILED" }
                         })
-                    ] : [])
-                ]);
+                    ]);
+                }
              } catch(e) { console.error("Refund failed", e); }
         }
 
