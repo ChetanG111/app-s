@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { Camera } from 'lucide-react';
 import { NotificationType } from '../Notification';
 
@@ -80,10 +81,13 @@ export const UploadView: React.FC<UploadViewProps> = ({ uploadedImage, onImageUp
                 >
                     {uploadedImage ? (
                         <>
-                            <img
+                            <Image
                                 src={uploadedImage}
                                 alt="Uploaded screenshot"
+                                width={292}
+                                height={520}
                                 className="h-[520px] w-auto block object-contain"
+                                unoptimized
                             />
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center">
                                 <Camera className="text-white mb-2" size={32} />

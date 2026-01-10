@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { X, Download, Check, Copy } from 'lucide-react';
+import { X, Copy, FileImage, FileType } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 

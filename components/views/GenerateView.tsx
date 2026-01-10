@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { X, Plus, Download, Trash2 } from 'lucide-react';
 import { NotificationType } from '../Notification';
 import { isImageLoaded, markImageLoaded } from '@/lib/imageCache';
@@ -151,10 +152,13 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                         className="relative z-[110] max-w-full max-h-full flex items-center justify-center animate-in zoom-in duration-400"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <img
+                        <Image
                             src={viewingImage}
                             alt="Full screen preview"
+                            width={1200}
+                            height={1200}
                             className="max-w-full max-h-[85vh] object-contain rounded-2xl"
+                            unoptimized
                         />
                     </div>
                 </div>
@@ -226,13 +230,15 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                                     {!isLoaded && isPriority && (
                                         <div className="absolute inset-0 bg-zinc-900 z-10" />
                                     )}
-                                    <img
+                                    <Image
                                         src={file.url}
                                         alt={file.name}
-                                        loading={isPriority ? "eager" : "lazy"}
+                                        fill
+                                        priority={isPriority}
                                         onLoad={() => handleOutputImageLoad(file.url)}
                                         onError={() => handleOutputImageError(file.url)}
-                                        className={`w-full h-full object-cover transition-opacity duration-500 ${isLoaded || !isPriority ? 'opacity-100' : 'opacity-0'}`}
+                                        className={`object-cover transition-opacity duration-500 ${isLoaded || !isPriority ? 'opacity-100' : 'opacity-0'}`}
+                                        unoptimized
                                     />
                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                     <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-300 translate-y-2 group-hover:translate-y-0">

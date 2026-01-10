@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { ConfirmationModal, useConfirmation } from '@/components/ConfirmationModal';
@@ -60,7 +61,13 @@ const AccountView = ({ onDelete }: { onDelete: () => void }) => {
                 <div className={`relative group ${isOAuth ? 'cursor-default' : 'cursor-pointer'}`}>
                     <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-zinc-700 overflow-hidden">
                         {user?.image ? (
-                            <img src={user.image} alt={user.name || "Avatar"} className="w-full h-full object-cover" />
+                            <Image 
+                                src={user.image} 
+                                alt={user.name || "Avatar"} 
+                                width={96}
+                                height={96}
+                                className="w-full h-full object-cover" 
+                            />
                         ) : (
                             <UserIcon size={40} className="text-zinc-500" />
                         )}

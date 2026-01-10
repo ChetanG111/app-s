@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Check } from 'lucide-react';
 import { isImageLoaded, markImageLoaded } from '@/lib/imageCache';
 
@@ -60,9 +61,11 @@ export const StyleView: React.FC<StyleViewProps> = ({ selectedStyle, onSelect })
                             {isLoading && (
                                 <div className="absolute inset-0 bg-[#0c0c0c] z-10" />
                             )}
-                            <img
+                            <Image
                                 src={style.image}
                                 alt={style.name}
+                                width={300}
+                                height={520}
                                 onLoad={() => handleImageLoad(style.id, style.image)}
                                 onError={() => handleImageError(style.id)}
                                 className={`h-[520px] w-auto block object-contain transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
