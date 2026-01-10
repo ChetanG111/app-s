@@ -19,21 +19,23 @@ const BACKGROUND_OPTIONS: BackgroundOption[] = [
 ];
 
 interface BackgroundViewProps {
-    selectedBg: string;
+    selected: string;
     onSelect: (id: string) => void;
-    customValue: string;
-    setCustomValue: (val: string) => void;
+    customPrompt: string;
+    onCustomPromptChange: (val: string) => void;
     generateBackground: boolean;
-    setGenerateBackground: (val: boolean) => void;
+    onGenerateBackgroundChange: (val: boolean) => void;
+    onNext: () => void;
 }
 
 export const BackgroundView: React.FC<BackgroundViewProps> = ({
-    selectedBg,
+    selected,
     onSelect,
-    customValue,
-    setCustomValue,
+    customPrompt,
+    onCustomPromptChange,
     generateBackground,
-    setGenerateBackground
+    onGenerateBackgroundChange,
+    onNext
 }) => {
     const [isFocused, setIsFocused] = useState(false);
 
@@ -46,7 +48,7 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
 
                 {/* Dev Mode Toggle */}
                 <div
-                    onClick={() => setGenerateBackground(!generateBackground)}
+                    onClick={() => onGenerateBackgroundChange(!generateBackground)}
                     className="flex items-center gap-3 bg-[#0c0c0c]/60 backdrop-blur-md border border-white/5 px-4 py-2 rounded-2xl cursor-pointer hover:border-white/20 transition-all group"
                 >
                     <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${generateBackground ? 'bg-blue-500' : 'bg-zinc-800'}`}>
@@ -65,7 +67,7 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
                         onClick={() => onSelect(option.id)}
                         className={`
                             w-full h-[72px] shrink-0 rounded-2xl flex items-center justify-between px-6 transition-all duration-300 border-2
-                            ${selectedBg === option.id
+                            ${selected === option.id
                                 ? 'bg-white text-black border-white scale-[1.02]'
                                 : 'bg-[#0c0c0c]/80 border-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-white'
                             }
@@ -74,23 +76,23 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
                         <div className={`flex flex-col items-start ${!generateBackground ? 'opacity-30' : ''}`}>
                             <div className="flex items-center gap-4">
                                 {option.isAI ? (
-                                    <Zap size={20} className={selectedBg === option.id ? 'text-blue-600' : 'text-zinc-500'} />
+                                    <Zap size={20} className={selected === option.id ? 'text-blue-600' : 'text-zinc-500'} />
                                 ) : option.isCustom ? (
-                                    <Palette size={20} className={selectedBg === option.id ? 'text-indigo-600' : 'text-zinc-500'} />
+                                    <Palette size={20} className={selected === option.id ? 'text-indigo-600' : 'text-zinc-500'} />
                                 ) : (
                                     <div className={`w-6 h-6 rounded-full border ${option.colorClass}`} />
                                 )}
                                 <div className="flex flex-col items-start">
                                     <span className="text-base font-bold leading-tight">{option.label}</span>
                                     {option.description && (
-                                        <span className={`text-[11px] font-medium leading-tight mt-1 ${selectedBg === option.id ? 'text-black/60' : 'text-zinc-600'}`}>
+                                        <span className={`text-[11px] font-medium leading-tight mt-1 ${selected === option.id ? 'text-black/60' : 'text-zinc-600'}`}>
                                             {option.description}
                                         </span>
                                     )}
                                 </div>
                             </div>
                         </div>
-                        {selectedBg === option.id && generateBackground && (
+                        {selected === option.id && generateBackground && (
                             <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
                                 <Check size={14} className="text-white" strokeWidth={4} />
                             </div>
@@ -107,10 +109,10 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
                     </div>
                 )}
 
-                {selectedBg === 'custom' && (
+                {selected === 'custom' && (
                     <div className="mt-4 animate-in slide-in-from-top-4 duration-500 flex flex-col items-center w-full">
                         <motion.div
-                            animate={customValue.length >= 100 ? { x: [-1, 2, -2, 2, -2, 0] } : {}}
+                            animate={customPrompt.length >= 100 ? { x: [-1, 2, -2, 2, -2, 0] } : {}}
                             transition={{ duration: 0.4 }}
                             className={`
                                 relative w-full transition-all duration-500 border-b-2 py-2
@@ -119,8 +121,8 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
                         >
                             <input
                                 type="text"
-                                value={customValue}
-                                onChange={(e) => setCustomValue(e.target.value)}
+                                value={customPrompt}
+                                onChange={(e) => onCustomPromptChange(e.target.value)}
                                 onFocus={() => setIsFocused(true)}
                                 onBlur={() => setIsFocused(false)}
                                 placeholder="Enter custom prompt or hex..."
@@ -130,9 +132,9 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
 
                             <div className={`
                                 absolute -bottom-6 right-0 text-[10px] font-bold uppercase tracking-widest transition-colors duration-300
-                                ${customValue.length >= 100 ? 'text-red-500' : isFocused ? 'text-zinc-400' : 'text-zinc-700'}
+                                ${customPrompt.length >= 100 ? 'text-red-500' : isFocused ? 'text-zinc-400' : 'text-zinc-700'}
                             `}>
-                                {customValue.length} / 100
+                                {customPrompt.length} / 100
                             </div>
 
                             <div className={`
@@ -142,6 +144,13 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
                         </motion.div>
                     </div>
                 )}
+
+                <button
+                    onClick={onNext}
+                    className="mt-8 bg-white text-black px-12 py-4 rounded-full font-bold hover:bg-zinc-200 transition-all active:scale-95"
+                >
+                    Continue
+                </button>
 
                 <p className="text-zinc-500 text-sm mt-6 text-center shrink-0">
                     The background sets the mood for your entire screenshot.

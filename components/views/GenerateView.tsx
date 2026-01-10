@@ -11,12 +11,17 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 interface GenerateViewProps {
     uploadedImage: string | null;
+    onGenerate: () => Promise<void>;
     isGenerating: boolean;
     currentStep: string | null;
-    handleGenerate: () => Promise<void>;
-    onNotify: (message: string, type: NotificationType) => void;
-    onConfirm: (options: { title: string; message: string; isDanger?: boolean; onConfirm: () => void }) => void;
-    onExport: (url: string) => void;
+    settings: {
+        style: string;
+        background: string;
+        headline: string;
+    };
+    onNotify?: (message: string, type: NotificationType) => void;
+    onConfirm?: (options: { title: string; message: string; isDanger?: boolean; onConfirm: () => void }) => void;
+    onExport?: (url: string) => void;
 }
 
 interface HistoryItem {
@@ -27,9 +32,10 @@ interface HistoryItem {
 
 export const GenerateView: React.FC<GenerateViewProps> = ({
     uploadedImage,
+    onGenerate,
     isGenerating,
     currentStep,
-    handleGenerate,
+    settings,
     onNotify,
     onConfirm,
     onExport
@@ -40,6 +46,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
         const cached = new Set<string>();
         return cached;
     });
+
 
     // Use SWR for instant output loading with caching
     const { data: outputsData, mutate: mutateOutputs } = useSWR<{ files: HistoryItem[] }>(
@@ -102,11 +109,30 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
     }, [isGenerating, mutateOutputs]);
 
     const onGenerateClick = async () => {
-        await handleGenerate();
+        await onGenerate();
         mutateOutputs();
     };
 
     const handleDelete = async (fileUrl: string) => {
+        if (!onConfirm) {
+            // Fallback if onConfirm not provided
+            try {
+                const response = await fetch("/api/outputs/delete", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ filenames: [fileUrl] }),
+                });
+                if (response.ok) {
+                    mutateOutputs();
+                    if (onNotify) onNotify("Image deleted successfully", "success");
+                }
+            } catch (err) {
+                console.error("Failed to delete file:", err);
+                if (onNotify) onNotify("Failed to delete image", "error");
+            }
+            return;
+        }
+
         onConfirm({
             title: "Delete Image",
             message: "Are you sure you want to delete this image? This action cannot be undone.",
@@ -121,11 +147,11 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
 
                     if (response.ok) {
                         mutateOutputs();
-                        onNotify("Image deleted successfully", "success");
+                        if (onNotify) onNotify("Image deleted successfully", "success");
                     }
                 } catch (err) {
                     console.error("Failed to delete file:", err);
-                    onNotify("Failed to delete image", "error");
+                    if (onNotify) onNotify("Failed to delete image", "error");
                 }
             }
         });
@@ -245,7 +271,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                onExport(file.url);
+                                                if (onExport) onExport(file.url);
                                             }}
                                             className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-black transition-all hover:scale-110 active:scale-95"
                                             title="Export"

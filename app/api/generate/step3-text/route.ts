@@ -8,13 +8,13 @@ import { verifyToken } from "@/lib/security";
 import { rateLimit } from "@/lib/ratelimit";
 import crypto from "crypto";
 
-// Init Supabase (Service Role for admin uploads)
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(req: NextRequest) {
+    // Init Supabase inside handler to avoid build-time env var issues
+    const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     let userId: string | null = null;
     try {
         const session = await auth();

@@ -10,11 +10,12 @@ const LAYOUT_STYLES = [
 ];
 
 interface StyleViewProps {
-    selectedStyle: string;
+    selected: string;
     onSelect: (id: string) => void;
+    onNext: () => void;
 }
 
-export const StyleView: React.FC<StyleViewProps> = ({ selectedStyle, onSelect }) => {
+export const StyleView: React.FC<StyleViewProps> = ({ selected, onSelect, onNext }) => {
     // Track loading state for each image - initialize based on cache
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
@@ -43,7 +44,7 @@ export const StyleView: React.FC<StyleViewProps> = ({ selectedStyle, onSelect })
 
             <div className="flex flex-wrap items-center justify-center gap-12 w-full">
                 {LAYOUT_STYLES.map((style) => {
-                    const isSelected = selectedStyle === style.id;
+                    const isSelected = selected === style.id;
                     const isLoading = loadingStates[style.id];
                     return (
                         <div
@@ -91,6 +92,13 @@ export const StyleView: React.FC<StyleViewProps> = ({ selectedStyle, onSelect })
                     );
                 })}
             </div>
+
+            <button
+                onClick={onNext}
+                className="mt-12 bg-white text-black px-12 py-4 rounded-full font-bold hover:bg-zinc-200 transition-all active:scale-95"
+            >
+                Continue
+            </button>
         </div>
     );
 };

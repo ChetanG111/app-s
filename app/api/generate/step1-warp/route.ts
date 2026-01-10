@@ -24,13 +24,14 @@ async function getCv() {
 
 export async function POST(req: NextRequest) {
   let transactionId: string | null = null;
+  let userId: string | null = null;
 
   try {
     const session = await auth();
     if (!session?.user?.id) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = session.user.id;
+    userId = session.user.id;
 
     // 1. Rate Limit
     const { success } = await rateLimit(`generate:${userId}`, 10, 60);
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
     // 3. Create Pending Transaction & Deduct Credit
     try {
         const result = await prisma.$transaction(async (tx) => {
+            if (!userId) throw new Error("Unauthorized");
             const user = await tx.user.findUnique({ where: { id: userId } });
             if (!user || user.credits < 1) {
                 throw new Error("Insufficient credits");

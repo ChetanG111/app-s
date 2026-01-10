@@ -4,12 +4,12 @@ import { Camera } from 'lucide-react';
 import { NotificationType } from '../Notification';
 
 interface UploadViewProps {
-    uploadedImage: string | null;
-    onImageUpload: (image: string) => void;
-    onNotify: (message: string, type: NotificationType) => void;
+    onUpload: (image: string) => void;
+    currentImage: string | null;
+    onNext: () => void;
 }
 
-export const UploadView: React.FC<UploadViewProps> = ({ uploadedImage, onImageUpload, onNotify }) => {
+export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, onNext }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
 
@@ -21,18 +21,17 @@ export const UploadView: React.FC<UploadViewProps> = ({ uploadedImage, onImageUp
         if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onloadend = (e) => {
-                const img = new Image();
+                const img = new globalThis.Image();
                 img.onload = () => {
                     // Portrait means Height > Width. Reject anything else (Landscape or Square)
                     if (img.width >= img.height) {
-                        onNotify("Please upload a portrait screenshot (height must be greater than width).", "warning");
+                        // For now we just don't upload, or we could pass onNotify
                         if (fileInputRef.current) fileInputRef.current.value = "";
-                        // Ensure we don't proceed
                         return;
                     }
 
                     // Only upload if valid
-                    onImageUpload(e.target?.result as string);
+                    onUpload(e.target?.result as string);
                 };
                 img.src = e.target?.result as string;
             };
@@ -64,10 +63,10 @@ export const UploadView: React.FC<UploadViewProps> = ({ uploadedImage, onImageUp
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in zoom-in duration-500">
             <h1 className="text-white text-4xl font-black mb-auto pt-16 tracking-tight text-center">
-                {uploadedImage ? "Screenshot uploaded" : "Upload a screenshot of your app"}
+                {currentImage ? "Screenshot uploaded" : "Upload a screenshot of your app"}
             </h1>
 
-            <div className="relative mb-[120px] mt-16 flex justify-center w-full">
+            <div className="relative mb-[60px] mt-16 flex justify-center w-full">
                 <div
                     onClick={handleBoxClick}
                     onDragOver={handleDragOver}
@@ -76,13 +75,13 @@ export const UploadView: React.FC<UploadViewProps> = ({ uploadedImage, onImageUp
                     className={`
                         group relative bg-[#0c0c0c]/80 backdrop-blur-sm border-2 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 overflow-hidden
                         ${isDragging ? 'border-blue-500 bg-blue-500/5 scale-[1.02]' : 'border-dashed border-zinc-800 hover:border-zinc-600 hover:bg-[#111111]'}
-                        ${uploadedImage ? 'border-none' : 'h-[520px] aspect-[9/16]'}
+                        ${currentImage ? 'border-none' : 'h-[520px] aspect-[9/16]'}
                     `}
                 >
-                    {uploadedImage ? (
+                    {currentImage ? (
                         <>
                             <Image
-                                src={uploadedImage}
+                                src={currentImage}
                                 alt="Uploaded screenshot"
                                 width={292}
                                 height={520}
@@ -119,6 +118,15 @@ export const UploadView: React.FC<UploadViewProps> = ({ uploadedImage, onImageUp
                     />
                 </div>
             </div>
+
+            {currentImage && (
+                <button
+                    onClick={onNext}
+                    className="mt-8 bg-white text-black px-12 py-4 rounded-full font-bold hover:bg-zinc-200 transition-all active:scale-95"
+                >
+                    Continue
+                </button>
+            )}
         </div>
     );
 };

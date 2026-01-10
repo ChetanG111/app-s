@@ -7,11 +7,13 @@ import {
     Layout, 
     ImagePlus, 
     Wand2,
-    Settings,
+    Settings as SettingsIcon,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { mutate } from "swr";
-import { useNotification } from "@/components/Notification";
+import useSWR, { mutate } from "swr";
+import { NotificationToast, useNotification } from "@/components/Notification";
+import { ConfirmationModal, useConfirmation } from "@/components/ConfirmationModal";
+import { ExportModal } from "@/components/ExportModal";
 
 import { UploadView } from "@/components/views/UploadView";
 import { StyleView } from "@/components/views/StyleView";
@@ -23,9 +25,12 @@ import { GenerateView } from "@/components/views/GenerateView";
 import { TopNav } from "@/components/TopNav";
 import { SidebarIcon } from "@/components/SidebarIcon";
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function Dashboard() {
     const { data: session } = useSession();
-    const { showNotification } = useNotification();
+    const { notification, showNotification, hideNotification } = useNotification();
+    const { confirmConfig, confirm, closeConfirm, handleConfirm } = useConfirmation();
     
     const [activeTab, setActiveTab] = useState('upload');
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -36,10 +41,22 @@ export default function Dashboard() {
     const [headline, setHeadline] = useState('');
     const [selectedFont, setSelectedFont] = useState('standard');
     const [selectedColor, setSelectedColor] = useState('white');
+    const [projectName, setProjectName] = useState("App-1");
     
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentStep, setCurrentStep] = useState<string | null>(null);
 
+    const [exportConfig, setExportConfig] = useState<{ isOpen: boolean; url: string | null }>({
+        isOpen: false,
+        url: null
+    });
+
+    // Use SWR for credits to prevent flicker and handle caching
+    const { data: creditsData } = useSWR('/api/credits', fetcher, {
+        revalidateOnFocus: true,
+        dedupingInterval: 2000,
+    });
+    const credits = creditsData?.credits ?? 0;
     const handleGenerate = async () => {
         if (!uploadedImage) {
             showNotification("Please upload an image first", "error");
@@ -113,97 +130,254 @@ export default function Dashboard() {
         }
     };
 
-    const icons = [
-        { id: 'upload', icon: ImagePlus },
-        { id: 'style', icon: Layout },
-        { id: 'background', icon: Wand2 },
-        { id: 'text', icon: Type },
-        { id: 'font', icon: Palette },
-        { id: 'color', icon: Settings },
-        { id: 'generate', icon: Wand2 },
-    ];
+        const icons = [
 
-    return (
-        <div className="flex h-screen bg-[#0A0A0A] text-white overflow-hidden">
-            {/* Sidebar */}
-            <div className="w-20 border-r border-white/5 flex flex-col items-center py-8 gap-8">
-                {icons.map((item) => (
-                    <SidebarIcon 
-                        key={item.id}
-                        icon={item.icon}
-                        active={activeTab === item.id}
-                        onClick={() => setActiveTab(item.id)}
-                    />
-                ))}
-            </div>
+            { id: 'upload', icon: ImagePlus },
 
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col">
-                <TopNav user={session?.user} />
-                
-                <div className="flex-1 p-8 overflow-y-auto">
-                    <div className="max-w-4xl mx-auto">
-                        {activeTab === 'upload' && (
-                            <UploadView 
-                                onUpload={setUploadedImage} 
-                                currentImage={uploadedImage}
-                                onNext={() => setActiveTab('style')}
-                            />
-                        )}
-                        {activeTab === 'style' && (
-                            <StyleView 
-                                selected={selectedStyle} 
-                                onSelect={setSelectedStyle} 
-                                onNext={() => setActiveTab('background')}
-                            />
-                        )}
-                        {activeTab === 'background' && (
-                            <BackgroundView 
-                                selected={selectedBg} 
-                                onSelect={setSelectedBg}
-                                customPrompt={customBgPrompt}
-                                onCustomPromptChange={setCustomBgPrompt}
-                                generateBackground={generateBackground}
-                                onGenerateBackgroundChange={setGenerateBackground}
-                                onNext={() => setActiveTab('text')}
-                            />
-                        )}
-                        {activeTab === 'text' && (
-                            <TextView 
-                                value={headline} 
-                                onChange={setHeadline}
-                                onNext={() => setActiveTab('font')}
-                            />
-                        )}
-                        {activeTab === 'font' && (
-                            <FontView 
-                                selected={selectedFont} 
-                                onSelect={setSelectedFont}
-                                onNext={() => setActiveTab('color')}
-                            />
-                        )}
-                        {activeTab === 'color' && (
-                            <ColorView 
-                                selected={selectedColor} 
-                                onSelect={setSelectedColor}
-                                onNext={() => setActiveTab('generate')}
-                            />
-                        )}
-                        {activeTab === 'generate' && (
-                            <GenerateView 
-                                onGenerate={handleGenerate}
-                                isGenerating={isGenerating}
-                                currentStep={currentStep}
-                                settings={{
-                                    style: selectedStyle,
-                                    background: selectedBg,
-                                    headline
-                                }}
-                            />
-                        )}
-                    </div>
+            { id: 'style', icon: Layout },
+
+            { id: 'background', icon: Wand2 },
+
+            { id: 'text', icon: Type },
+
+            { id: 'font', icon: Palette },
+
+            { id: 'color', icon: SettingsIcon },
+
+            { id: 'generate', icon: Wand2 },
+
+        ];
+
+    
+
+        return (
+
+            <div className="flex h-screen bg-[#0A0A0A] text-white overflow-hidden">
+
+                <NotificationToast
+
+                    message={notification.message}
+
+                    type={notification.type}
+
+                    isVisible={notification.isVisible}
+
+                    onClose={hideNotification}
+
+                />
+
+                <ConfirmationModal
+
+                    isOpen={confirmConfig.isOpen}
+
+                    title={confirmConfig.title}
+
+                    message={confirmConfig.message}
+
+                    confirmLabel={confirmConfig.confirmLabel}
+
+                    cancelLabel={confirmConfig.cancelLabel}
+
+                    isDanger={confirmConfig.isDanger}
+
+                    onConfirm={handleConfirm}
+
+                    onCancel={closeConfirm}
+
+                />
+
+                <ExportModal
+
+                    isOpen={exportConfig.isOpen}
+
+                    imageUrl={exportConfig.url}
+
+                    onClose={() => setExportConfig({ ...exportConfig, isOpen: false })}
+
+                    onNotify={showNotification}
+
+                />
+
+    
+
+                {/* Sidebar */}
+
+                <div className="w-20 border-r border-white/5 flex flex-col items-center py-8 gap-8">
+
+                    {icons.map((item) => (
+
+                        <SidebarIcon 
+
+                            key={item.id}
+
+                            Icon={item.icon}
+
+                            isSelected={activeTab === item.id}
+
+                            onClick={() => setActiveTab(item.id)}
+
+                        />
+
+                    ))}
+
                 </div>
+
+    
+
+                {/* Main Content */}
+
+                <div className="flex-1 flex flex-col">
+
+                    <TopNav 
+
+                        projectName={projectName} 
+
+                        setProjectName={setProjectName} 
+
+                        credits={credits} 
+
+                    />
+
+    
+
+                    <div className="flex-1 p-8 overflow-y-auto">
+
+                        <div className="max-w-4xl mx-auto">
+
+                            {activeTab === 'upload' && (
+
+                                <UploadView 
+
+                                    onUpload={setUploadedImage} 
+
+                                    currentImage={uploadedImage}
+
+                                    onNext={() => setActiveTab('style')}
+
+                                />
+
+                            )}
+
+                            {activeTab === 'style' && (
+
+                                <StyleView 
+
+                                    selected={selectedStyle} 
+
+                                    onSelect={setSelectedStyle} 
+
+                                    onNext={() => setActiveTab('background')}
+
+                                />
+
+                            )}
+
+                            {activeTab === 'background' && (
+
+                                <BackgroundView 
+
+                                    selected={selectedBg} 
+
+                                    onSelect={setSelectedBg}
+
+                                    customPrompt={customBgPrompt}
+
+                                    onCustomPromptChange={setCustomBgPrompt}
+
+                                    generateBackground={generateBackground}
+
+                                    onGenerateBackgroundChange={setGenerateBackground}
+
+                                    onNext={() => setActiveTab('text')}
+
+                                />
+
+                            )}
+
+                            {activeTab === 'text' && (
+
+                                <TextView 
+
+                                    value={headline} 
+
+                                    onChange={setHeadline}
+
+                                    onNext={() => setActiveTab('font')}
+
+                                />
+
+                            )}
+
+                            {activeTab === 'font' && (
+
+                                <FontView 
+
+                                    selected={selectedFont} 
+
+                                    onSelect={setSelectedFont}
+
+                                    onNext={() => setActiveTab('color')}
+
+                                />
+
+                            )}
+
+                            {activeTab === 'color' && (
+
+                                <ColorView 
+
+                                    selected={selectedColor} 
+
+                                    onSelect={setSelectedColor}
+
+                                    onNext={() => setActiveTab('generate')}
+
+                                />
+
+                            )}
+
+                            {activeTab === 'generate' && (
+
+                                <GenerateView 
+
+                                    uploadedImage={uploadedImage}
+
+                                    onGenerate={handleGenerate}
+
+                                    isGenerating={isGenerating}
+
+                                    currentStep={currentStep}
+
+                                    settings={{
+
+                                        style: selectedStyle,
+
+                                        background: selectedBg,
+
+                                        headline
+
+                                    }}
+
+                                    onNotify={showNotification}
+
+                                    onConfirm={confirm}
+
+                                    onExport={(url) => setExportConfig({ isOpen: true, url })}
+
+                                />
+
+                            )}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
-        </div>
-    );
-}
+
+        );
+
+    }
+
+    

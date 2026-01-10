@@ -14,11 +14,12 @@ const FONT_OPTIONS: FontOption[] = [
 ];
 
 interface FontViewProps {
-    selectedFont: string;
+    selected: string;
     onSelect: (id: string) => void;
+    onNext: () => void;
 }
 
-export const FontView: React.FC<FontViewProps> = ({ selectedFont, onSelect }) => {
+export const FontView: React.FC<FontViewProps> = ({ selected, onSelect, onNext }) => {
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h1 className="text-white text-5xl font-black mb-auto pt-16 tracking-tight text-center">
@@ -32,20 +33,27 @@ export const FontView: React.FC<FontViewProps> = ({ selectedFont, onSelect }) =>
                         onClick={() => onSelect(option.id)}
                         className={`
               w-full h-16 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
-              ${selectedFont === option.id
+              ${selected === option.id
                                 ? 'bg-white text-black border-white scale-[1.02]'
                                 : 'bg-[#0c0c0c]/80 border-zinc-800 text-zinc-400 hover:border-zinc-500 hover:text-white'
                             }
             `}
                     >
                         <span className={option.className}>{option.label}</span>
-                        {selectedFont === option.id && (
+                        {selected === option.id && (
                             <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
                                 <Check size={14} className="text-white" strokeWidth={4} />
                             </div>
                         )}
                     </button>
                 ))}
+
+                <button
+                    onClick={onNext}
+                    className="mt-8 bg-white text-black px-12 py-4 rounded-full font-bold hover:bg-zinc-200 transition-all active:scale-95"
+                >
+                    Continue
+                </button>
 
                 <p className="text-zinc-500 text-sm mt-12 text-center">
                     Choose a font that matches your app&apos;s brand identity.
