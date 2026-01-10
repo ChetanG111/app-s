@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs/promises";
 import { existsSync } from "fs";
 import crypto from "crypto";
-// @ts-expect-error
+// @ts-expect-error - opencv-wasm does not have type definitions
 import cv from "opencv-wasm";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
