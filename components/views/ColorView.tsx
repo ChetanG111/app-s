@@ -84,7 +84,7 @@ export const ColorView: React.FC<ColorViewProps> = ({
                                     <Check size={14} className="text-white" strokeWidth={4} />
                                 </div>
                             )}
-                        </button>
+                        </motion.button>
                     );
                 })}
 

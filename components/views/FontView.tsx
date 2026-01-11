@@ -52,7 +52,7 @@ export const FontView: React.FC<FontViewProps> = ({ selected, onSelect, onNext }
                                 <Check size={14} className="text-white" strokeWidth={4} />
                             </div>
                         )}
-                    </button>
+                    </motion.button>
                 ))}
 
 

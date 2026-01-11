@@ -105,7 +105,7 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
                                 <Check size={14} className="text-white" strokeWidth={4} />
                             </div>
                         )}
-                    </button>
+                    </motion.button>
                 ))}
 
                 {!generateBackground && (

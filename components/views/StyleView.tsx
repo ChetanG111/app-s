@@ -95,7 +95,7 @@ export const StyleView: React.FC<StyleViewProps> = ({ selected, onSelect, onNext
                             `}>
                                 <span className="text-[10px] sm:text-xs font-bold tracking-widest uppercase text-white whitespace-nowrap">{style.name}</span>
                             </div>
-                        </div>
+                        </motion.div>
                     );
                 })}
             </div>
