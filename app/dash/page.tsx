@@ -230,7 +230,7 @@ export default function Dashboard() {
 
             {/* Sidebar UI */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 sm:left-6 sm:top-1/2 sm:-translate-y-1/2 sm:bottom-auto sm:translate-x-0 z-30 flex items-center gap-3">
-                <div className="flex flex-row sm:flex-col items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-full p-1 sm:p-2">
+                <div className="flex flex-row sm:flex-col items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-[22px] sm:rounded-full p-1 sm:p-2 shadow-[0_8px_32px_rgba(0,0,0,0.8)]">
                     {icons.map((item, index) => {
                         const isSelected = selectedIndex === index;
                         const isDisabled = !uploadedImage && index !== 0 && index !== (icons.length - 1);

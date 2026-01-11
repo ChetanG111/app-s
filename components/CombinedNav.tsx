@@ -19,7 +19,7 @@ export const CombinedNav: React.FC<CombinedNavProps> = ({ projectName, setProjec
 
     return (
         <div className="absolute top-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
-            <div className="w-[90%] pointer-events-auto flex items-center justify-between h-14 bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-2xl px-3 shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-white/10">
+            <div className="w-[90%] pointer-events-auto flex items-center justify-between h-14 bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-[22px] px-3 shadow-[0_8px_32px_rgba(0,0,0,0.8)] transition-all duration-300 hover:border-white/10">
                 
                 {/* Left Side: Logo & Project Name */}
                 <div className="flex items-center gap-2">

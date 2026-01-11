@@ -210,8 +210,8 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
 
             <div className="flex flex-col items-center gap-8 w-full">
                 <div className="w-full">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <div className="flex items-center justify-center sm:justify-between mb-6">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2 text-center sm:text-left">
                             Recent Generations
                             <span className="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded-md font-mono">
                                 {history.length}
