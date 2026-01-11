@@ -262,23 +262,6 @@ export default function Dashboard() {
                         );
                     })}
                 </div>
-
-                {/* Mobile Next Button */}
-                {selectedIndex < icons.length - 1 && (
-                    <button
-                        onClick={handleNext}
-                        disabled={selectedIndex === 0 && !uploadedImage}
-                        className={`
-                            sm:hidden flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 active:scale-90 shadow-lg
-                            ${selectedIndex === 0 && !uploadedImage
-                                ? 'bg-zinc-900 text-zinc-700 cursor-not-allowed'
-                                : 'bg-white text-black hover:bg-zinc-200'
-                            }
-                        `}
-                    >
-                        <ChevronRight size={20} strokeWidth={3} />
-                    </button>
-                )}
             </div>
 
             {/* Main Content Area */}

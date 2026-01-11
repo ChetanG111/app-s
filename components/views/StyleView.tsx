@@ -49,7 +49,7 @@ export const StyleView: React.FC<StyleViewProps> = ({ selected, onSelect, onNext
                     return (
                         <div
                             key={style.id}
-                            onClick={() => onSelect(style.id)}
+                            onClick={() => { onSelect(style.id); onNext(); }}
                             className={`
                                 group relative bg-[#0c0c0c] rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-500 border-2
                                 ${isSelected

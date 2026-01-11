@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { ChevronRight } from 'lucide-react';
 
 interface TextViewProps {
     value: string;
@@ -20,38 +21,47 @@ export const TextView: React.FC<TextViewProps> = ({ value, onChange, onNext }) =
             </h1>
 
             <div className="w-full max-w-2xl flex flex-col items-center px-4 sm:mb-auto">
-                <motion.div
-                    animate={isAtLimit ? { x: [-1, 2, -2, 2, -2, 0] } : {}}
-                    transition={{ duration: 0.4, ease: "easeInOut" }}
-                    className={`
-                        relative w-full transition-all duration-500 border-b-2 py-4
-                        ${isFocused ? 'border-white' : 'border-zinc-800'}
-                    `}
-                >
-                    <input
-                        ref={inputRef}
-                        type="text"
-                        value={value}
-                        onChange={(e) => onChange(e.target.value)}
-                        onFocus={() => setIsFocused(true)}
-                        onBlur={() => setIsFocused(false)}
-                        placeholder="Enter your headline here..."
-                        maxLength={limit}
-                        className="w-full bg-transparent text-white text-2xl sm:text-4xl font-bold text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
-                    />
+                <div className="flex items-center gap-3 w-full">
+                    <motion.div
+                        animate={isAtLimit ? { x: [-1, 2, -2, 2, -2, 0] } : {}}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                        className={`
+                            relative flex-1 transition-all duration-500 border-b-2 py-4
+                            ${isFocused ? 'border-white' : 'border-zinc-800'}
+                        `}
+                    >
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={value}
+                            onChange={(e) => onChange(e.target.value)}
+                            onFocus={() => setIsFocused(true)}
+                            onBlur={() => setIsFocused(false)}
+                            placeholder="Enter your headline here..."
+                            maxLength={limit}
+                            className="w-full bg-transparent text-white text-2xl sm:text-4xl font-bold text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
+                        />
 
-                    <div className={`
-                        absolute -bottom-8 sm:-bottom-10 right-0 text-xs sm:text-sm font-bold transition-colors duration-300
-                        ${isAtLimit ? 'text-red-500' : isFocused ? 'text-zinc-400' : 'text-zinc-600'}
-                    `}>
-                        {value.length} / {limit}
-                    </div>
+                        <div className={`
+                            absolute -bottom-8 sm:-bottom-10 right-0 text-xs sm:text-sm font-bold transition-colors duration-300
+                            ${isAtLimit ? 'text-red-500' : isFocused ? 'text-zinc-400' : 'text-zinc-600'}
+                        `}>
+                            {value.length} / {limit}
+                        </div>
 
-                    <div className={`
-                        absolute inset-x-0 -bottom-[2px] h-[2px] bg-white transition-opacity duration-500
-                        ${isFocused ? 'opacity-100' : 'opacity-0'}
-                    `} />
-                </motion.div>
+                        <div className={`
+                            absolute inset-x-0 -bottom-[2px] h-[2px] bg-white transition-opacity duration-500
+                            ${isFocused ? 'opacity-100' : 'opacity-0'}
+                        `} />
+                    </motion.div>
+
+                    <button
+                        onClick={onNext}
+                        className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center shrink-0 hover:bg-zinc-200 active:scale-95 transition-all shadow-lg"
+                    >
+                        <ChevronRight size={20} className="text-black" strokeWidth={3} />
+                    </button>
+                </div>
 
 
 

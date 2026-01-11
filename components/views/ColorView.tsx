@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Check, Palette } from 'lucide-react';
+import { Zap, Check, Palette, ChevronRight } from 'lucide-react';
 
 interface ColorOption {
     id: string;
@@ -47,7 +47,7 @@ export const ColorView: React.FC<ColorViewProps> = ({
                     return (
                         <button
                             key={option.id}
-                            onClick={() => !isDisabled && onSelect(option.id)}
+                            onClick={() => { if (!isDisabled) { onSelect(option.id); if (option.id !== 'custom') onNext(); } }}
                             disabled={isDisabled}
                             className={`
                                 w-full h-14 sm:h-16 shrink-0 rounded-2xl flex items-center justify-between px-6 sm:px-8 text-sm sm:text-lg font-semibold transition-all duration-300 border-2
@@ -85,30 +85,39 @@ export const ColorView: React.FC<ColorViewProps> = ({
 
                 {selected === 'custom' && (
                     <div key="custom-color-input" className="mt-4 animate-in slide-in-from-top-4 duration-500 flex flex-col items-center w-full">
-                        <motion.div
-                            animate={customColor.length >= 20 ? { x: [-1, 2, -2, 2, -2, 0] } : {}}
-                            transition={{ duration: 0.4 }}
-                            className={`
-                                relative w-full transition-all duration-500 border-b-2 py-2
-                                ${isFocused ? 'border-white' : 'border-zinc-800'}
-                            `}
-                        >
-                            <input
-                                type="text"
-                                value={customColor}
-                                onChange={(e) => onCustomColorChange(e.target.value)}
-                                onFocus={() => setIsFocused(true)}
-                                onBlur={() => setIsFocused(false)}
-                                placeholder="Enter hex code (e.g. #FF0000)..."
-                                maxLength={20}
-                                className="w-full bg-transparent text-white text-lg font-medium text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
-                            />
+                        <div className="flex items-center gap-3 w-full">
+                            <motion.div
+                                animate={customColor.length >= 20 ? { x: [-1, 2, -2, 2, -2, 0] } : {}}
+                                transition={{ duration: 0.4 }}
+                                className={`
+                                    relative flex-1 transition-all duration-500 border-b-2 py-2
+                                    ${isFocused ? 'border-white' : 'border-zinc-800'}
+                                `}
+                            >
+                                <input
+                                    type="text"
+                                    value={customColor}
+                                    onChange={(e) => onCustomColorChange(e.target.value)}
+                                    onFocus={() => setIsFocused(true)}
+                                    onBlur={() => setIsFocused(false)}
+                                    placeholder="Enter hex code (e.g. #FF0000)..."
+                                    maxLength={20}
+                                    className="w-full bg-transparent text-white text-lg font-medium text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
+                                />
 
-                            <div className={`
-                                absolute inset-x-0 -bottom-[1px] h-[1px] bg-white transition-opacity duration-500
-                                ${isFocused ? 'opacity-100' : 'opacity-0'}
-                            `} />
-                        </motion.div>
+                                <div className={`
+                                    absolute inset-x-0 -bottom-[1px] h-[1px] bg-white transition-opacity duration-500
+                                    ${isFocused ? 'opacity-100' : 'opacity-0'}
+                                `} />
+                            </motion.div>
+
+                            <button
+                                onClick={onNext}
+                                className="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 hover:bg-zinc-200 active:scale-95 transition-all shadow-lg"
+                            >
+                                <ChevronRight size={20} className="text-black" strokeWidth={3} />
+                            </button>
+                        </div>
                     </div>
                 )}
 

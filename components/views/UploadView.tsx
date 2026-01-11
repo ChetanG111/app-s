@@ -33,6 +33,7 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, 
 
                     // Only upload if valid
                     onUpload(e.target?.result as string);
+                    onNext();
                 };
                 img.src = e.target?.result as string;
             };

@@ -30,7 +30,7 @@ export const FontView: React.FC<FontViewProps> = ({ selected, onSelect, onNext }
                 {FONT_OPTIONS.map((option) => (
                     <button
                         key={option.id}
-                        onClick={() => onSelect(option.id)}
+                        onClick={() => { onSelect(option.id); onNext(); }}
                         className={`
               w-full h-14 sm:h-16 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
               ${selected === option.id
