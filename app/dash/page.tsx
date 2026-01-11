@@ -10,7 +10,8 @@ import {
     Droplet,
     Layers,
     Sparkles,
-    ChevronDown
+    ChevronDown,
+    MessageSquare
 } from 'lucide-react';
 import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
@@ -19,6 +20,7 @@ import useSWR, { mutate } from 'swr';
 import { NotificationToast, useNotification } from '@/components/Notification';
 import { ConfirmationModal, useConfirmation } from '@/components/ConfirmationModal';
 import { ExportModal } from '@/components/ExportModal';
+import { FeedbackModal } from '@/components/FeedbackModal';
 import { SidebarIcon } from '@/components/SidebarIcon';
 import { TopNav } from '@/components/TopNav';
 import { UserNav } from '@/components/UserNav';
@@ -53,6 +55,7 @@ export default function Dashboard() {
     const [currentStep, setCurrentStep] = useState<string | null>(null);
     const [generateBackground, setGenerateBackground] = useState(true);
     const [latestGeneratedImage, setLatestGeneratedImage] = useState<{ image: string; url: string } | null>(null);
+    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [exportConfig, setExportConfig] = useState<{ isOpen: boolean; url: string | null }>({
         isOpen: false,
         url: null
@@ -204,6 +207,10 @@ export default function Dashboard() {
                 onClose={() => setExportConfig({ ...exportConfig, isOpen: false })}
                 onNotify={showNotification}
             />
+            <FeedbackModal
+                isOpen={isFeedbackOpen}
+                onClose={() => setIsFeedbackOpen(false)}
+            />
 
             {/* Top Navigation */}
             <TopNav projectName={projectName} setProjectName={setProjectName} credits={credits} />
@@ -344,6 +351,17 @@ export default function Dashboard() {
                         </button>
                     </div>
                 )}
+            </div>
+
+            {/* Feedback Button */}
+            <div className="absolute bottom-6 right-6 z-40">
+                <button
+                    onClick={() => setIsFeedbackOpen(true)}
+                    className="w-12 h-12 rounded-full bg-[#0c0c0c] border border-white/10 text-zinc-400 hover:text-white hover:border-white/30 flex items-center justify-center transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                    title="Give Feedback"
+                >
+                    <MessageSquare size={20} />
+                </button>
             </div>
         </main>
     );

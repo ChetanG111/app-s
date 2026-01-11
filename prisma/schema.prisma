@@ -40,6 +40,7 @@ model User {
 
   // Relations
   transactions CreditTransaction[]
+  feedback     Feedback[]
 }
 
 enum TransactionStatus {
@@ -138,4 +139,15 @@ model RateLimit {
   key       String   @id
   count     Int      @default(0)
   expiresAt DateTime
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String?  // Optional, in case we allow anonymous feedback later
+  user      User?    @relation(fields: [userId], references: [id])
+  message   String
+  type      String   // "BUG", "FEATURE", "OTHER"
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

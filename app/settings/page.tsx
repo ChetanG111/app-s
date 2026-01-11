@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import useSWR from 'swr';
 import { ConfirmationModal, useConfirmation } from '@/components/ConfirmationModal';
+import { FeedbackModal } from '@/components/FeedbackModal';
 import { NotificationToast, useNotification } from '@/components/Notification';
 import {
     User as UserIcon,
@@ -253,7 +254,7 @@ const BillingView = ({ credits }: { credits: number }) => {
     );
 };
 
-const HelpView = () => {
+const HelpView = ({ onOpenFeedback }: { onOpenFeedback: () => void }) => {
     return (
         <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="mb-10">
@@ -261,43 +262,27 @@ const HelpView = () => {
                 <p className="text-zinc-400">Get help, find documentation, or contact us.</p>
             </div>
 
-            {/* Quick Links */}
-            <div className="grid grid-cols-2 gap-4 mb-10">
-                <button className="flex flex-col items-start gap-3 p-4 bg-zinc-900/50 hover:bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-xl transition-all group text-left">
-                    <div className="p-2 bg-zinc-800 rounded-lg group-hover:scale-110 transition-transform">
-                        <FileText size={20} className="text-zinc-300" />
-                    </div>
-                    <div>
-                        <span className="block text-white font-bold text-sm">Documentation</span>
-                        <span className="text-zinc-500 text-xs">Read the guides</span>
-                    </div>
-                </button>
-                <button className="flex flex-col items-start gap-3 p-4 bg-zinc-900/50 hover:bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-xl transition-all group text-left">
-                    <div className="p-2 bg-zinc-800 rounded-lg group-hover:scale-110 transition-transform">
-                        <MessageSquare size={20} className="text-zinc-300" />
-                    </div>
-                    <div>
-                        <span className="block text-white font-bold text-sm">Community</span>
-                        <span className="text-zinc-500 text-xs">Join Discord</span>
-                    </div>
-                </button>
-            </div>
-
             {/* Contact Options */}
             <div className="mb-12">
                 <h3 className="text-lg font-bold text-white mb-4">Contact</h3>
                 <div className="space-y-3">
-                    <button className="w-full flex items-center justify-between p-4 bg-zinc-900/30 border border-zinc-800 rounded-xl hover:bg-zinc-900 transition-colors group">
+                    <a 
+                        href="mailto:chetangonuguntla0@gmail.com?subject=shots88 - Support Request"
+                        className="w-full flex items-center justify-between p-4 bg-zinc-900/30 border border-zinc-800 rounded-xl hover:bg-zinc-900 transition-colors group"
+                    >
                         <div className="flex items-center gap-3">
                             <Mail size={18} className="text-zinc-400 group-hover:text-white transition-colors" />
                             <span className="text-zinc-300 group-hover:text-white transition-colors">Email Support</span>
                         </div>
                         <ExternalLink size={16} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
-                    </button>
-                    <button className="w-full flex items-center justify-between p-4 bg-zinc-900/30 border border-zinc-800 rounded-xl hover:bg-zinc-900 transition-colors group">
+                    </a>
+                    <button 
+                        onClick={onOpenFeedback}
+                        className="w-full flex items-center justify-between p-4 bg-zinc-900/30 border border-zinc-800 rounded-xl hover:bg-zinc-900 transition-colors group"
+                    >
                         <div className="flex items-center gap-3">
                             <AlertTriangle size={18} className="text-zinc-400 group-hover:text-white transition-colors" />
-                            <span className="text-zinc-300 group-hover:text-white transition-colors">Report a Bug</span>
+                            <span className="text-zinc-300 group-hover:text-white transition-colors">Report a Bug / Feedback</span>
                         </div>
                         <ExternalLink size={16} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
                     </button>
@@ -309,9 +294,9 @@ const HelpView = () => {
                 <div className="flex items-center gap-4 text-xs text-zinc-500">
                     <span>Shots v1.0.0</span>
                     <span className="w-1 h-1 bg-zinc-800 rounded-full" />
-                    <a href="#" className="hover:text-zinc-300 transition-colors">Privacy Policy</a>
+                    <Link href="/privacy" className="hover:text-zinc-300 transition-colors">Privacy Policy</Link>
                     <span className="w-1 h-1 bg-zinc-800 rounded-full" />
-                    <a href="#" className="hover:text-zinc-300 transition-colors">Terms of Service</a>
+                    <Link href="/terms" className="hover:text-zinc-300 transition-colors">Terms of Service</Link>
                 </div>
             </div>
         </div>
@@ -328,6 +313,7 @@ function SettingsContent() {
     const initialTab = (tabParam && validTabs.includes(tabParam as TabId)) ? (tabParam as TabId) : 'account';
 
     const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const { notification, showNotification, hideNotification } = useNotification();
     const { confirmConfig, confirm, closeConfirm, handleConfirm } = useConfirmation();
 
@@ -380,6 +366,10 @@ function SettingsContent() {
                 isDanger={confirmConfig.isDanger}
                 onConfirm={handleConfirm}
                 onCancel={closeConfirm}
+            />
+            <FeedbackModal
+                isOpen={isFeedbackOpen}
+                onClose={() => setIsFeedbackOpen(false)}
             />
 
             {/* Floating Sidebar */}
@@ -443,7 +433,7 @@ function SettingsContent() {
                     <div className="max-w-4xl mx-auto py-16 px-12">
                         {activeTab === 'account' && <AccountView onDelete={handleDeleteAccount} />}
                         {activeTab === 'billing' && <BillingView credits={credits} />}
-                        {activeTab === 'help' && <HelpView />}
+                        {activeTab === 'help' && <HelpView onOpenFeedback={() => setIsFeedbackOpen(true)} />}
                     </div>
                 </div>
             </main>

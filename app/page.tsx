@@ -7,6 +7,7 @@ import { LandingNav } from '@/components/LandingNav';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { ShowcaseSection } from '@/components/landing/ShowcaseSection';
 import { PricingSection } from '@/components/landing/PricingSection';
+import { FeedbackModal } from '@/components/FeedbackModal';
 
 import { useSession, signIn } from 'next-auth/react';
 
@@ -16,6 +17,7 @@ export default function LandingPage() {
     const showcaseRef = useRef<HTMLDivElement>(null);
     const pricingRef = useRef<HTMLDivElement>(null);
     const [isNavigating, setIsNavigating] = useState(false);
+    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
     const handleScrollTo = (section: string) => {
         if (section === 'showcase' && showcaseRef.current) {
@@ -48,6 +50,7 @@ export default function LandingPage() {
 
     return (
         <main className="relative min-h-screen text-white overflow-x-hidden">
+            <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
             <LandingNav onScrollTo={handleScrollTo} onDashboardClick={handleStartCreating} />
 
             <HeroSection onStartCreating={handleStartCreating} />
@@ -72,6 +75,7 @@ export default function LandingPage() {
                     <div className="flex items-center gap-6 text-xs text-zinc-600">
                         <Link href="/privacy" className="hover:text-zinc-400 transition-colors">Privacy Policy</Link>
                         <Link href="/terms" className="hover:text-zinc-400 transition-colors">Terms of Service</Link>
+                        <button onClick={() => setIsFeedbackOpen(true)} className="hover:text-zinc-400 transition-colors">Feedback</button>
                         <span>© 2026 shots88. All rights reserved.</span>
                     </div>
                 </div>
