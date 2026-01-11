@@ -102,22 +102,22 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="relative w-full max-w-lg bg-[#0c0c0c] border border-white/10 rounded-[2.5rem] p-10 shadow-2xl overflow-hidden flex flex-col items-center"
+                        className="relative w-full max-w-sm bg-[#0c0c0c] border border-white/10 rounded-[2.5rem] p-6 shadow-2xl overflow-hidden flex flex-col items-center"
                     >
                         {/* Close button */}
                         <button
                             onClick={onClose}
-                            className="absolute top-8 right-8 p-2 text-zinc-500 hover:text-white transition-colors"
+                            className="absolute top-5 right-5 p-2 text-zinc-500 hover:text-white transition-colors"
                         >
-                            <X size={20} />
+                            <X size={18} />
                         </button>
 
-                        <h2 className="text-2xl font-black text-white mb-8 tracking-tight">
+                        <h2 className="text-xl font-black text-white mb-6 tracking-tight">
                             Export Image
                         </h2>
 
                         {/* Image Preview Area */}
-                        <div className="relative w-full aspect-[9/16] max-h-[400px] mb-10 bg-zinc-900/50 rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center">
+                        <div className="relative w-full aspect-[9/16] max-h-[250px] mb-6 bg-zinc-900/50 rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center">
                             <Image
                                 src={imageUrl}
                                 alt="Export Preview"
@@ -128,29 +128,29 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="grid grid-cols-3 gap-4 w-full">
+                        <div className="grid grid-cols-3 gap-3 w-full">
                             <button
                                 onClick={() => handleDownload('png')}
-                                className="flex flex-col items-center justify-center gap-2 h-24 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-2xl transition-all group active:scale-95"
+                                className="flex flex-col items-center justify-center gap-1.5 h-20 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-2xl transition-all group active:scale-95"
                             >
-                                <FileImage size={24} className="text-zinc-400 group-hover:text-blue-400" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-white">PNG</span>
+                                <FileImage size={20} className="text-zinc-400 group-hover:text-blue-400" />
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-white">PNG</span>
                             </button>
 
                             <button
                                 onClick={() => handleDownload('jpg')}
-                                className="flex flex-col items-center justify-center gap-2 h-24 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-2xl transition-all group active:scale-95"
+                                className="flex flex-col items-center justify-center gap-1.5 h-20 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-2xl transition-all group active:scale-95"
                             >
-                                <FileType size={24} className="text-zinc-400 group-hover:text-amber-400" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-white">JPG</span>
+                                <FileType size={20} className="text-zinc-400 group-hover:text-amber-400" />
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-white">JPG</span>
                             </button>
 
                             <button
                                 onClick={handleCopy}
-                                className="flex flex-col items-center justify-center gap-2 h-24 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-2xl transition-all group active:scale-95"
+                                className="flex flex-col items-center justify-center gap-1.5 h-20 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-2xl transition-all group active:scale-95"
                             >
-                                <Copy size={24} className="text-zinc-400 group-hover:text-emerald-400" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-white">Copy</span>
+                                <Copy size={20} className="text-zinc-400 group-hover:text-emerald-400" />
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-white">Copy</span>
                             </button>
                         </div>
                     </motion.div>

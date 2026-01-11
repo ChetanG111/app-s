@@ -14,12 +14,12 @@ export const TextView: React.FC<TextViewProps> = ({ value, onChange, onNext }) =
     const isAtLimit = value.length >= limit;
 
     return (
-        <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h1 className="text-white text-5xl font-black mb-auto pt-16 tracking-tight text-center">
+        <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-20 pb-28 sm:pt-0 sm:pb-0">
+            <h1 className="text-white text-3xl sm:text-5xl font-black mb-10 sm:mb-auto tracking-tight text-center">
                 Headline Text
             </h1>
 
-            <div className="w-full max-w-2xl mb-auto flex flex-col items-center px-4">
+            <div className="w-full max-w-2xl flex flex-col items-center px-4 sm:mb-auto">
                 <motion.div
                     animate={isAtLimit ? { x: [-1, 2, -2, 2, -2, 0] } : {}}
                     transition={{ duration: 0.4, ease: "easeInOut" }}
@@ -37,11 +37,11 @@ export const TextView: React.FC<TextViewProps> = ({ value, onChange, onNext }) =
                         onBlur={() => setIsFocused(false)}
                         placeholder="Enter your headline here..."
                         maxLength={limit}
-                        className="w-full bg-transparent text-white text-4xl font-bold text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
+                        className="w-full bg-transparent text-white text-2xl sm:text-4xl font-bold text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
                     />
 
                     <div className={`
-                        absolute -bottom-10 right-0 text-sm font-bold transition-colors duration-300
+                        absolute -bottom-8 sm:-bottom-10 right-0 text-xs sm:text-sm font-bold transition-colors duration-300
                         ${isAtLimit ? 'text-red-500' : isFocused ? 'text-zinc-400' : 'text-zinc-600'}
                     `}>
                         {value.length} / {limit}
@@ -55,7 +55,7 @@ export const TextView: React.FC<TextViewProps> = ({ value, onChange, onNext }) =
 
 
 
-                <p className="text-zinc-500 text-sm mt-16 text-center max-w-md">
+                <p className="text-zinc-500 text-sm mt-12 sm:mt-16 text-center max-w-md">
                     This text will appear at the top of your generated mockup. Make it punchy and clear.
                 </p>
             </div>

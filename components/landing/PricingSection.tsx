@@ -55,7 +55,7 @@ export const PricingSection: React.FC = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
-                    className="text-center mb-16"
+                    className="text-center mb-8 sm:mb-16"
                 >
                     <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
                         Simple Pricing
@@ -66,23 +66,23 @@ export const PricingSection: React.FC = () => {
                 </motion.div>
 
                 {/* Pricing Cards */}
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
                     {/* Starter Plan */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.5 }}
-                        className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 flex flex-col hover:border-zinc-700 transition-all group"
+                        className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 sm:p-8 flex flex-col hover:border-zinc-700 transition-all group"
                     >
-                        <div className="mb-8">
-                            <h4 className="text-zinc-400 font-bold uppercase tracking-wider text-xs mb-1">Starter</h4>
+                        <div className="mb-6 sm:mb-8">
+                            <h4 className="text-zinc-400 font-bold uppercase tracking-wider text-[10px] sm:text-xs mb-1">Starter</h4>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-4xl font-black text-white">$10</span>
-                                <span className="text-zinc-500 text-sm">one-time</span>
+                                <span className="text-3xl sm:text-4xl font-black text-white">$10</span>
+                                <span className="text-zinc-500 text-xs sm:text-sm">one-time</span>
                             </div>
                         </div>
-                        <ul className="space-y-4 mb-10 flex-1">
+                        <ul className="space-y-3 sm:space-y-4 mb-8 sm:mb-10 flex-1">
                             <li className="flex items-center gap-3 text-sm text-zinc-300 font-medium">
                                 <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
                                     <Check size={12} className="text-blue-500" strokeWidth={3} />
@@ -105,7 +105,7 @@ export const PricingSection: React.FC = () => {
                         <button
                             onClick={() => handleCheckout("starter")}
                             disabled={isLoading !== null}
-                            className="w-full py-4 bg-white text-black rounded-2xl font-black text-sm hover:bg-zinc-200 transition-all active:scale-95 text-center block disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 sm:py-4 bg-white text-black rounded-2xl font-black text-sm hover:bg-zinc-200 transition-all active:scale-95 text-center block disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading === "starter" ? "Loading..." : "Buy Now"}
                         </button>
@@ -117,19 +117,19 @@ export const PricingSection: React.FC = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.5, delay: 0.1 }}
-                        className="bg-blue-600/5 border border-blue-500/20 rounded-3xl p-8 flex flex-col relative overflow-hidden group hover:border-blue-500/40 transition-all"
+                        className="bg-blue-600/5 border border-blue-500/20 rounded-3xl p-6 sm:p-8 flex flex-col relative overflow-hidden group hover:border-blue-500/40 transition-all"
                     >
                         <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl">
                             Best Value
                         </div>
-                        <div className="mb-8">
-                            <h4 className="text-blue-400 font-bold uppercase tracking-wider text-xs mb-1">Professional</h4>
+                        <div className="mb-6 sm:mb-8">
+                            <h4 className="text-blue-400 font-bold uppercase tracking-wider text-[10px] sm:text-xs mb-1">Professional</h4>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-4xl font-black text-white">$50</span>
-                                <span className="text-zinc-500 text-sm">one-time</span>
+                                <span className="text-3xl sm:text-4xl font-black text-white">$50</span>
+                                <span className="text-zinc-500 text-xs sm:text-sm">one-time</span>
                             </div>
                         </div>
-                        <ul className="space-y-4 mb-10 flex-1">
+                        <ul className="space-y-3 sm:space-y-4 mb-8 sm:mb-10 flex-1">
                             <li className="flex items-center gap-3 text-sm text-zinc-300 font-medium">
                                 <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
                                     <Check size={12} className="text-blue-500" strokeWidth={3} />
@@ -152,7 +152,7 @@ export const PricingSection: React.FC = () => {
                         <button
                             onClick={() => handleCheckout("pro")}
                             disabled={isLoading !== null}
-                            className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-500 transition-all active:scale-95 text-center block disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-500 transition-all active:scale-95 text-center block disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading === "pro" ? "Loading..." : "Buy Now"}
                         </button>

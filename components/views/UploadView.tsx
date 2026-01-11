@@ -63,11 +63,11 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, 
 
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in zoom-in duration-500">
-            <h1 className="text-white text-4xl font-black mb-auto pt-16 tracking-tight text-center">
+            <h1 className="text-white text-3xl sm:text-4xl font-black mb-8 sm:mb-auto pt-32 sm:pt-16 tracking-tight text-center">
                 {currentImage ? "Screenshot uploaded" : "Upload a screenshot of your app"}
             </h1>
 
-            <div className="relative mb-32 mt-16 flex justify-center w-full">
+            <div className="relative mb-auto mt-0 sm:mb-32 sm:mt-16 flex justify-center w-full">
                 <div
                     onClick={handleBoxClick}
                     onDragOver={handleDragOver}
@@ -76,7 +76,7 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, 
                     className={`
                         group relative bg-[#0c0c0c]/80 backdrop-blur-sm border-2 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 overflow-hidden
                         ${isDragging ? 'border-blue-500 bg-blue-500/5 scale-[1.02]' : 'border-dashed border-zinc-800 hover:border-zinc-600 hover:bg-[#111111]'}
-                        ${currentImage ? 'border-none' : 'h-[520px] aspect-[9/16]'}
+                        ${currentImage ? 'border-none' : 'h-[550px] sm:h-[520px] aspect-[9/16]'}
                     `}
                 >
                     {currentImage ? (
@@ -86,7 +86,7 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, 
                                 alt="Uploaded screenshot"
                                 width={292}
                                 height={520}
-                                className="h-[520px] w-auto block object-contain"
+                                className="h-[550px] sm:h-[520px] w-auto block object-contain"
                                 unoptimized
                             />
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center">

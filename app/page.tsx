@@ -70,9 +70,9 @@ export default function LandingPage() {
                         <div className="relative w-6 h-3 bg-zinc-800 rounded-full flex items-center justify-center overflow-hidden border border-white/10">
                             <div className="w-3 h-3 bg-white/20 rounded-full blur-[1px]" />
                         </div>
-                        <span className="text-zinc-500 text-sm font-medium">shots88</span>
+                        <span className="text-zinc-500 text-xs sm:text-sm font-medium">shots88</span>
                     </div>
-                    <div className="flex items-center gap-6 text-xs text-zinc-600">
+                    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[10px] sm:text-xs text-zinc-600">
                         <Link href="/privacy" className="hover:text-zinc-400 transition-colors">Privacy Policy</Link>
                         <Link href="/terms" className="hover:text-zinc-400 transition-colors">Terms of Service</Link>
                         <button onClick={() => setIsFeedbackOpen(true)} className="hover:text-zinc-400 transition-colors">Feedback</button>

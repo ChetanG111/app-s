@@ -11,7 +11,8 @@ import {
     Layers,
     Sparkles,
     ChevronDown,
-    MessageSquare
+    MessageSquare,
+    ChevronRight
 } from 'lucide-react';
 import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
@@ -22,6 +23,7 @@ import { ConfirmationModal, useConfirmation } from '@/components/ConfirmationMod
 import { ExportModal } from '@/components/ExportModal';
 import { FeedbackModal } from '@/components/FeedbackModal';
 import { SidebarIcon } from '@/components/SidebarIcon';
+import { CombinedNav } from '@/components/CombinedNav';
 import { TopNav } from '@/components/TopNav';
 import { UserNav } from '@/components/UserNav';
 
@@ -213,12 +215,22 @@ export default function Dashboard() {
             />
 
             {/* Top Navigation */}
-            <TopNav projectName={projectName} setProjectName={setProjectName} credits={credits} />
-            <UserNav />
+            <div className="sm:hidden">
+                <CombinedNav 
+                    projectName={projectName} 
+                    setProjectName={setProjectName} 
+                    credits={credits} 
+                    onFeedbackClick={() => setIsFeedbackOpen(true)}
+                />
+            </div>
+            <div className="hidden sm:block">
+                <TopNav projectName={projectName} setProjectName={setProjectName} credits={credits} />
+                <UserNav />
+            </div>
 
             {/* Sidebar UI */}
-            <div className="absolute left-6 top-1/2 -translate-y-1/2 z-30">
-                <div className="flex flex-col items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-full p-2">
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 sm:left-6 sm:top-1/2 sm:-translate-y-1/2 sm:bottom-auto sm:translate-x-0 z-30 flex items-center gap-3">
+                <div className="flex flex-row sm:flex-col items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-full p-1 sm:p-2">
                     {icons.map((item, index) => {
                         const isSelected = selectedIndex === index;
                         const isDisabled = !uploadedImage && index !== 0 && index !== (icons.length - 1);
@@ -250,10 +262,27 @@ export default function Dashboard() {
                         );
                     })}
                 </div>
+
+                {/* Mobile Next Button */}
+                {selectedIndex < icons.length - 1 && (
+                    <button
+                        onClick={handleNext}
+                        disabled={selectedIndex === 0 && !uploadedImage}
+                        className={`
+                            sm:hidden flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 active:scale-90 shadow-lg
+                            ${selectedIndex === 0 && !uploadedImage
+                                ? 'bg-zinc-900 text-zinc-700 cursor-not-allowed'
+                                : 'bg-white text-black hover:bg-zinc-200'
+                            }
+                        `}
+                    >
+                        <ChevronRight size={20} strokeWidth={3} />
+                    </button>
+                )}
             </div>
 
             {/* Main Content Area */}
-            <div className="relative z-10 w-full h-full flex flex-col items-center justify-center pl-24">
+            <div className="relative z-10 w-full h-full flex flex-col items-center justify-center sm:pl-24">
                 {selectedIndex === 0 && (
                     <UploadView
                         onUpload={setUploadedImage}
@@ -330,7 +359,7 @@ export default function Dashboard() {
 
                 {/* Universal Continue Button - Visible on all tabs except the last one */}
                 {selectedIndex < icons.length - 1 && (
-                    <div className="absolute bottom-10 left-0 right-0 flex justify-center pl-24 pointer-events-none">
+                    <div className="absolute bottom-10 left-0 right-0 hidden sm:flex justify-center sm:pl-24 pointer-events-none">
                         <button
                             onClick={handleNext}
                             disabled={selectedIndex === 0 && !uploadedImage}
@@ -354,7 +383,7 @@ export default function Dashboard() {
             </div>
 
             {/* Feedback Button */}
-            <div className="absolute bottom-6 right-6 z-40">
+            <div className="absolute bottom-6 right-6 z-40 hidden sm:block">
                 <button
                     onClick={() => setIsFeedbackOpen(true)}
                     className="w-12 h-12 rounded-full bg-[#0c0c0c] border border-white/10 text-zinc-400 hover:text-white hover:border-white/30 flex items-center justify-center transition-all shadow-lg hover:shadow-xl hover:scale-105"

@@ -43,34 +43,34 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                        className="relative w-full max-w-md bg-[#0c0c0c] border border-white/10 rounded-[2rem] p-8 shadow-2xl overflow-hidden"
+                        className="relative w-full max-w-sm bg-[#0c0c0c] border border-white/10 rounded-[2rem] p-6 shadow-2xl overflow-hidden"
                     >
                         {/* Subtle background detail */}
                         <div className="absolute top-0 left-0 w-full h-1 bg-white/5" />
 
                         <div className="flex flex-col items-center text-center">
-                            <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-6 ${isDanger ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-white/5 text-white border border-white/10'
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-5 ${isDanger ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-white/5 text-white border border-white/10'
                                 }`}>
-                                <AlertCircle size={28} />
+                                <AlertCircle size={24} />
                             </div>
 
-                            <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                            <h3 className="text-lg font-bold text-white mb-2 tracking-tight">
                                 {title}
                             </h3>
-                            <p className="text-zinc-400 text-sm leading-relaxed mb-8 px-4">
+                            <p className="text-zinc-400 text-xs leading-relaxed mb-6 px-2">
                                 {message}
                             </p>
 
                             <div className="flex items-center gap-3 w-full">
                                 <button
                                     onClick={onCancel}
-                                    className="flex-1 h-12 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-bold transition-all active:scale-95 border border-white/5"
+                                    className="flex-1 h-10 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-bold text-xs transition-all active:scale-95 border border-white/5"
                                 >
                                     {cancelLabel}
                                 </button>
                                 <button
                                     onClick={onConfirm}
-                                    className={`flex-1 h-12 rounded-xl font-bold transition-all active:scale-95 ${isDanger
+                                    className={`flex-1 h-10 rounded-xl font-bold text-xs transition-all active:scale-95 ${isDanger
                                         ? 'bg-red-600 hover:bg-red-500 text-white'
                                         : 'bg-white hover:bg-zinc-200 text-black'
                                         }`}
@@ -83,9 +83,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                         {/* Close button */}
                         <button
                             onClick={onCancel}
-                            className="absolute top-6 right-6 p-2 text-zinc-600 hover:text-white transition-colors"
+                            className="absolute top-4 right-4 p-2 text-zinc-600 hover:text-white transition-colors"
                         >
-                            <X size={18} />
+                            <X size={16} />
                         </button>
                     </motion.div>
                 </div>

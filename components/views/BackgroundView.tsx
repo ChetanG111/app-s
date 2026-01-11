@@ -42,8 +42,8 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
 
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
-            <div className="flex flex-col items-center w-full shrink-0 mb-8">
-                <h1 className="text-white text-5xl font-black mb-6 tracking-tight text-center">
+            <div className="flex flex-col items-center w-full shrink-0 pt-24 sm:pt-0 mb-8">
+                <h1 className="text-white text-3xl sm:text-5xl font-black mb-6 tracking-tight text-center">
                     Background Style
                 </h1>
 

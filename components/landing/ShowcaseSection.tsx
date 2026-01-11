@@ -7,7 +7,7 @@ export const ShowcaseSection: React.FC = () => {
     return (
         <section id="showcase" className="py-24 px-6">
             <div className="max-w-6xl mx-auto">
-                {/* Outputs Heading */}
+                {/* Designs Heading */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -16,7 +16,7 @@ export const ShowcaseSection: React.FC = () => {
                     className="text-center mb-16"
                 >
                     <h2 className="text-4xl font-black text-white">
-                        Outputs
+                        Designs
                     </h2>
                 </motion.div>
 
@@ -69,8 +69,8 @@ export const ShowcaseSection: React.FC = () => {
                     transition={{ duration: 0.8 }}
                     className="relative"
                 >
-                    <div className="bg-zinc-900/30 border border-zinc-800 rounded-3xl p-8 overflow-hidden">
-                        <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-zinc-900/30 border border-zinc-800 rounded-3xl px-2 py-8 sm:px-8 overflow-hidden">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {[
                                 '/previews/shot-2026-01-10-4447.png',
                                 '/previews/shot-2026-01-10-3490.jpg',
@@ -78,7 +78,7 @@ export const ShowcaseSection: React.FC = () => {
                             ].map((src, i) => (
                                 <div
                                     key={i}
-                                    className="aspect-[9/19] bg-zinc-900 rounded-2xl overflow-hidden"
+                                    className="aspect-[9/19] max-w-[280px] sm:max-w-none mx-auto w-full bg-zinc-900 rounded-2xl overflow-hidden"
                                 >
                                     <img
                                         src={src}
@@ -89,7 +89,7 @@ export const ShowcaseSection: React.FC = () => {
                             ))}
                         </div>
                         <p className="text-center text-zinc-600 text-sm mt-6">
-                            Example outputs from our mockup generator
+                            Example designs from our mockup generator
                         </p>
                     </div>
                 </motion.div>

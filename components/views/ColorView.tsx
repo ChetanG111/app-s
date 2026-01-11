@@ -37,11 +37,11 @@ export const ColorView: React.FC<ColorViewProps> = ({
 
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
-            <h1 className="text-white text-5xl font-black mb-auto pt-16 tracking-tight text-center">
+            <h1 className="text-white text-3xl sm:text-5xl font-black mb-8 sm:mb-auto pt-32 sm:pt-16 tracking-tight text-center">
                 Headline Color
             </h1>
 
-            <div className="w-full max-w-md mb-auto flex flex-col gap-2.5 px-4 pb-20">
+            <div className="w-full max-w-md mt-0 sm:mt-0 sm:mb-auto flex flex-col gap-2.5 px-4 pb-20">
                 {COLOR_OPTIONS.map((option) => {
                     const isDisabled = option.isAI;
                     return (
@@ -50,7 +50,7 @@ export const ColorView: React.FC<ColorViewProps> = ({
                             onClick={() => !isDisabled && onSelect(option.id)}
                             disabled={isDisabled}
                             className={`
-                                w-full h-16 shrink-0 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
+                                w-full h-14 sm:h-16 shrink-0 rounded-2xl flex items-center justify-between px-6 sm:px-8 text-sm sm:text-lg font-semibold transition-all duration-300 border-2
                                 ${isDisabled
                                     ? 'bg-[#0c0c0c]/60 border-zinc-700 text-zinc-400 cursor-not-allowed'
                                     : selected === option.id
@@ -59,7 +59,7 @@ export const ColorView: React.FC<ColorViewProps> = ({
                                 }
                             `}
                         >
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 sm:gap-4">
                                 {option.isAI ? (
                                     <Zap size={20} className={selected === option.id ? 'text-blue-600' : 'text-zinc-500'} />
                                 ) : option.isCustom ? (
@@ -67,9 +67,9 @@ export const ColorView: React.FC<ColorViewProps> = ({
                                 ) : (
                                     <div className={`w-6 h-6 rounded-full border ${option.colorClass}`} />
                                 )}
-                                <span>{option.label}</span>
+                                <span className="whitespace-nowrap">{option.label}</span>
                                 {option.isAI && (
-                                    <span className="text-[10px] font-bold uppercase tracking-widest bg-zinc-800 text-zinc-500 px-2 py-1 rounded-full">
+                                    <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest bg-zinc-800 text-zinc-500 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
                                         Coming Soon
                                     </span>
                                 )}
@@ -112,7 +112,7 @@ export const ColorView: React.FC<ColorViewProps> = ({
                     </div>
                 )}
 
-                <p className="text-zinc-500 text-sm mt-12 text-center">
+                <p className="text-zinc-500 text-sm mt-8 sm:mt-12 text-center">
                     Pick a color that pops against your background.
                 </p>
             </div>

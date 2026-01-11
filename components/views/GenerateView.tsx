@@ -201,7 +201,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                             alt="Full screen preview"
                             width={1200}
                             height={1200}
-                            className="max-w-full max-h-[85vh] object-contain rounded-2xl"
+                            className="max-w-full max-h-[70vh] sm:max-h-[85vh] object-contain rounded-2xl"
                             unoptimized
                         />
                     </div>
@@ -281,7 +281,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                                         unoptimized
                                     />
                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                                    <div className="absolute top-3 right-3 sm:top-6 sm:right-6 flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 pointer-events-auto sm:pointer-events-none sm:group-hover:pointer-events-auto transition-all duration-300 translate-y-0 sm:translate-y-2 sm:group-hover:translate-y-0">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
