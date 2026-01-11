@@ -51,9 +51,20 @@ export async function addTextOverlay(
 ): Promise<string> {
     try {
         const imageBuffer = Buffer.from(imageBase64, 'base64');
-        const metadata = await sharp(imageBuffer).metadata();
-        const width = metadata.width || 1080;
-        const height = metadata.height || 1920;
+
+        // FORCE RESIZE to iPhone 16 Pro Max (6.9") - Apple's 2025 Flagship Size
+        // Apple requires 1320 x 2868. This is the "largest device" that scales down to all others.
+        // We resize BEFORE adding text so the text is rendered natively at this high resolution.
+        const resizedBuffer = await sharp(imageBuffer)
+            .resize(1320, 2868, {
+                fit: 'fill', // Ignore slight aspect ratio differences (0.2%) to fill screen
+                kernel: sharp.kernel.lanczos3 // High-quality upscaling
+            })
+            .toBuffer();
+
+        const metadata = await sharp(resizedBuffer).metadata();
+        const width = metadata.width || 1320;
+        const height = metadata.height || 2868;
 
         // 1. Determine Font
         const fontFamily = FONT_MAP[font] || 'Inter';
@@ -151,7 +162,7 @@ export async function addTextOverlay(
         `;
 
         // 6. Composite
-        const outputBuffer = await sharp(imageBuffer)
+        const outputBuffer = await sharp(resizedBuffer)
             .composite([
                 {
                     input: Buffer.from(svgImage),

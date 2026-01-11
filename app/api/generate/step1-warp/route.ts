@@ -116,6 +116,12 @@ export async function POST(req: NextRequest) {
         let warped: any = null;
         let tempHsv: any = null;
         let mask: any = null;
+        let cleanedMask: any = null;
+        let dilatedMask: any = null;
+        let kernel: any = null;
+        let blurredMask: any = null;
+        let channels: any = null;
+        let newChannels: any = null;
         let finalBuffer;
 
         try {
@@ -138,32 +144,84 @@ export async function POST(req: NextRequest) {
 
             M = _cv.getPerspectiveTransform(srcTri, dstTri);
 
+            // 2. Warp Screenshot (Color)
+            // Use INTER_CUBIC for high quality
+            // Use BORDER_REPLICATE to fill edges with image color, preventing dark halos when blended
             warped = new _cv.Mat();
             const dsize = new _cv.Size(tempRaw.info.width, tempRaw.info.height);
-            _cv.warpPerspective(shotMat, warped, M, dsize, _cv.INTER_LINEAR, _cv.BORDER_CONSTANT, new _cv.Scalar(0, 0, 0, 0));
+            _cv.warpPerspective(shotMat, warped, M, dsize, _cv.INTER_CUBIC, _cv.BORDER_REPLICATE, new _cv.Scalar(0, 0, 0, 0));
 
+            // 3. Generate Soft Mask from Green Screen (The Constraint)
+            
             tempHsv = new _cv.Mat();
             _cv.cvtColor(tempMat, tempHsv, _cv.COLOR_RGBA2RGB);
             _cv.cvtColor(tempHsv, tempHsv, _cv.COLOR_RGB2HSV);
 
             mask = new _cv.Mat();
-            // OpenCV WASM requires Mat objects for inRange bounds, not Scalar
-            const lowMat = _cv.matFromArray(1, 3, _cv.CV_8UC1, [30, 40, 40]);
-            const highMat = _cv.matFromArray(1, 3, _cv.CV_8UC1, [90, 255, 255]);
+            // Tighten HSV range to avoid bezel reflections (Green is ~60)
+            const lowMat = _cv.matFromArray(1, 3, _cv.CV_8UC1, [35, 50, 50]);
+            const highMat = _cv.matFromArray(1, 3, _cv.CV_8UC1, [85, 255, 255]);
             _cv.inRange(tempHsv, lowMat, highMat, mask);
             lowMat.delete();
             highMat.delete();
 
-            warped.copyTo(tempMat, mask);
+            // 4. Clean & Refine Mask
+            // Remove noise (white spots)
+            cleanedMask = new _cv.Mat();
+            _cv.medianBlur(mask, cleanedMask, 5);
 
-            const outData = Buffer.from(tempMat.data);
-            finalBuffer = await sharp(outData, {
+            // 5. Create "Black Hole" on Template (Remove Green Fringe)
+            // We dilate the mask to ensure we cover ALL green pixels, including the anti-aliased edge.
+            // Then we paint this area BLACK on the template.
+            dilatedMask = new _cv.Mat();
+            kernel = _cv.Mat.ones(3, 3, _cv.CV_8U);
+            _cv.dilate(cleanedMask, dilatedMask, kernel, new _cv.Point(-1, -1), 2);
+            
+            // Set the screen area to pure Black (0,0,0,255)
+            // This kills the green halo. Any edge transparency in the overlay will now blend with Black.
+            tempMat.setTo(new _cv.Scalar(0, 0, 0, 255), dilatedMask);
+
+            // 6. Blur Mask (Anti-aliasing for Overlay)
+            // We use the ORIGINAL cleaned mask (not dilated) for the image.
+            // This creates a "Fade to Black" effect at the edge, mimicking a bezel gap.
+            blurredMask = new _cv.Mat();
+            const ksize = new _cv.Size(5, 5);
+            _cv.GaussianBlur(cleanedMask, blurredMask, ksize, 0, 0, _cv.BORDER_DEFAULT);
+
+            // 7. Merge for Overlay
+            channels = new _cv.MatVector();
+            _cv.split(warped, channels);
+            
+            newChannels = new _cv.MatVector();
+            newChannels.push_back(channels.get(0)); // R
+            newChannels.push_back(channels.get(1)); // G
+            newChannels.push_back(channels.get(2)); // B
+            newChannels.push_back(blurredMask);     // A
+            
+            _cv.merge(newChannels, warped);
+
+            // 8. Prepare Buffers for Sharp
+            // We must use the modified tempMat (with black hole) as the base
+            const baseTemplateBuffer = Buffer.from(tempMat.data);
+            const overlayBuffer = Buffer.from(warped.data);
+
+            // 9. Composite using Sharp
+            // Note: We use the modified template buffer as the base
+            finalBuffer = await sharp(baseTemplateBuffer, {
                 raw: {
                     width: tempRaw.info.width,
                     height: tempRaw.info.height,
                     channels: 4
                 }
             })
+                .composite([{
+                    input: overlayBuffer,
+                    raw: {
+                        width: tempRaw.info.width,
+                        height: tempRaw.info.height,
+                        channels: 4
+                    }
+                }])
                 .png()
                 .toBuffer();
 
@@ -176,6 +234,12 @@ export async function POST(req: NextRequest) {
             if (warped && !warped.isDeleted()) warped.delete();
             if (tempHsv && !tempHsv.isDeleted()) tempHsv.delete();
             if (mask && !mask.isDeleted()) mask.delete();
+            if (cleanedMask && !cleanedMask.isDeleted()) cleanedMask.delete();
+            if (dilatedMask && !dilatedMask.isDeleted()) dilatedMask.delete();
+            if (kernel && !kernel.isDeleted()) kernel.delete();
+            if (blurredMask && !blurredMask.isDeleted()) blurredMask.delete();
+            if (channels && !channels.isDeleted()) channels.delete();
+            if (newChannels && !newChannels.isDeleted()) newChannels.delete();
         }
 
         // GENERATE TOKEN

@@ -165,18 +165,39 @@ def main():
     src_corners = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
     
     matrix = cv2.getPerspectiveTransform(src_corners, corners)
+    
+    # WARP SCREENSHOT (High Quality)
+    # Using INTER_CUBIC as requested for better quality
     warped = cv2.warpPerspective(shot, matrix, (temp.shape[1], temp.shape[0]), 
-                                 flags=cv2.INTER_LANCZOS4)
+                                 flags=cv2.INTER_CUBIC)
     
-    # 5. Composite
-    hsv = cv2.cvtColor(temp, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, np.array([30, 40, 40]), np.array([90, 255, 255]))
-    mask = cv2.GaussianBlur(mask, (3, 3), 0)
-    alpha = mask.astype(float) / 255.0
+    # 5. Composite (Soft Edge Blending)
     
-    final = temp.copy()
-    for c in range(3):
-        final[:, :, c] = (temp[:, :, c] * (1 - alpha) + warped[:, :, c] * alpha).astype(np.uint8)
+    # Generate Alpha Mask from Geometry
+    # Create a white rectangle matching the source screenshot size
+    mask_src = np.full((h, w), 255, dtype=np.uint8)
+    
+    # Warp the mask using the same matrix to match the screenshot's position
+    warped_mask = cv2.warpPerspective(mask_src, matrix, (temp.shape[1], temp.shape[0]), 
+                                      flags=cv2.INTER_CUBIC)
+    
+    # Soften the edges to remove jaggies (Anti-aliasing simulation)
+    # Kernel size (5,5) creates a soft transition
+    warped_mask = cv2.GaussianBlur(warped_mask, (5, 5), 0)
+    
+    # Normalize Alpha to 0.0 - 1.0 range
+    alpha = warped_mask.astype(float) / 255.0
+    
+    # Expand Alpha to 3 channels (H, W, 1) -> (H, W, 3) for vectorized multiplication
+    alpha_3c = np.expand_dims(alpha, axis=2)
+    
+    # Alpha Blending Formula: Final = Src * Alpha + Dst * (1 - Alpha)
+    # 'warped' is the source (Screenshot)
+    # 'temp' is the destination (Phone Background)
+    final_float = (warped.astype(float) * alpha_3c) + (temp.astype(float) * (1.0 - alpha_3c))
+    
+    # Clip and cast back to uint8
+    final = np.clip(final_float, 0, 255).astype(np.uint8)
 
     # 6. Save
     output_path = Path(args.output)
