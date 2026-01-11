@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverExternalPackages: ["opencv-wasm", "sharp", "onnxruntime-node"],
   images: {
     remotePatterns: [
       {
@@ -8,12 +9,6 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
-  },
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals.push('opencv-wasm');
-    }
-    return config;
   },
 };
 
