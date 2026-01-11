@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ["opencv-wasm", "sharp", "onnxruntime-node"],
-  experimental: {
-    outputFileTracingIncludes: {
-      '/api/generate/**/*': ['./node_modules/opencv-wasm/opencv.wasm'],
-    },
+  outputFileTracingIncludes: {
+    '/api/generate/**/*': ['./node_modules/opencv-wasm/opencv.wasm'],
   },
   images: {
     remotePatterns: [

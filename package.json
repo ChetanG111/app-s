@@ -13,6 +13,7 @@
     "@auth/prisma-adapter": "^2.11.1",
     "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.90.1",
+    "@vercel/analytics": "^1.6.1",
     "clsx": "^2.1.1",
     "dodopayments": "^2.14.2",
     "framer-motion": "^11.16.1",

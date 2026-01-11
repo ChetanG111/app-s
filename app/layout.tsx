@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Caveat, Poppins } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
@@ -26,6 +27,7 @@ export default function RootLayout({
                 >
                     <div className="grid-container" />
                     {children}
+                    <Analytics />
                 </SessionProvider>
             </body>
         </html>
