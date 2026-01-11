@@ -13,12 +13,12 @@ export async function POST(req: NextRequest) {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-        console.error("Missing Supabase configuration:", { 
-            url: !!supabaseUrl, 
-            key: !!supabaseKey 
+        console.error("Missing Supabase configuration:", {
+            url: !!supabaseUrl,
+            key: !!supabaseKey
         });
         return NextResponse.json(
-            { error: "Storage configuration missing" }, 
+            { error: "Storage configuration missing" },
             { status: 500 }
         );
     }
@@ -41,10 +41,10 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { 
-            image, 
-            headline, 
-            font, 
+        const {
+            image,
+            headline,
+            font,
             color,
             style,
             backgroundId,
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
         if (payload.imageHash) {
             const incomingHash = crypto.createHash('sha256').update(image).digest('hex');
             if (incomingHash !== payload.imageHash) {
-                 return NextResponse.json({ error: "Image integrity check failed" }, { status: 403 });
+                return NextResponse.json({ error: "Image integrity check failed" }, { status: 403 });
             }
         }
 
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
             const cleanBase64 = image.split(',').pop();
             finalImageBase64 = await addTextOverlay(cleanBase64, headline, font, color);
         } else {
-             finalImageBase64 = image.split(',').pop();
+            finalImageBase64 = image.split(',').pop();
         }
 
         // 5. Upload to Supabase Storage
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
             .getPublicUrl(finalFilename);
 
         // 7. Save to DB & Complete Transaction
-        await withRetry(() => prisma.$transaction(async (tx) => {
+        const screenshotCount = await withRetry(() => prisma.$transaction(async (tx) => {
             // Create Screenshot Record
             await tx.screenshot.create({
                 data: {
@@ -131,17 +131,32 @@ export async function POST(req: NextRequest) {
                 where: { id: transactionId },
                 data: { status: "COMPLETED" }
             });
+
+            return tx.screenshot.count({
+                where: { userId: userId! }
+            });
         }));
 
-        return NextResponse.json({ 
+        // Send Slack Notification (Only for first 3 images)
+        if (screenshotCount <= 3) {
+            const { sendSlackNotification } = await import("@/lib/slack");
+            await sendSlackNotification(`🎨 New Image Generated (Image #${screenshotCount})`, {
+                User: session?.user?.email || userId || "Unknown",
+                Headline: headline || "No headline",
+                Style: style || "Basic",
+                URL: publicUrl
+            });
+        }
+
+        return NextResponse.json({
             image: `data:image/png;base64,${finalImageBase64}`,
             url: publicUrl,
-            success: true 
+            success: true
         });
 
     } catch (error: unknown) {
         console.error("Step 3 Text Error:", error);
-        
+
         // Refund Credit
         if (userId) {
             try {
@@ -164,9 +179,9 @@ export async function POST(req: NextRequest) {
                         })
                     ])).catch(e => console.error("CRITICAL: Credit refund failed", e));
                 }
-            } catch(e) { console.error("Refund failed", e); }
+            } catch (e) { console.error("Refund failed", e); }
         }
-        
+
         const message = error instanceof Error ? error.message : "Text overlay failed";
         return NextResponse.json({ error: message }, { status: 500 });
     }

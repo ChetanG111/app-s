@@ -28,6 +28,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             metadata: { message: "3 free credits for new account" }
           }
         });
+
+        // Send Slack Notification
+        const { sendSlackNotification } = await import("@/lib/slack");
+        await sendSlackNotification(`👋 New User Signup`, {
+          Name: user.name || "Unknown",
+          Email: user.email || "No email",
+          Id: user.id
+        });
       }
     }
   },

@@ -12,15 +12,15 @@ export async function POST(req: Request) {
     // Rate Limiting
     const ip = req.headers.get("x-forwarded-for") ?? "anonymous";
     const identifier = session?.user?.id ? `feedback-user-${session.user.id}` : `feedback-ip-${ip}`;
-    
+
     // Limit: 3 requests per hour (3600 seconds)
     const { success } = await rateLimit(identifier, 3, 3600);
-    
+
     if (!success) {
-        return NextResponse.json(
-            { error: "Too many feedback submissions. Please try again later." },
-            { status: 429 }
-        );
+      return NextResponse.json(
+        { error: "Too many feedback submissions. Please try again later." },
+        { status: 429 }
+      );
     }
 
     if (!message) {
@@ -31,10 +31,10 @@ export async function POST(req: Request) {
     }
 
     if (!type || !["BUG", "FEATURE", "OTHER"].includes(type)) {
-        return NextResponse.json(
-            { error: "Valid type is required" },
-            { status: 400 }
-        );
+      return NextResponse.json(
+        { error: "Valid type is required" },
+        { status: 400 }
+      );
     }
 
     const feedback = await prisma.feedback.create({
@@ -43,6 +43,14 @@ export async function POST(req: Request) {
         type,
         userId: session?.user?.id || null,
       },
+    });
+
+    // Send Slack Notification
+    const { sendSlackNotification } = await import("@/lib/slack");
+    await sendSlackNotification(`📢 New Feedback (${type})`, {
+      User: session?.user?.email || "Anonymous",
+      Message: message,
+      Type: type
     });
 
     return NextResponse.json(feedback);
