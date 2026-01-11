@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     const { message, type } = body;
 
     // Rate Limiting
-    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    const ip = req.headers.get("x-forwarded-for") ?? "anonymous";
     const identifier = session?.user?.id ? `feedback-user-${session.user.id}` : `feedback-ip-${ip}`;
     
     // Limit: 3 requests per hour (3600 seconds)

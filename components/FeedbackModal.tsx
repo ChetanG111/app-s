@@ -21,6 +21,15 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState("");
 
+    React.useEffect(() => {
+        if (isOpen) {
+            setIsSuccess(false);
+            setMessage("");
+            setType("FEATURE");
+            setError("");
+        }
+    }, [isOpen]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!message.trim()) return;
