@@ -9,11 +9,22 @@ import { rateLimit } from "@/lib/ratelimit";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+        console.error("Missing Supabase configuration:", { 
+            url: !!supabaseUrl, 
+            key: !!supabaseKey 
+        });
+        return NextResponse.json(
+            { error: "Storage configuration missing" }, 
+            { status: 500 }
+        );
+    }
+
     // Init Supabase inside handler to avoid build-time env var issues
-    const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     let userId: string | null = null;
     try {
