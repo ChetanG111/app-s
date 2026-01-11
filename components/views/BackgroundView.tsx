@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Palette, Check, ChevronRight } from 'lucide-react';
+import { useHaptic } from '@/hooks/useHaptic';
 
 interface BackgroundOption {
     id: string;
@@ -37,6 +38,7 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
     onGenerateBackgroundChange,
     onNext
 }) => {
+    const { trigger } = useHaptic();
     const [isFocused, setIsFocused] = useState(false);
     const isDev = process.env.NODE_ENV === 'development';
 
@@ -64,10 +66,13 @@ export const BackgroundView: React.FC<BackgroundViewProps> = ({
             </div>
 
             <div className="w-full max-w-md flex flex-col items-center gap-2.5 px-4 pb-20">
-                {BACKGROUND_OPTIONS.map((option) => (
-                    <button
+                {BACKGROUND_OPTIONS.map((option, index) => (
+                    <motion.button
                         key={option.id}
-                        onClick={() => { onSelect(option.id); if (option.id !== 'custom') onNext(); }}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05, duration: 0.3 }}
+                        onClick={() => { trigger(); onSelect(option.id); if (option.id !== 'custom') onNext(); }}
                         className={`
                             w-full h-[72px] shrink-0 rounded-2xl flex items-center justify-between px-6 transition-all duration-300 border-2
                             ${selected === option.id

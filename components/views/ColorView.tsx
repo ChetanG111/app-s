@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Check, Palette, ChevronRight } from 'lucide-react';
+import { useHaptic } from '@/hooks/useHaptic';
 
 interface ColorOption {
     id: string;
@@ -33,6 +34,7 @@ export const ColorView: React.FC<ColorViewProps> = ({
     onCustomColorChange,
     onNext 
 }) => {
+    const { trigger } = useHaptic();
     const [isFocused, setIsFocused] = useState(false);
 
     return (
@@ -42,12 +44,15 @@ export const ColorView: React.FC<ColorViewProps> = ({
             </h1>
 
             <div className="w-full max-w-md mt-0 sm:mt-0 sm:mb-auto flex flex-col gap-2.5 px-4 pb-20">
-                {COLOR_OPTIONS.map((option) => {
+                {COLOR_OPTIONS.map((option, index) => {
                     const isDisabled = option.isAI;
                     return (
-                        <button
+                        <motion.button
                             key={option.id}
-                            onClick={() => { if (!isDisabled) { onSelect(option.id); if (option.id !== 'custom') onNext(); } }}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05, duration: 0.3 }}
+                            onClick={() => { trigger(); if (!isDisabled) { onSelect(option.id); if (option.id !== 'custom') onNext(); } }}
                             disabled={isDisabled}
                             className={`
                                 w-full h-14 sm:h-16 shrink-0 rounded-2xl flex items-center justify-between px-6 sm:px-8 text-sm sm:text-lg font-semibold transition-all duration-300 border-2

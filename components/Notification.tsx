@@ -9,6 +9,7 @@ import {
     Info,
     AlertTriangle
 } from 'lucide-react';
+import { useHaptic } from '@/hooks/useHaptic';
 
 export type NotificationType = 'success' | 'warning' | 'error' | 'info';
 
@@ -25,8 +26,11 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
     isVisible,
     onClose
 }) => {
+    const { trigger } = useHaptic();
+
     useEffect(() => {
         if (isVisible) {
+            trigger();
             // Error messages persist longer (15s) so users can read and report
             const duration = type === 'error' ? 15000 : 5000;
             const timer = setTimeout(() => {
@@ -34,7 +38,7 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
             }, duration);
             return () => clearTimeout(timer);
         }
-    }, [isVisible, type, onClose]);
+    }, [isVisible, type, onClose, trigger]);
 
     const styles = {
         success: {

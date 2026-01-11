@@ -1,5 +1,7 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
+import { useHaptic } from '@/hooks/useHaptic';
 
 interface FontOption {
     id: string;
@@ -20,6 +22,8 @@ interface FontViewProps {
 }
 
 export const FontView: React.FC<FontViewProps> = ({ selected, onSelect, onNext }) => {
+    const { trigger } = useHaptic();
+
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-20 pb-28 sm:pt-0 sm:pb-0">
             <h1 className="text-white text-3xl sm:text-5xl font-black mb-10 sm:mb-auto tracking-tight text-center">
@@ -27,10 +31,13 @@ export const FontView: React.FC<FontViewProps> = ({ selected, onSelect, onNext }
             </h1>
 
             <div className="w-full max-w-md flex flex-col gap-4 px-4 sm:mb-auto">
-                {FONT_OPTIONS.map((option) => (
-                    <button
+                {FONT_OPTIONS.map((option, index) => (
+                    <motion.button
                         key={option.id}
-                        onClick={() => { onSelect(option.id); onNext(); }}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05, duration: 0.3 }}
+                        onClick={() => { trigger(); onSelect(option.id); onNext(); }}
                         className={`
               w-full h-14 sm:h-16 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
               ${selected === option.id

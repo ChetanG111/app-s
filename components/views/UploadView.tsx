@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Camera } from 'lucide-react';
 import { NotificationType } from '../Notification';
+import { useHaptic } from '@/hooks/useHaptic';
 
 interface UploadViewProps {
     onUpload: (image: string) => void;
@@ -11,6 +12,7 @@ interface UploadViewProps {
 }
 
 export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, onNext, onNotify }) => {
+    const { trigger } = useHaptic();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
 
@@ -33,6 +35,7 @@ export const UploadView: React.FC<UploadViewProps> = ({ onUpload, currentImage, 
 
                     // Only upload if valid
                     onUpload(e.target?.result as string);
+                    trigger();
                     onNext();
                 };
                 img.src = e.target?.result as string;

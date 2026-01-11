@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
+import { useHaptic } from '@/hooks/useHaptic';
 
 interface TextViewProps {
     value: string;
@@ -9,6 +10,7 @@ interface TextViewProps {
 }
 
 export const TextView: React.FC<TextViewProps> = ({ value, onChange, onNext }) => {
+    const { trigger } = useHaptic();
     const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const limit = 50;
@@ -56,7 +58,7 @@ export const TextView: React.FC<TextViewProps> = ({ value, onChange, onNext }) =
                     </motion.div>
 
                     <button
-                        onClick={onNext}
+                        onClick={() => { trigger(); onNext(); }}
                         className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center shrink-0 hover:bg-zinc-200 active:scale-95 transition-all shadow-lg"
                     >
                         <ChevronRight size={20} className="text-black" strokeWidth={3} />

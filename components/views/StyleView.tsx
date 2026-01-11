@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { isImageLoaded, markImageLoaded } from '@/lib/imageCache';
+import { useHaptic } from '@/hooks/useHaptic';
 
 const LAYOUT_STYLES = [
     { id: 'Basic', name: 'Basic', image: '/previews/Basic.png' },
@@ -16,6 +18,7 @@ interface StyleViewProps {
 }
 
 export const StyleView: React.FC<StyleViewProps> = ({ selected, onSelect, onNext }) => {
+    const { trigger } = useHaptic();
     // Track loading state for each image - initialize based on cache
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
@@ -43,13 +46,16 @@ export const StyleView: React.FC<StyleViewProps> = ({ selected, onSelect, onNext
             </h1>
 
             <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-12 w-full">
-                {LAYOUT_STYLES.map((style) => {
+                {LAYOUT_STYLES.map((style, index) => {
                     const isSelected = selected === style.id;
                     const isLoading = loadingStates[style.id];
                     return (
-                        <div
+                        <motion.div
                             key={style.id}
-                            onClick={() => { onSelect(style.id); onNext(); }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1, duration: 0.4 }}
+                            onClick={() => { trigger(); onSelect(style.id); onNext(); }}
                             className={`
                                 group relative bg-[#0c0c0c] rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-500 border-2
                                 ${isSelected
