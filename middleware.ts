@@ -1,7 +1,10 @@
+import { NextRequest } from 'next/server';
+import NextAuth from 'next-auth';
+import { authConfig } from '@/auth'; // Import authConfig directly
 
-import { auth as middleware } from "@/auth"
+const { auth } = NextAuth(authConfig);
 
-export default middleware((req) => {
+export default auth((req: NextRequest) => {
     const isLoggedIn = !!req.auth;
     const { nextUrl } = req;
     const isDashboard = nextUrl.pathname.startsWith('/dash');

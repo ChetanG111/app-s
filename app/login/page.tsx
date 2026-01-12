@@ -11,22 +11,56 @@ import { Suspense, useEffect } from 'react';
 function LoginPageContent() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        console.log("Login submitted:", { email, password });
-    };
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const searchParams = useSearchParams();
     const router = useRouter();
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const callbackUrl = searchParams.get('callbackUrl') || "/dash";
 
     useEffect(() => {
-        if (session) {
+        if (status === "authenticated") {
             router.push(callbackUrl);
         }
-    }, [session, router, callbackUrl]);
+    }, [status, router, callbackUrl]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError("");
+        setIsLoading(true);
+
+        try {
+            const result = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
+            });
+
+            console.log("SignIn Result:", result);
+
+            if (result?.error) {
+                console.log("SignIn Error Code:", result.error);
+                
+                const errorMap: Record<string, string> = {
+                    "invalid-format": "Invalid email or password format.",
+                    "user-not-found": "No account found with this email.",
+                    "no-password-set": "This account uses Google login. Please sign in with Google.",
+                    "incorrect-password": "The password you entered is incorrect.",
+                    "CredentialsSignin": "Invalid email or password.",
+                    "Configuration": "System configuration error. Please try again later."
+                };
+
+                setError(errorMap[result.error] || "An unexpected error occurred.");
+            } else {
+                router.push(callbackUrl);
+            }
+        } catch (err) {
+            setError("Something went wrong");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleGoogleSignIn = () => {
         signIn("google", { callbackUrl });
@@ -86,6 +120,13 @@ function LoginPageContent() {
                             <div className="h-[1px] bg-white/5 flex-1" />
                         </div>
 
+                        {/* Error Message */}
+                        {error && (
+                            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold text-center">
+                                {error}
+                            </div>
+                        )}
+
                         {/* Email Form */}
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="relative">
@@ -114,16 +155,17 @@ function LoginPageContent() {
 
                             <button
                                 type="submit"
+                                disabled={isLoading}
                                 className={`
                                     w-full h-14 rounded-2xl font-black text-sm transition-all mt-4 flex items-center justify-center gap-3 group
-                                    ${isReady
+                                    ${isReady && !isLoading
                                         ? 'bg-white text-black hover:bg-zinc-200 active:scale-[0.98]'
                                         : 'bg-zinc-900 text-zinc-600 border border-white/5 cursor-not-allowed'
                                     }
                                 `}
                             >
-                                Sign In
-                                <ArrowRight size={18} className={`transition-transform ${isReady ? 'group-hover:translate-x-1' : ''}`} />
+                                {isLoading ? "Signing In..." : "Sign In"}
+                                {!isLoading && <ArrowRight size={18} className={`transition-transform ${isReady ? 'group-hover:translate-x-1' : ''}`} />}
                             </button>
                         </form>
                     </div>

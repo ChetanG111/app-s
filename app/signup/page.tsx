@@ -5,19 +5,66 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Mail, ArrowRight, Chrome, Lock, User, Sparkles } from 'lucide-react';
 import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { RegisterSchema } from '@/lib/validations/auth';
+import { z } from 'zod';
 
 export default function SignupPage() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Signup submitted:", { name, email, password });
+        setError("");
+        setIsLoading(true);
+
+        try {
+            // Client-side validation
+            RegisterSchema.parse({ name, email, password });
+
+            const res = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, password }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                // Throw the specific error message from the API
+                throw new Error(data.error || "Signup failed");
+            }
+
+            // Auto-login after signup
+            await signIn("credentials", {
+                email,
+                password,
+                callbackUrl: "/dash",
+            });
+
+        } catch (err) {
+            if (err instanceof z.ZodError && err.errors && err.errors.length > 0) {
+                // Client-side Zod validation error
+                setError(err.errors[0].message);
+            } else if (err instanceof z.ZodError) {
+                 setError("Invalid input parameters.");
+            } else if (err instanceof Error) {
+                // Server-side error or general error
+                setError(err.message);
+            } else {
+                setError("An unknown error occurred. Please try again.");
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleGoogleSignUp = () => {
-        signIn("google");
+        signIn("google", { callbackUrl: "/dash" });
     };
 
     const isReady = name.length > 0 && email.length > 0 && password.length > 0;
@@ -74,6 +121,13 @@ export default function SignupPage() {
                             <div className="h-[1px] bg-white/5 flex-1" />
                         </div>
 
+                        {/* Error Message */}
+                        {error && (
+                            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold text-center">
+                                {error}
+                            </div>
+                        )}
+
                         {/* Signup Form */}
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="relative">
@@ -114,16 +168,17 @@ export default function SignupPage() {
 
                             <button
                                 type="submit"
+                                disabled={isLoading}
                                 className={`
                                     w-full h-14 rounded-2xl font-black text-sm transition-all mt-4 flex items-center justify-center gap-3 group
-                                    ${isReady
+                                    ${isReady && !isLoading
                                         ? 'bg-white text-black hover:bg-zinc-200 active:scale-[0.98]'
                                         : 'bg-zinc-900 text-zinc-600 border border-white/5 cursor-not-allowed'
                                     }
                                 `}
                             >
-                                Create Account
-                                <ArrowRight size={18} className={`transition-transform ${isReady ? 'group-hover:translate-x-1' : ''}`} />
+                                {isLoading ? "Creating Account..." : "Create Account"}
+                                {!isLoading && <ArrowRight size={18} className={`transition-transform ${isReady ? 'group-hover:translate-x-1' : ''}`} />}
                             </button>
                         </form>
                     </div>
