@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
             const safeFilename = path.basename(filename);
 
             // Find record belonging to user
-            const screenshot = await withRetry(() => prisma.screenshot.findFirst({
+            const screenshot = await withRetry<any>(() => prisma.screenshot.findFirst({
                 where: {
                     userId: session.user!.id,
                     url: {

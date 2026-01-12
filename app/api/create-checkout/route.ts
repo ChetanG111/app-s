@@ -19,6 +19,7 @@ export async function POST(req: Request) {
                 { error: "Unauthorized" },
                 { status: 401 }
             );
+        }
         const userId = session.user.id;
         if (!userId) {
             return NextResponse.json({ error: "User ID missing" }, { status: 400 });

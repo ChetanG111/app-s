@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { dodoClient } from "@/lib/dodo";
 import prisma from "@/lib/prisma";
-import { Tier } from "@prisma/client";
 
 export async function POST(req: Request) {
     try {
@@ -77,7 +76,7 @@ export async function POST(req: Request) {
                     data: {
                         credits: { increment: creditsToAdd },
                         // Upgrade tier if applicable, or just keep track
-                        currentTier: tier as Tier,
+                        currentTier: tier as any,
                     },
                 });
 
@@ -87,7 +86,7 @@ export async function POST(req: Request) {
                         userId,
                         amount: amount / 100, // storing in dollars if amount is cents
                         creditsAdded: creditsToAdd,
-                        tier: tier as Tier,
+                        tier: tier as any,
                         provider: "DODO",
                         providerId: verifiedPayment.payment_id || paymentId,
                     }

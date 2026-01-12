@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { addTextOverlay } from "@/services/typography";
 import { auth } from "@/auth";
 import prisma, { withRetry } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
 import { verifyToken } from "@/lib/security";
 import { rateLimit } from "@/lib/ratelimit";
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
             .getPublicUrl(finalFilename);
 
         // 7. Save to DB & Complete Transaction
-        const screenshotCount = await withRetry(() => prisma.$transaction(async (tx) => {
+        const screenshotCount = await withRetry<number>(() => prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             // Create Screenshot Record
             await tx.screenshot.create({
                 data: {

@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server';
 import NextAuth from 'next-auth';
 import { authConfig } from '@/auth'; // Import authConfig directly
 
-const { auth } = NextAuth(authConfig);
+const { auth } = (NextAuth as any)(authConfig);
 
-export default auth((req: NextRequest) => {
+export default auth((req: any) => {
     const isLoggedIn = !!req.auth;
     const { nextUrl } = req;
     const isDashboard = nextUrl.pathname.startsWith('/dash');

@@ -24,7 +24,7 @@ export async function getUserScreenshots(userId: string) {
             where: { userId },
             orderBy: { createdAt: 'desc' }
         });
-        return screenshots.map(s => ({
+        return screenshots.map((s: any) => ({
             name: s.url.split('/').pop() || s.id,
             url: s.url,
             createdAt: s.createdAt

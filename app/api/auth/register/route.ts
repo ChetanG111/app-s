@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const validatedFields = RegisterSchema.safeParse(body);
 
     if (!validatedFields.success) {
-      const firstError = validatedFields.error.errors[0]?.message || "Invalid input";
+      const firstError = validatedFields.error.issues[0]?.message || "Invalid input";
       return NextResponse.json(
         { error: firstError },
         { status: 400 }

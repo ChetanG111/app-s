@@ -47,9 +47,9 @@ export default function SignupPage() {
             });
 
         } catch (err) {
-            if (err instanceof z.ZodError && err.errors && err.errors.length > 0) {
+            if (err instanceof z.ZodError && err.issues && err.issues.length > 0) {
                 // Client-side Zod validation error
-                setError(err.errors[0].message);
+                setError(err.issues[0].message);
             } else if (err instanceof z.ZodError) {
                  setError("Invalid input parameters.");
             } else if (err instanceof Error) {

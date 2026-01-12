@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 /**
  * CRON JOB: Refund stale PENDING transactions.
  * Run this periodically (e.g., every 10 mins) via Vercel Cron or similar.
  */
 export async function GET(req: Request) {
-    // 1. Security Check (Optional: check for a CRON_SECRET header)
     // 1. Security Check (Required: check for a CRON_SECRET header)
     const authHeader = req.headers.get('authorization');
     const secret = process.env.CRON_SECRET;
@@ -39,7 +39,7 @@ export async function GET(req: Request) {
         // 3. Process each (Atomically refund and mark failed)
         for (const tx of staleTransactions) {
             try {
-                await prisma.$transaction(async (db) => {
+                await prisma.$transaction(async (db: Prisma.TransactionClient) => {
                     // Double check status in case of race condition
                     const currentTx = await db.creditTransaction.findUnique({
                         where: { id: tx.id }

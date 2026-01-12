@@ -9,6 +9,7 @@ import crypto from "crypto";
 import { cv } from "opencv-wasm";
 import { auth } from "@/auth";
 import prisma, { withRetry } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { signToken } from "@/lib/security";
 import { rateLimit } from "@/lib/ratelimit";
 import { LAYOUT_COORDS } from "@/lib/data";
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
 
         // 3. Create Pending Transaction & Deduct Credit
         try {
-            const result = await prisma.$transaction(async (tx) => {
+            const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
                 if (!userId) throw new Error("Unauthorized");
                 const user = await tx.user.findUnique({ where: { id: userId } });
                 if (!user || user.credits < 1) {
