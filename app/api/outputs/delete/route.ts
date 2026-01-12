@@ -4,6 +4,7 @@ import { existsSync } from "fs";
 import path from "path";
 import { auth } from "@/auth";
 import prisma, { withRetry } from "@/lib/prisma";
+import { Screenshot } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
     try {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
             const safeFilename = path.basename(filename);
 
             // Find record belonging to user
-            const screenshot = await withRetry<any>(() => prisma.screenshot.findFirst({
+            const screenshot = await withRetry<Screenshot | null>(() => prisma.screenshot.findFirst({
                 where: {
                     userId: session.user!.id,
                     url: {

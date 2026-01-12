@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
             _cv.warpPerspective(shotMat, warped, M, dsize, _cv.INTER_CUBIC, _cv.BORDER_REPLICATE, new _cv.Scalar(0, 0, 0, 0));
 
             // 3. Generate Soft Mask from Green Screen (The Constraint)
-            
+
             tempHsv = new _cv.Mat();
             _cv.cvtColor(tempMat, tempHsv, _cv.COLOR_RGBA2RGB);
             _cv.cvtColor(tempHsv, tempHsv, _cv.COLOR_RGB2HSV);
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
             dilatedMask = new _cv.Mat();
             kernel = _cv.Mat.ones(3, 3, _cv.CV_8U);
             _cv.dilate(cleanedMask, dilatedMask, kernel, new _cv.Point(-1, -1), 2);
-            
+
             // Set the screen area to pure Black (0,0,0,255)
             // This kills the green halo. Any edge transparency in the overlay will now blend with Black.
             tempMat.setTo(new _cv.Scalar(0, 0, 0, 255), dilatedMask);
@@ -192,13 +192,13 @@ export async function POST(req: NextRequest) {
             // 7. Merge for Overlay
             channels = new _cv.MatVector();
             _cv.split(warped, channels);
-            
+
             newChannels = new _cv.MatVector();
             newChannels.push_back(channels.get(0)); // R
             newChannels.push_back(channels.get(1)); // G
             newChannels.push_back(channels.get(2)); // B
             newChannels.push_back(blurredMask);     // A
-            
+
             _cv.merge(newChannels, warped);
 
             // 8. Prepare Buffers for Sharp
@@ -269,8 +269,8 @@ export async function POST(req: NextRequest) {
                     where: { id: uid },
                     data: { credits: { increment: 1 } }
                 }),
-                prisma.creditTransaction.update({
-                    where: { id: tid },
+                prisma.creditTransaction.updateMany({
+                    where: { id: tid, userId: uid },
                     data: { status: "FAILED" }
                 })
             ])).catch(e => console.error("CRITICAL: Credit refund failed", e));

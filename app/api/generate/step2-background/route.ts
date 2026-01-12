@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         if (payload.imageHash) {
             const incomingHash = crypto.createHash('sha256').update(image).digest('hex');
             if (incomingHash !== payload.imageHash) {
-                 return NextResponse.json({ error: "Image integrity check failed" }, { status: 403 });
+                return NextResponse.json({ error: "Image integrity check failed" }, { status: 403 });
             }
         }
 
@@ -86,26 +86,26 @@ export async function POST(req: NextRequest) {
         const newBase64 = extractImageBase64(result);
 
         if (!newBase64) {
-             throw new Error("Gemini returned no image");
+            throw new Error("Gemini returned no image");
         }
 
         // Hash the output
         const outputHash = crypto.createHash('sha256').update(newBase64).digest('hex');
-        
+
         const nextToken = await signToken({ userId, step: 2, transactionId, imageHash: outputHash });
 
-        return NextResponse.json({ 
-            image: newBase64, 
+        return NextResponse.json({
+            image: newBase64,
             token: nextToken,
-            success: true 
+            success: true
         });
 
     } catch (error: unknown) {
         console.error("Step 2 Background Error:", error);
-        
+
         // Attempt Refund if AI failed
         if (userId) {
-             try {
+            try {
                 // Re-verify token locally in catch block if possible, or use transactionId if it was already set
                 const body = await req.clone().json().catch(() => ({}));
                 const token = body.token;
@@ -120,13 +120,13 @@ export async function POST(req: NextRequest) {
                             where: { id: uid },
                             data: { credits: { increment: 1 } }
                         }),
-                        prisma.creditTransaction.update({
-                            where: { id: tid },
+                        prisma.creditTransaction.updateMany({
+                            where: { id: tid, userId: uid },
                             data: { status: "FAILED" }
                         })
                     ])).catch(e => console.error("CRITICAL: Credit refund failed", e));
                 }
-             } catch(e) { console.error("Refund failed", e); }
+            } catch (e) { console.error("Refund failed", e); }
         }
 
         const message = error instanceof Error ? error.message : "Background generation failed";

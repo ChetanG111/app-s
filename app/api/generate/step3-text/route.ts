@@ -10,7 +10,7 @@ import { rateLimit } from "@/lib/ratelimit";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
@@ -133,8 +133,8 @@ export async function POST(req: NextRequest) {
 
             // Mark Transaction as Completed
             // Assuming CreditTransaction model exists based on Step 1
-            await tx.creditTransaction.update({
-                where: { id: transactionId },
+            await tx.creditTransaction.updateMany({
+                where: { id: transactionId, userId: userId! },
                 data: { status: "COMPLETED" }
             });
 
@@ -179,8 +179,8 @@ export async function POST(req: NextRequest) {
                             where: { id: uid },
                             data: { credits: { increment: 1 } }
                         }),
-                        prisma.creditTransaction.update({
-                            where: { id: tid },
+                        prisma.creditTransaction.updateMany({
+                            where: { id: tid, userId: uid },
                             data: { status: "FAILED" }
                         })
                     ])).catch(e => console.error("CRITICAL: Credit refund failed", e));
