@@ -160,34 +160,33 @@ export async function POST(req: NextRequest) {
 
             mask = new _cv.Mat();
             // Tighten HSV range to avoid bezel reflections (Green is ~60)
-            const lowMat = _cv.matFromArray(1, 3, _cv.CV_8UC1, [35, 50, 50]);
+            // Updated range from runcopy.py
+            const lowMat = _cv.matFromArray(1, 3, _cv.CV_8UC1, [35, 100, 50]);
             const highMat = _cv.matFromArray(1, 3, _cv.CV_8UC1, [85, 255, 255]);
             _cv.inRange(tempHsv, lowMat, highMat, mask);
             lowMat.delete();
             highMat.delete();
 
             // 4. Clean & Refine Mask
-            // Remove noise (white spots)
+            // Use Morph Open to clean noise (from runcopy.py)
             cleanedMask = new _cv.Mat();
-            _cv.medianBlur(mask, cleanedMask, 5);
-
-            // 5. Create "Black Hole" on Template (Remove Green Fringe)
-            // We dilate the mask to ensure we cover ALL green pixels, including the anti-aliased edge.
-            // Then we paint this area BLACK on the template.
-            dilatedMask = new _cv.Mat();
             kernel = _cv.Mat.ones(3, 3, _cv.CV_8U);
+            _cv.morphologyEx(mask, cleanedMask, _cv.MORPH_OPEN, kernel);
+
+            // 5. Expand Mask (The 'Breakage' Fix)
+            // Expand the white area (screen) into the dark bezel.
+            dilatedMask = new _cv.Mat();
+            // Reuse kernel (3x3)
             _cv.dilate(cleanedMask, dilatedMask, kernel, new _cv.Point(-1, -1), 2);
 
-            // Set the screen area to pure Black (0,0,0,255)
-            // This kills the green halo. Any edge transparency in the overlay will now blend with Black.
-            tempMat.setTo(new _cv.Scalar(0, 0, 0, 255), dilatedMask);
-
-            // 6. Blur Mask (Anti-aliasing for Overlay)
-            // We use the ORIGINAL cleaned mask (not dilated) for the image.
-            // This creates a "Fade to Black" effect at the edge, mimicking a bezel gap.
+            // 6. Blur Mask (Feathering)
+            // Blur the DILATED mask to create soft edge
             blurredMask = new _cv.Mat();
-            const ksize = new _cv.Size(5, 5);
-            _cv.GaussianBlur(cleanedMask, blurredMask, ksize, 0, 0, _cv.BORDER_DEFAULT);
+            const ksize = new _cv.Size(3, 3);
+            _cv.GaussianBlur(dilatedMask, blurredMask, ksize, 0, 0, _cv.BORDER_DEFAULT);
+
+            // Note: We do NOT cut a hole in tempMat anymore.
+            // We overlay the warped image (with alpha) on top of the original template.
 
             // 7. Merge for Overlay
             channels = new _cv.MatVector();
