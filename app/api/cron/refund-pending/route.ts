@@ -7,8 +7,12 @@ import prisma from "@/lib/prisma";
  */
 export async function GET(req: Request) {
     // 1. Security Check (Optional: check for a CRON_SECRET header)
+    // 1. Security Check (Required: check for a CRON_SECRET header)
     const authHeader = req.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const secret = process.env.CRON_SECRET;
+
+    // FAIL CLOSED: If secret is not set, or header doesn't match, reject.
+    if (!secret || authHeader !== `Bearer ${secret}`) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -40,13 +44,13 @@ export async function GET(req: Request) {
                     const currentTx = await db.creditTransaction.findUnique({
                         where: { id: tx.id }
                     });
-                    
+
                     if (currentTx?.status !== "PENDING") return;
 
                     // Refund user
                     await db.user.update({
                         where: { id: tx.userId },
-                        data: { credits: { increment: Math.abs(tx.amount) } }
+                        data: { credits: { decrement: tx.amount } }
                     });
 
                     // Mark as FAILED (or could be 'EXPIRED')
@@ -61,8 +65,8 @@ export async function GET(req: Request) {
             }
         }
 
-        return NextResponse.json({ 
-            success: true, 
+        return NextResponse.json({
+            success: true,
             refunded: refundedCount,
             total_stale: staleTransactions.length
         });

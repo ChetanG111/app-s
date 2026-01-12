@@ -1,9 +1,14 @@
 
 import { SignJWT, jwtVerify } from "jose";
 
-const SECRET = new TextEncoder().encode(
-  process.env.AUTH_SECRET || "development_secret_do_not_use_in_prod"
-);
+const SECRET_VAL = process.env.AUTH_SECRET || "development_secret_do_not_use_in_prod";
+
+function getSecret() {
+  if (process.env.NODE_ENV === "production" && (SECRET_VAL === "development_secret_do_not_use_in_prod" || !process.env.AUTH_SECRET)) {
+    throw new Error("FATAL SECURITY: AUTH_SECRET is not set in production. Application will not start.");
+  }
+  return new TextEncoder().encode(SECRET_VAL);
+}
 
 const ALG = "HS256";
 
@@ -12,17 +17,17 @@ export async function signToken(payload: any): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: ALG })
     .setIssuedAt()
-    .setExpirationTime("15m") // Token valid for 15 minutes (enough for the pipeline)
-    .sign(SECRET);
+    .setExpirationTime("10m")
+    .sign(getSecret());
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function verifyToken(token: string): Promise<any | null> {
+export async function verifyToken(token: string): Promise<any> {
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, getSecret(), {
+      algorithms: [ALG],
+    });
     return payload;
   } catch (error) {
-    console.error("Token verification failed:", error);
     return null;
   }
 }

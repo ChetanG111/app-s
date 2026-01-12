@@ -51,6 +51,11 @@ export async function POST(req: NextRequest) {
             token
         } = body;
 
+        // Validation - Prevent DoS with massive text
+        if (headline && headline.trim().length > 200) {
+            return NextResponse.json({ error: "Headline too long (max 200 chars)" }, { status: 400 });
+        }
+
         // 2. Security Check
         if (!token) {
             return NextResponse.json({ error: "Missing security token" }, { status: 403 });

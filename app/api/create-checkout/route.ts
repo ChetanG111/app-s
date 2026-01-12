@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { dodoClient } from "@/lib/dodo";
 import { auth } from "@/auth";
 import { z } from "zod";
+import { rateLimit } from "@/lib/ratelimit";
 
 const CheckoutSchema = z.object({
     plan: z.enum(["starter", "pro"]),
@@ -18,6 +19,15 @@ export async function POST(req: Request) {
                 { error: "Unauthorized" },
                 { status: 401 }
             );
+        const userId = session.user.id;
+        if (!userId) {
+            return NextResponse.json({ error: "User ID missing" }, { status: 400 });
+        }
+
+        // Rate Limit: 5 attempts per minute (generous but stops script spam)
+        const { success } = await rateLimit(`checkout:${userId}`, 5, 60);
+        if (!success) {
+            return NextResponse.json({ error: "Too many checkout attempts. Please wait." }, { status: 429 });
         }
 
         const body = await req.json();
