@@ -60,7 +60,7 @@ export async function POST(req: Request) {
             if (creditsToAdd === 0) {
                 const amt = Number(amount);
                 if (amt === 10 || amt === 1000) {
-                    creditsToAdd = 10;
+                    creditsToAdd = 15;
                     tier = "STARTER";
                 } else if (amt === 50 || amt === 5000) {
                     creditsToAdd = 70;
