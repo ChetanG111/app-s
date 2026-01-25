@@ -141,39 +141,11 @@ export const TranslateView: React.FC<TranslateViewProps> = ({
                     );
                 })}
 
-                {/* Total Cost Indicator */}
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 p-4 rounded-3xl bg-[#0c0c0c]/80 border border-white/5 flex items-center justify-between"
-                >
-                    <div className="flex flex-col gap-1">
-                        <span className="text-xs font-bold text-white uppercase tracking-wider">
-                            {selectedLanguages.length} language{selectedLanguages.length !== 1 ? 's' : ''} selected
-                        </span>
-                        <p className="text-[10px] text-zinc-500 font-medium">
-                            Each language generates a separate screenshot.
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <div className="flex flex-col items-end">
-                            <div className="flex items-center gap-1">
-                                <Zap size={14} className="text-blue-400 fill-blue-400" />
-                                <span className="text-lg font-black text-white">{creditCost}</span>
-                            </div>
-                            <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-tighter">Total Credits</span>
-                        </div>
-                    </div>
-                </motion.div>
-
-                <p className="text-zinc-500 text-[11px] mt-6 text-center font-medium leading-relaxed flex items-center justify-center gap-2">
-                    <Sparkles size={12} className="text-zinc-700" />
-                    {disabled
-                        ? "Enter a headline first to enable translation options."
-                        : "Targeting large audiences increases app visibility by up to 4x."
-                    }
+                {/* Credit Cost Text */}
+                <p className="text-zinc-500 text-[11px] mt-6 text-center font-medium">
+                    One language costs 1 credit.
                 </p>
+
 
                 {/* Mobile Continue Button */}
                 <div className="sm:hidden mt-6 flex justify-center">
