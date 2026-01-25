@@ -1,6 +1,6 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Users, Sparkles, ChevronRight, Zap, Globe } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Check, Users, Sparkles, ChevronRight, Zap } from 'lucide-react';
 import { useHaptic } from '@/hooks/useHaptic';
 
 interface LanguageOption {
@@ -11,6 +11,12 @@ interface LanguageOption {
 }
 
 const LANGUAGE_OPTIONS: LanguageOption[] = [
+    {
+        id: 'english',
+        label: 'English',
+        audience: '1.5B+',
+        flag: '🇺🇸'
+    },
     {
         id: 'french',
         label: 'French',
@@ -38,57 +44,51 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 ];
 
 interface TranslateViewProps {
-    selected: string | null;
-    onSelect: (id: string | null) => void;
-    includeEnglish: boolean;
-    onIncludeEnglishChange: (val: boolean) => void;
+    selectedLanguages: string[];
+    onSelectLanguages: (languages: string[]) => void;
     onNext: () => void;
     disabled?: boolean;
 }
 
 export const TranslateView: React.FC<TranslateViewProps> = ({
-    selected,
-    onSelect,
-    includeEnglish,
-    onIncludeEnglishChange,
+    selectedLanguages,
+    onSelectLanguages,
     onNext,
     disabled = false
 }) => {
     const { trigger } = useHaptic();
 
-    const handleSelect = (id: string) => {
+    const handleToggle = (id: string) => {
         if (disabled) return;
         trigger();
-        if (selected === id) {
-            onSelect(null);
-            if (includeEnglish) onIncludeEnglishChange(false);
+
+        if (selectedLanguages.includes(id)) {
+            // Don't allow deselecting if it's the last one
+            if (selectedLanguages.length === 1) return;
+            onSelectLanguages(selectedLanguages.filter(lang => lang !== id));
         } else {
-            onSelect(id);
+            onSelectLanguages([...selectedLanguages, id]);
         }
     };
 
-    const handleToggle = () => {
-        if (!selected || disabled) return;
-        trigger();
-        onIncludeEnglishChange(!includeEnglish);
-    };
+    const creditCost = selectedLanguages.length;
 
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
             <h1 className="text-white text-3xl sm:text-5xl font-black mb-10 sm:mb-auto pt-48 sm:pt-32 tracking-tight text-center leading-tight">
-                Translate Headline
+                Select Languages
             </h1>
 
             <div className="w-full max-w-lg mt-0 sm:mt-0 sm:mb-auto flex flex-col gap-2 px-4 pb-20">
                 {LANGUAGE_OPTIONS.map((lang, index) => {
-                    const isSelected = selected === lang.id;
+                    const isSelected = selectedLanguages.includes(lang.id);
                     return (
                         <motion.button
                             key={lang.id}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05, duration: 0.3 }}
-                            onClick={() => handleSelect(lang.id)}
+                            onClick={() => handleToggle(lang.id)}
                             className={`
                                 relative p-3.5 rounded-xl border-2 transition-all duration-300 flex items-center gap-4 group w-full
                                 ${disabled
@@ -124,7 +124,7 @@ export const TranslateView: React.FC<TranslateViewProps> = ({
                                         </span>
                                     </div>
                                     <span className={`text-[7px] font-bold uppercase tracking-[0.1em] mt-0.5 ${isSelected ? 'text-zinc-500' : 'text-zinc-600'}`}>
-                                        Generation Cost
+                                        Credit Cost
                                     </span>
                                 </div>
                                 {isSelected ? (
@@ -141,49 +141,31 @@ export const TranslateView: React.FC<TranslateViewProps> = ({
                     );
                 })}
 
-                <AnimatePresence>
-                    {selected && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="mt-4 p-4 rounded-3xl bg-[#0c0c0c]/80 border border-white/5 flex items-center justify-between"
-                        >
-                            <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-2">
-                                    <Globe size={14} className="text-blue-400" />
-                                    <span className="text-xs font-bold text-white uppercase tracking-wider">Multi-Language Pack</span>
-                                </div>
-                                <p className="text-[10px] text-zinc-500 font-medium">Generate both English and translated mockups.</p>
-                            </div>
+                {/* Total Cost Indicator */}
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-4 rounded-3xl bg-[#0c0c0c]/80 border border-white/5 flex items-center justify-between"
+                >
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">
+                            {selectedLanguages.length} language{selectedLanguages.length !== 1 ? 's' : ''} selected
+                        </span>
+                        <p className="text-[10px] text-zinc-500 font-medium">
+                            Each language generates a separate screenshot.
+                        </p>
+                    </div>
 
-                            <div className="flex items-center gap-4">
-                                <div className="flex flex-col items-end">
-                                    <div className="flex items-center gap-1">
-                                        <Zap size={12} className="text-blue-400 fill-blue-400" />
-                                        <span className="text-xs font-black text-white">{includeEnglish ? '2' : '1'}</span>
-                                    </div>
-                                    <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-tighter">Total Cost</span>
-                                </div>
-
-                                <button
-                                    onClick={handleToggle}
-                                    disabled={disabled}
-                                    className={`
-                                        w-12 h-6 rounded-full relative transition-all duration-300 p-1
-                                        ${disabled ? 'bg-zinc-900 cursor-not-allowed' : includeEnglish ? 'bg-blue-500' : 'bg-zinc-800'}
-                                    `}
-                                >
-                                    <motion.div
-                                        animate={{ x: includeEnglish ? 24 : 0 }}
-                                        className="w-4 h-4 bg-white rounded-full shadow-lg"
-                                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                    />
-                                </button>
+                    <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-end">
+                            <div className="flex items-center gap-1">
+                                <Zap size={14} className="text-blue-400 fill-blue-400" />
+                                <span className="text-lg font-black text-white">{creditCost}</span>
                             </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                            <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-tighter">Total Credits</span>
+                        </div>
+                    </div>
+                </motion.div>
 
                 <p className="text-zinc-500 text-[11px] mt-6 text-center font-medium leading-relaxed flex items-center justify-center gap-2">
                     <Sparkles size={12} className="text-zinc-700" />
@@ -193,13 +175,24 @@ export const TranslateView: React.FC<TranslateViewProps> = ({
                     }
                 </p>
 
-                {/* Mobile Skip Button only */}
+                {/* Mobile Continue Button */}
                 <div className="sm:hidden mt-6 flex justify-center">
                     <button
                         onClick={() => { trigger(); onNext(); }}
-                        className="px-8 py-3 bg-white/5 text-zinc-400 rounded-full text-xs font-bold uppercase tracking-widest"
+                        disabled={disabled || selectedLanguages.length === 0}
+                        className={`
+                            px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2
+                            ${disabled || selectedLanguages.length === 0
+                                ? 'bg-white/5 text-zinc-600 cursor-not-allowed'
+                                : 'bg-white text-black'
+                            }
+                        `}
                     >
-                        {selected ? 'Continue' : 'Skip'}
+                        Continue
+                        <span className="flex items-center gap-1 px-2 py-0.5 bg-black/10 rounded-full">
+                            <Zap size={10} className="text-blue-600 fill-blue-600" />
+                            {creditCost}
+                        </span>
                     </button>
                 </div>
             </div>

@@ -54,8 +54,7 @@ export default function Dashboard() {
     const [customColor, setCustomColor] = useState("#ffffff");
     const [selectedBg, setSelectedBg] = useState("charcoal");
     const [customBgPrompt, setCustomBgPrompt] = useState("");
-    const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
-    const [includeEnglishHeadline, setIncludeEnglishHeadline] = useState(false);
+    const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['english']);
     const [projectName, setProjectName] = useState("App-1");
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentStep, setCurrentStep] = useState<string | null>(null);
@@ -104,95 +103,119 @@ export default function Dashboard() {
             return;
         }
 
+        if (selectedLanguages.length === 0) {
+            showNotification("Please select at least one language.", "warning");
+            return;
+        }
+
         setIsGenerating(true);
-        setCurrentStep("Creating overlay");
+        const totalLanguages = selectedLanguages.length;
+        let successCount = 0;
+        const failedLanguages: string[] = [];
 
-        try {
-            // STEP 1: Warp
-            const res1 = await fetch("/api/generate/step1-warp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    screenshot: uploadedImage,
-                    style: selectedStyle,
-                    skipWarp: !generateWarp
-                }),
-            });
-            const data1 = await res1.json();
-            if (!res1.ok) throw new Error(data1.error || "Step 1 failed");
+        // Generate for each selected language sequentially
+        for (let i = 0; i < selectedLanguages.length; i++) {
+            const language = selectedLanguages[i];
+            const languageLabel = language.charAt(0).toUpperCase() + language.slice(1);
 
-            const tokenStep1 = data1.token;
+            try {
+                setCurrentStep(`Creating overlay (${i + 1}/${totalLanguages})`);
 
-            // STEP 2: Background
-            setCurrentStep(generateBackground ? "Generating background" : "Processing...");
-            const res2 = await fetch("/api/generate/step2-background", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    image: data1.image,
-                    backgroundId: selectedBg,
-                    customBackground: customBgPrompt,
-                    skipBackground: !generateBackground,
-                    token: tokenStep1
-                }),
-            });
-            const data2 = await res2.json();
-            if (!res2.ok) throw new Error(data2.error || "Step 2 failed");
-
-            const tokenStep2 = data2.token;
-
-            // NEW: Translation Step
-            let finalHeadline = headline;
-            if (selectedLanguage && headline) {
-                setCurrentStep(`Translating into ${selectedLanguage}`);
-                const transRes = await fetch("/api/translate", {
+                // STEP 1: Warp
+                const res1 = await fetch("/api/generate/step1-warp", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        text: headline,
-                        targetLanguage: selectedLanguage
+                        screenshot: uploadedImage,
+                        style: selectedStyle,
+                        skipWarp: !generateWarp
                     }),
                 });
-                const transData = await transRes.json();
-                if (transRes.ok && transData.translatedText) {
-                    finalHeadline = transData.translatedText;
+                const data1 = await res1.json();
+                if (!res1.ok) throw new Error(data1.error || "Step 1 failed");
+
+                const tokenStep1 = data1.token;
+
+                // STEP 2: Background
+                setCurrentStep(generateBackground ? `Generating background (${i + 1}/${totalLanguages})` : `Processing (${i + 1}/${totalLanguages})...`);
+                const res2 = await fetch("/api/generate/step2-background", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        image: data1.image,
+                        backgroundId: selectedBg,
+                        customBackground: customBgPrompt,
+                        skipBackground: !generateBackground,
+                        token: tokenStep1
+                    }),
+                });
+                const data2 = await res2.json();
+                if (!res2.ok) throw new Error(data2.error || "Step 2 failed");
+
+                const tokenStep2 = data2.token;
+
+                // Translation Step (skip for English)
+                let finalHeadline = headline;
+                if (language !== 'english' && headline) {
+                    setCurrentStep(`Translating to ${languageLabel} (${i + 1}/${totalLanguages})`);
+                    const transRes = await fetch("/api/translate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            text: headline,
+                            targetLanguage: language
+                        }),
+                    });
+                    const transData = await transRes.json();
+                    if (transRes.ok && transData.translatedText) {
+                        finalHeadline = transData.translatedText;
+                    }
                 }
+
+                // STEP 3: Text & Save
+                setCurrentStep(`Adding text (${i + 1}/${totalLanguages})`);
+                const res3 = await fetch("/api/generate/step3-text", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        image: data2.image,
+                        headline: finalHeadline,
+                        font: selectedFont,
+                        color: selectedColor === 'custom' ? customColor : selectedColor,
+                        style: selectedStyle,
+                        backgroundId: selectedBg,
+                        token: tokenStep2,
+                        skipText: !generateText
+                    }),
+                });
+                const data3 = await res3.json();
+                if (!res3.ok) throw new Error(data3.error || "Step 3 failed");
+
+                // Store for instant display (base64 + supabase URL)
+                if (data3.image && data3.url) {
+                    setLatestGeneratedImage({ image: data3.image, url: data3.url });
+                }
+
+                successCount++;
+            } catch (err) {
+                console.error(`Failed to generate for ${languageLabel}:`, err);
+                failedLanguages.push(languageLabel);
             }
-
-            // STEP 3: Text & Save
-            setCurrentStep("Adding text");
-            const res3 = await fetch("/api/generate/step3-text", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    image: data2.image,
-                    headline: finalHeadline,
-                    font: selectedFont,
-                    color: selectedColor === 'custom' ? customColor : selectedColor,
-                    style: selectedStyle,
-                    backgroundId: selectedBg,
-                    token: tokenStep2,
-                    skipText: !generateText
-                }),
-            });
-            const data3 = await res3.json();
-            if (!res3.ok) throw new Error(data3.error || "Step 3 failed");
-
-            // Store for instant display (base64 + supabase URL)
-            if (data3.image && data3.url) {
-                setLatestGeneratedImage({ image: data3.image, url: data3.url });
-            }
-
-            showNotification("Mockup generated successfully!", "success");
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : "Generation failed";
-            showNotification(errorMessage, "error");
-        } finally {
-            setIsGenerating(false);
-            setCurrentStep(null);
-            mutate('/api/credits');
-            mutate('/api/outputs'); // Refresh outputs list
         }
+
+        // Show appropriate notification based on results
+        if (successCount === totalLanguages) {
+            showNotification(`${successCount} mockup${successCount !== 1 ? 's' : ''} generated successfully!`, "success");
+        } else if (successCount > 0) {
+            showNotification(`${successCount}/${totalLanguages} generated. Failed: ${failedLanguages.join(', ')}`, "warning");
+        } else {
+            showNotification(`Generation failed for all languages`, "error");
+        }
+
+        setIsGenerating(false);
+        setCurrentStep(null);
+        mutate('/api/credits');
+        mutate('/api/outputs'); // Refresh outputs list
     };
 
     const icons = [
@@ -339,10 +362,8 @@ export default function Dashboard() {
 
                 {selectedIndex === 4 && (
                     <TranslateView
-                        selected={selectedLanguage}
-                        onSelect={setSelectedLanguage}
-                        includeEnglish={includeEnglishHeadline}
-                        onIncludeEnglishChange={setIncludeEnglishHeadline}
+                        selectedLanguages={selectedLanguages}
+                        onSelectLanguages={setSelectedLanguages}
                         onNext={handleNext}
                         disabled={!headline.trim()}
                     />
@@ -379,8 +400,9 @@ export default function Dashboard() {
                             style: selectedStyle,
                             background: selectedBg,
                             headline,
-                            language: selectedLanguage
+                            languages: selectedLanguages
                         }}
+                        creditCost={selectedLanguages.length}
                         onNotify={showNotification}
                         onConfirm={confirm}
                         onExport={(url) => setExportConfig({ isOpen: true, url })}
@@ -403,6 +425,14 @@ export default function Dashboard() {
                             `}
                         >
                             Continue
+                            {selectedIndex === 4 && selectedLanguages.length > 0 && (
+                                <span className="flex items-center gap-1 px-2.5 py-1 bg-black/10 rounded-full text-sm">
+                                    <svg className="w-3 h-3 text-blue-600 fill-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    {selectedLanguages.length}
+                                </span>
+                            )}
                             <ChevronDown
                                 size={20}
                                 strokeWidth={3}

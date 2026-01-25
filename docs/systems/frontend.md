@@ -13,15 +13,19 @@ The editor is a wizard. We explicitly separate logic into "Views":
 -   `UploadView`: Drag & Drop screenshot.
 -   `StyleView`: Choose device template (Basic, Rotated).
 -   `BackgroundView`: AI Prompting.
--   `TextView`: Typography controls.
+-   `TextView`: Headline input.
+-   `TranslateView`: Multi-language selection (English + 4 languages).
+-   `FontView`: Font selection.
+-   `ColorView`: Text color picker.
+-   `GenerateView`: Generation trigger + output gallery.
 
 ## Editor Logic
-Located in `app/dash/page.tsx` (or `GenerateView.tsx`).
-It orchestrates the **Generation Pipeline**:
-1.  Calls `step1-warp`.
-2.  Received `image` + `token`.
-3.  Calls `step2-background` with `token`.
-4.  ...
+Located in `app/dash/page.tsx`.
+It orchestrates the **Generation Pipeline** for each selected language:
+1.  Loops through `selectedLanguages` array.
+2.  For each language: calls `step1-warp` → `step2-background` → (translate if not English) → `step3-text`.
+3.  Each language generates one screenshot (1 credit each).
+4.  Failures per-language don't stop subsequent languages.
 
 ## Design System
 -   **Components**: Radix UI primitives (headless) + Tailwind.

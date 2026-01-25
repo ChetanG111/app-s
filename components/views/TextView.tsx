@@ -79,7 +79,7 @@ export const TextView: React.FC<TextViewProps> = ({
                     This text will appear at the top of your generated mockup. Make it punchy and clear.
                 </p>
 
-                {onGenerateTextChange && (
+                {onGenerateTextChange && process.env.NODE_ENV === 'development' && (
                     <div className="mt-12 flex flex-col items-center p-4 border border-dashed border-zinc-800 rounded-3xl bg-zinc-900/10">
                         <div className="flex items-center gap-4">
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Dev Tool</span>
