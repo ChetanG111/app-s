@@ -55,6 +55,7 @@ export default function Dashboard() {
     const [selectedBg, setSelectedBg] = useState("charcoal");
     const [customBgPrompt, setCustomBgPrompt] = useState("");
     const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+    const [includeEnglishHeadline, setIncludeEnglishHeadline] = useState(false);
     const [projectName, setProjectName] = useState("App-1");
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentStep, setCurrentStep] = useState<string | null>(null);
@@ -137,6 +138,24 @@ export default function Dashboard() {
 
             const tokenStep2 = data2.token;
 
+            // NEW: Translation Step
+            let finalHeadline = headline;
+            if (selectedLanguage && headline) {
+                setCurrentStep(`Translating into ${selectedLanguage}`);
+                const transRes = await fetch("/api/translate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        text: headline,
+                        targetLanguage: selectedLanguage
+                    }),
+                });
+                const transData = await transRes.json();
+                if (transRes.ok && transData.translatedText) {
+                    finalHeadline = transData.translatedText;
+                }
+            }
+
             // STEP 3: Text & Save
             setCurrentStep("Adding text");
             const res3 = await fetch("/api/generate/step3-text", {
@@ -144,7 +163,7 @@ export default function Dashboard() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     image: data2.image,
-                    headline,
+                    headline: finalHeadline,
                     font: selectedFont,
                     color: selectedColor === 'custom' ? customColor : selectedColor,
                     style: selectedStyle,
@@ -237,7 +256,10 @@ export default function Dashboard() {
                 <div className="flex flex-row sm:flex-col items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-[22px] sm:rounded-full p-1 sm:p-2 shadow-[0_8px_32px_rgba(0,0,0,0.8)]">
                     {icons.map((item, index) => {
                         const isSelected = selectedIndex === index;
-                        const isDisabled = !uploadedImage && index !== 0 && index !== (icons.length - 1);
+                        const isHeadlineView = item.id === 'translate' || item.id === 'font' || item.id === 'color';
+                        const isHeadlineEmpty = !headline.trim();
+
+                        const isDisabled = (!uploadedImage && index !== 0 && index !== (icons.length - 1)) || (isHeadlineView && isHeadlineEmpty);
 
                         return (
                             <div key={item.id} className="relative">
@@ -311,7 +333,10 @@ export default function Dashboard() {
                     <TranslateView
                         selected={selectedLanguage}
                         onSelect={setSelectedLanguage}
+                        includeEnglish={includeEnglishHeadline}
+                        onIncludeEnglishChange={setIncludeEnglishHeadline}
                         onNext={handleNext}
+                        disabled={!headline.trim()}
                     />
                 )}
 
@@ -320,6 +345,7 @@ export default function Dashboard() {
                         selected={selectedFont}
                         onSelect={setSelectedFont}
                         onNext={handleNext}
+                        disabled={!headline.trim()}
                     />
                 )}
 
@@ -330,6 +356,7 @@ export default function Dashboard() {
                         customColor={customColor}
                         onCustomColorChange={setCustomColor}
                         onNext={handleNext}
+                        disabled={!headline.trim()}
                     />
                 )}
 
@@ -343,7 +370,8 @@ export default function Dashboard() {
                         settings={{
                             style: selectedStyle,
                             background: selectedBg,
-                            headline
+                            headline,
+                            language: selectedLanguage
                         }}
                         onNotify={showNotification}
                         onConfirm={confirm}

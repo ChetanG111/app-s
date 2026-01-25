@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
         const screenshotBuffer = Buffer.from(screenshot.split(",")[1], 'base64');
         const shotRaw = await sharp(screenshotBuffer)
             .ensureAlpha()
-            .resize(1200)
+            .resize(1320)
             .toFormat('raw')
             .toBuffer({ resolveWithObject: true });
 

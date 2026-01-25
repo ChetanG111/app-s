@@ -19,9 +19,10 @@ interface FontViewProps {
     selected: string;
     onSelect: (id: string) => void;
     onNext: () => void;
+    disabled?: boolean;
 }
 
-export const FontView: React.FC<FontViewProps> = ({ selected, onSelect, onNext }) => {
+export const FontView: React.FC<FontViewProps> = ({ selected, onSelect, onNext, disabled = false }) => {
     const { trigger } = useHaptic();
 
     return (
@@ -37,17 +38,20 @@ export const FontView: React.FC<FontViewProps> = ({ selected, onSelect, onNext }
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05, duration: 0.3 }}
-                        onClick={() => { trigger(); onSelect(option.id); onNext(); }}
+                        onClick={() => { if (!disabled) { trigger(); onSelect(option.id); onNext(); } }}
+                        disabled={disabled}
                         className={`
               w-full h-14 sm:h-16 rounded-2xl flex items-center justify-between px-8 text-lg font-semibold transition-all duration-300 border-2
-              ${selected === option.id
-                                ? 'bg-white text-black border-white scale-[1.02]'
-                                : 'bg-[#0c0c0c]/80 border-zinc-800 text-zinc-400 hover:border-zinc-500 hover:text-white'
+              ${disabled
+                                ? 'bg-[#0c0c0c]/40 border-zinc-900/50 text-zinc-600 cursor-not-allowed opacity-50'
+                                : selected === option.id
+                                    ? 'bg-white text-black border-white scale-[1.02]'
+                                    : 'bg-[#0c0c0c]/80 border-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-white'
                             }
             `}
                     >
                         <span className={option.className}>{option.label}</span>
-                        {selected === option.id && (
+                        {selected === option.id && !disabled && (
                             <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
                                 <Check size={14} className="text-white" strokeWidth={4} />
                             </div>
@@ -58,7 +62,10 @@ export const FontView: React.FC<FontViewProps> = ({ selected, onSelect, onNext }
 
 
                 <p className="text-zinc-500 text-sm mt-8 sm:mt-12 text-center">
-                    Choose a font that matches your app&apos;s brand identity.
+                    {disabled
+                        ? "Enter a headline first to choose a font."
+                        : "Choose a font that matches your app's brand identity."
+                    }
                 </p>
             </div>
         </div>

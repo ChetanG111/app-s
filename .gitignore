@@ -33,3 +33,4 @@ public/intermediate/*
 /app/generated/prisma
 
 .env
+test-s

@@ -19,6 +19,7 @@ interface GenerateViewProps {
         style: string;
         background: string;
         headline: string;
+        language: string | null;
     };
     onNotify?: (message: string, type: NotificationType) => void;
     onConfirm?: (options: { title: string; message: string; isDanger?: boolean; onConfirm: () => void }) => void;
@@ -100,6 +101,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
     const uiSteps = [
         "Creating Overlay",
         "Background Generation",
+        "Translating",
         "Adding Text",
         "Verifying"
     ];
@@ -113,14 +115,16 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
 
         switch (currentStep) {
             case "Creating overlay":
-            case "Verifying": // Treat the first verification as part of the overlay creation
+            case "Verifying":
                 return 0;
             case "Generating background":
                 return 1;
-            case "Adding text":
+            case (currentStep.startsWith("Translating") ? currentStep : null):
                 return 2;
+            case "Adding text":
+                return 3;
             case "Cleaning up":
-                return 3; // Show "Verifying" in UI for the final cleanup/save phase
+                return 4;
             default:
                 return 0;
         }

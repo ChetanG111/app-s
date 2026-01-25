@@ -1,36 +1,38 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Check, Users, Sparkles, ChevronRight, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, Users, Sparkles, ChevronRight, Zap, Globe } from 'lucide-react';
 import { useHaptic } from '@/hooks/useHaptic';
 
 interface LanguageOption {
     id: string;
     label: string;
-    description: string;
     audience: string;
     flag: string;
 }
 
 const LANGUAGE_OPTIONS: LanguageOption[] = [
     {
-        id: 'hindi',
-        label: 'Hindi',
-        audience: '600M+',
-        description: 'Primary language for localized Indian markets.',
-        flag: '🇮🇳'
+        id: 'french',
+        label: 'French',
+        audience: '300M+',
+        flag: '🇫🇷'
+    },
+    {
+        id: 'german',
+        label: 'German',
+        audience: '130M+',
+        flag: '🇩🇪'
     },
     {
         id: 'spanish',
         label: 'Spanish',
         audience: '530M+',
-        description: 'Essential for global social outreach.',
         flag: '🇪🇸'
     },
     {
         id: 'portuguese',
         label: 'Portuguese',
         audience: '260M+',
-        description: 'Fastest growing market in Latin America.',
         flag: '🇧🇷'
     },
 ];
@@ -38,23 +40,37 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 interface TranslateViewProps {
     selected: string | null;
     onSelect: (id: string | null) => void;
+    includeEnglish: boolean;
+    onIncludeEnglishChange: (val: boolean) => void;
     onNext: () => void;
+    disabled?: boolean;
 }
 
 export const TranslateView: React.FC<TranslateViewProps> = ({
     selected,
     onSelect,
-    onNext
+    includeEnglish,
+    onIncludeEnglishChange,
+    onNext,
+    disabled = false
 }) => {
     const { trigger } = useHaptic();
 
     const handleSelect = (id: string) => {
+        if (disabled) return;
         trigger();
         if (selected === id) {
             onSelect(null);
+            if (includeEnglish) onIncludeEnglishChange(false);
         } else {
             onSelect(id);
         }
+    };
+
+    const handleToggle = () => {
+        if (!selected || disabled) return;
+        trigger();
+        onIncludeEnglishChange(!includeEnglish);
     };
 
     return (
@@ -63,7 +79,7 @@ export const TranslateView: React.FC<TranslateViewProps> = ({
                 Translate Headline
             </h1>
 
-            <div className="w-full max-w-xl mt-0 sm:mt-0 sm:mb-auto flex flex-col gap-3 px-4 pb-20">
+            <div className="w-full max-w-lg mt-0 sm:mt-0 sm:mb-auto flex flex-col gap-2 px-4 pb-20">
                 {LANGUAGE_OPTIONS.map((lang, index) => {
                     const isSelected = selected === lang.id;
                     return (
@@ -74,51 +90,50 @@ export const TranslateView: React.FC<TranslateViewProps> = ({
                             transition={{ delay: index * 0.05, duration: 0.3 }}
                             onClick={() => handleSelect(lang.id)}
                             className={`
-                                relative p-5 rounded-2xl border-2 transition-all duration-300 flex items-center gap-6 group w-full
-                                ${isSelected
-                                    ? 'bg-white text-black border-white scale-[1.02] shadow-xl shadow-black/20'
-                                    : 'bg-[#0c0c0c]/80 border-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-white'
+                                relative p-3.5 rounded-xl border-2 transition-all duration-300 flex items-center gap-4 group w-full
+                                ${disabled
+                                    ? 'bg-[#0c0c0c]/40 border-zinc-900/50 text-zinc-600 cursor-not-allowed opacity-50'
+                                    : isSelected
+                                        ? 'bg-white text-black border-white scale-[1.01] shadow-lg shadow-black/20'
+                                        : 'bg-[#0c0c0c]/80 border-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-white'
                                 }
                             `}
                         >
-                            <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-3xl shrink-0 transition-colors ${isSelected ? 'bg-zinc-100' : 'bg-white/5'}`}>
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl shrink-0 transition-colors ${isSelected ? 'bg-zinc-100' : 'bg-white/5'}`}>
                                 {lang.flag}
                             </div>
 
                             <div className="flex flex-col items-start text-left flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <h3 className={`text-xl font-bold truncate ${isSelected ? 'text-black' : 'text-white'}`}>
+                                    <h3 className={`text-base font-bold truncate ${isSelected ? 'text-black' : 'text-white'}`}>
                                         {lang.label}
                                     </h3>
-                                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${isSelected ? 'bg-black/5 text-black/60' : 'bg-white/5 text-zinc-500'}`}>
-                                        <Users size={10} strokeWidth={3} />
+                                    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${isSelected ? 'bg-black/5 text-black/60' : 'bg-white/5 text-zinc-500'}`}>
+                                        <Users size={8} strokeWidth={3} />
                                         {lang.audience}
                                     </div>
                                 </div>
-                                <p className={`text-xs mt-1 font-medium leading-relaxed truncate w-full ${isSelected ? 'text-zinc-600' : 'text-zinc-500'}`}>
-                                    {lang.description}
-                                </p>
                             </div>
 
-                            <div className="flex items-center gap-4 shrink-0">
+                            <div className="flex items-center gap-3 shrink-0">
                                 <div className="hidden sm:flex flex-col items-end">
-                                    <div className="flex items-center gap-1.5">
-                                        <Zap size={12} className={`${isSelected ? 'text-blue-600 fill-blue-600' : 'text-blue-400 fill-blue-400'}`} />
-                                        <span className={`text-[12px] font-black uppercase tracking-widest ${isSelected ? 'text-black' : 'text-white'}`}>
+                                    <div className="flex items-center gap-1">
+                                        <Zap size={10} className={`${isSelected ? 'text-blue-600 fill-blue-600' : 'text-blue-400 fill-blue-400'}`} />
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${isSelected ? 'text-black' : 'text-white'}`}>
                                             1
                                         </span>
                                     </div>
-                                    <span className={`text-[8px] font-bold uppercase tracking-[0.1em] mt-0.5 ${isSelected ? 'text-zinc-500' : 'text-zinc-600'}`}>
+                                    <span className={`text-[7px] font-bold uppercase tracking-[0.1em] mt-0.5 ${isSelected ? 'text-zinc-500' : 'text-zinc-600'}`}>
                                         Generation Cost
                                     </span>
                                 </div>
                                 {isSelected ? (
-                                    <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
-                                        <Check size={16} className="text-white" strokeWidth={4} />
+                                    <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
+                                        <Check size={12} className="text-white" strokeWidth={4} />
                                     </div>
                                 ) : (
-                                    <div className="w-8 h-8 rounded-full border border-zinc-800 group-hover:border-zinc-600 transition-colors flex items-center justify-center">
-                                        <ChevronRight size={16} className="text-zinc-800 group-hover:text-zinc-600" />
+                                    <div className="w-6 h-6 rounded-full border border-zinc-800 group-hover:border-zinc-600 transition-colors flex items-center justify-center">
+                                        <ChevronRight size={12} className="text-zinc-800 group-hover:text-zinc-600" />
                                     </div>
                                 )}
                             </div>
@@ -126,9 +141,56 @@ export const TranslateView: React.FC<TranslateViewProps> = ({
                     );
                 })}
 
+                <AnimatePresence>
+                    {selected && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="mt-4 p-4 rounded-3xl bg-[#0c0c0c]/80 border border-white/5 flex items-center justify-between"
+                        >
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                    <Globe size={14} className="text-blue-400" />
+                                    <span className="text-xs font-bold text-white uppercase tracking-wider">Multi-Language Pack</span>
+                                </div>
+                                <p className="text-[10px] text-zinc-500 font-medium">Generate both English and translated mockups.</p>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className="flex flex-col items-end">
+                                    <div className="flex items-center gap-1">
+                                        <Zap size={12} className="text-blue-400 fill-blue-400" />
+                                        <span className="text-xs font-black text-white">{includeEnglish ? '2' : '1'}</span>
+                                    </div>
+                                    <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-tighter">Total Cost</span>
+                                </div>
+
+                                <button
+                                    onClick={handleToggle}
+                                    disabled={disabled}
+                                    className={`
+                                        w-12 h-6 rounded-full relative transition-all duration-300 p-1
+                                        ${disabled ? 'bg-zinc-900 cursor-not-allowed' : includeEnglish ? 'bg-blue-500' : 'bg-zinc-800'}
+                                    `}
+                                >
+                                    <motion.div
+                                        animate={{ x: includeEnglish ? 24 : 0 }}
+                                        className="w-4 h-4 bg-white rounded-full shadow-lg"
+                                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                    />
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <p className="text-zinc-500 text-[11px] mt-6 text-center font-medium leading-relaxed flex items-center justify-center gap-2">
                     <Sparkles size={12} className="text-zinc-700" />
-                    Targeting large audiences increases app visibility by up to 4x.
+                    {disabled
+                        ? "Enter a headline first to enable translation options."
+                        : "Targeting large audiences increases app visibility by up to 4x."
+                    }
                 </p>
 
                 {/* Mobile Skip Button only */}
