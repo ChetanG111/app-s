@@ -7,9 +7,17 @@ interface TextViewProps {
     value: string;
     onChange: (text: string) => void;
     onNext: () => void;
+    generateText?: boolean;
+    onGenerateTextChange?: (val: boolean) => void;
 }
 
-export const TextView: React.FC<TextViewProps> = ({ value, onChange, onNext }) => {
+export const TextView: React.FC<TextViewProps> = ({
+    value,
+    onChange,
+    onNext,
+    generateText = true,
+    onGenerateTextChange
+}) => {
     const { trigger } = useHaptic();
     const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -70,6 +78,28 @@ export const TextView: React.FC<TextViewProps> = ({ value, onChange, onNext }) =
                 <p className="text-zinc-500 text-sm mt-12 sm:mt-16 text-center max-w-md">
                     This text will appear at the top of your generated mockup. Make it punchy and clear.
                 </p>
+
+                {onGenerateTextChange && (
+                    <div className="mt-12 flex flex-col items-center p-4 border border-dashed border-zinc-800 rounded-3xl bg-zinc-900/10">
+                        <div className="flex items-center gap-4">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Dev Tool</span>
+                            <div className="h-px w-12 bg-zinc-800" />
+                            <button
+                                onClick={() => { trigger(); onGenerateTextChange(!generateText); }}
+                                className={`flex items-center gap-3 px-4 py-2 rounded-full border-2 transition-all duration-300 ${generateText ? 'border-zinc-800 text-zinc-400 bg-transparent' : 'border-red-900/50 bg-red-950/20 text-red-400'}`}
+                            >
+                                <span className="text-sm font-bold">{generateText ? 'Text Rendering Active' : 'Text Rendering Skipped'}</span>
+                                <div className={`w-8 h-4 rounded-full relative transition-colors ${generateText ? 'bg-zinc-800' : 'bg-red-500'}`}>
+                                    <motion.div
+                                        animate={{ x: generateText ? 2 : 18 }}
+                                        className="absolute top-1 w-2 h-2 bg-white rounded-full"
+                                    />
+                                </div>
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-zinc-700 mt-2 font-medium tracking-tight">Allows testing image styles without waiting for typography processing.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

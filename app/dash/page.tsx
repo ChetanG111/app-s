@@ -66,6 +66,8 @@ export default function Dashboard() {
         isOpen: false,
         url: null
     });
+    const [generateWarp, setGenerateWarp] = useState(true);
+    const [generateText, setGenerateText] = useState(true);
 
     // Aggressive caching: fetch once, only refetch after generation via mutate()
     const { data: creditsData } = useSWR('/api/credits', fetcher, {
@@ -112,7 +114,8 @@ export default function Dashboard() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     screenshot: uploadedImage,
-                    style: selectedStyle
+                    style: selectedStyle,
+                    skipWarp: !generateWarp
                 }),
             });
             const data1 = await res1.json();
@@ -168,7 +171,8 @@ export default function Dashboard() {
                     color: selectedColor === 'custom' ? customColor : selectedColor,
                     style: selectedStyle,
                     backgroundId: selectedBg,
-                    token: tokenStep2
+                    token: tokenStep2,
+                    skipText: !generateText
                 }),
             });
             const data3 = await res3.json();
@@ -306,6 +310,8 @@ export default function Dashboard() {
                         selected={selectedStyle}
                         onSelect={setSelectedStyle}
                         onNext={handleNext}
+                        generateWarp={generateWarp}
+                        onGenerateWarpChange={setGenerateWarp}
                     />
                 )}
 
@@ -326,6 +332,8 @@ export default function Dashboard() {
                         value={headline}
                         onChange={setHeadline}
                         onNext={handleNext}
+                        generateText={generateText}
+                        onGenerateTextChange={setGenerateText}
                     />
                 )}
 

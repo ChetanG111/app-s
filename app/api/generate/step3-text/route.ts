@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
             color,
             style,
             backgroundId,
-            token
+            token,
+            skipText
         } = body;
 
         // Validation - Prevent DoS with massive text
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
 
         // 4. Add Text
         let finalImageBase64 = image;
-        if (headline) {
+        if (headline && !skipText) {
             const cleanBase64 = image.split(',').pop();
             finalImageBase64 = await addTextOverlay(cleanBase64, headline, font, color);
         } else {
@@ -90,8 +91,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 5. Upload to Supabase Storage
-        const timestamp = Date.now();
-        const finalFilename = `mockup-${timestamp}.png`;
+        const finalFilename = `mockup-${crypto.randomUUID()}.png`;
         const buffer = Buffer.from(finalImageBase64, 'base64');
 
         const { error: uploadError } = await supabase

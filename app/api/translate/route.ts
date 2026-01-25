@@ -2,12 +2,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auth } from "@/auth";
+import { rateLimit } from "@/lib/ratelimit";
 
 export async function POST(req: NextRequest) {
     try {
         const session = await auth();
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { success } = await rateLimit(`translate:${session.user.id}`, 10, 60);
+        if (!success) {
+            return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
         }
 
         const body = await req.json();
@@ -26,7 +32,7 @@ export async function POST(req: NextRequest) {
         const genAI = new GoogleGenerativeAI(apiKey);
 
         const modelsToTry = [
-            "gemini-2.5-flash-image",
+            "gemini-2.5-flash-lite",
             "gemini-1.5-flash",
             "gemini-1.5-flash-latest",
             "gemini-1.5-pro",
