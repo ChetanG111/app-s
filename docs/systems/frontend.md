@@ -15,8 +15,7 @@ The editor is a wizard. We explicitly separate logic into "Views":
 -   `BackgroundView`: AI Prompting.
 -   `TextView`: Headline input.
 -   `TranslateView`: Multi-language selection (English + 4 languages).
--   `FontView`: Font selection.
--   `ColorView`: Text color picker.
+-   `FontView`: Font selection.-   `ColorView`: Text color picker.
 -   `GenerateView`: Generation trigger + output gallery.
 
 ## Editor Logic

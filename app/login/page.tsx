@@ -66,6 +66,20 @@ function LoginPageContent() {
         signIn("google", { callbackUrl });
     };
 
+    // Prevent rendering the form if authenticated or loading to avoid race conditions
+    if (status === "loading" || status === "authenticated") {
+        return (
+            <div className="flex w-screen h-screen bg-[#050505] items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <p className="text-zinc-500 text-sm font-medium">
+                        {status === "authenticated" ? "Redirecting..." : "Checking session..."}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     const isReady = email.length > 0 && password.length > 0;
 
     return (

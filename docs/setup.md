@@ -21,6 +21,7 @@ cp .env.example .env
 | --- | --- | --- |
 | `DATABASE_URL` | Prisma connection | Supabase/Neon |
 | `AUTH_SECRET` | NextAuth encryption | `npx auth secret` |
+| `GEMINI_API_KEY` | AI Generation & Translation | Google AI Studio |
 | `DODO_PAYMENTS_API_KEY` | Checkout & Verification | Dodo Dashboard |
 | `GOOGLE_CLIENT_ID` | OAuth Login | Google Cloud Console |
 

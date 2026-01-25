@@ -25,10 +25,12 @@ The core product turns a screenshot into a polished marketing asset. It runs in 
         -   Composites Warped Image over Background.
     -   **Output**: Composite PNG + `token` (Step 2 signed).
 
-3.  **Translation** (`api/translate`) - *Optional, per-language*
-    -   **Input**: Headline text + target language.
-    -   **Process**: Calls Gemini to translate headline (skipped for English).
-    -   **Output**: Translated headline text.
+3.  **Step 2.5: Translation** (`api/translate`)
+    -   **Input**: Headline text + Target Language.
+    -   **Process**:
+        -   Uses **Gemini 2.5 Flash Lite** for fast, marketing-focused translations.
+        -   Falls back to Gemini 1.5 Flash/Pro if 2.5 is unavailable.
+    -   **Output**: Translated text string.
 
 4.  **Step 3: Text** (`api/generate/step3-text`)
     -   **Input**: Text settings + Step 2 Token.
