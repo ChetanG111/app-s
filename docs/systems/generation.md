@@ -6,24 +6,45 @@
 ## Overview
 The core product turns a screenshot into a polished marketing asset. It runs in **3 Steps**.
 
-### The Pipeline
+## Pipeline Architecture
+The generation process is split into reusable stages to optimize cost and performance for multi-language batches.
 
-1.  **Step 1: Warp** (`api/generate/step1-warp`)
-    -   **Input**: Raw screenshot.
-    -   **Process**:
-        -   Loads template (e.g., `Rotated.png`).
-        -   Warps screenshot using **OpenCV** (Perspective Transform).
-        -   Masks using HSV Green Screen technique.
-        -   Composites using **Sharp**.
-    -   **Output**: Warped PNG + `token` (Step 1 signed).
+### Step 1: Warp & Credit Reservation
+`POST /api/generate/step1-warp`
+- **Input**: Screenshot, Style, `creditCost` (Wait N).
+- **Process**:
+    - Deducts **N credits** from user balance.
+    - Creates a `PENDING` transaction with `metadata.allowedImages = N`.
+    - Generates the warped overlay (green-screened).
+    - Signs a JWT token containing `transactionId` and result hash.
+- **Output**: Warped image, Token.
 
-2.  **Step 2: Background** (`api/generate/step2-background`)
-    -   **Input**: Prompt + Step 1 Token.
-    -   **Process**:
-        -   Validates Token (ensures user paid for Step 1).
-        -   Calls **Gemini / AI** to generate background texture/image.
-        -   Composites Warped Image over Background.
-    -   **Output**: Composite PNG + `token` (Step 2 signed).
+### Step 2: Background (Reused)
+`POST /api/generate/step2-background`
+- **Input**: Warped Image, Background Prompt, Token.
+- **Process**:
+    - Verifies Token.
+    - Uses Google Gemini (Imagen) to generate the background *once*.
+    - Signs a new Token authorizing Step 3.
+- **Output**: Composite Image (No Text), Token.
+
+### Step 3: Text Overlay & Finalize (Parallel)
+`POST /api/generate/step3-text`
+- **Input**: Composite Image, Headline, Font/Color, Language, Token.
+- **Process**:
+    - **Atomic Limit Check**: Locks `CreditTransaction` row and increments `metadata.generatedCount`. Rejects if limit exceeded.
+    - Adds text overlay (Sharp).
+    - Uploads to Supabase.
+    - Creates `Screenshot` record (stores `language` ID in settings, which powers the UI label).
+    - Marks Transaction `COMPLETED` (idempotent).
+- **Output**: Final Public URL.
+
+## Concurrency & Security
+- **Parallelism**: The frontend executes Step 3 in parallel (`Promise.all`) for all selected languages.
+- **Safety**:
+    - **Step 1/2** run serially once (Single Source of Truth).
+    - **Step 3** is race-proof due to atomic DB row locking on the transaction metadata.
+    - **Refunds**: Only Step 1/2 failures trigger a full refund. Step 3 failures must be retried manually (no auto-refunds avoids exploit risks).
 
 3.  **Step 2.5: Translation** (`api/translate`)
     -   **Input**: Headline text + Target Language.

@@ -27,7 +27,8 @@ export async function getUserScreenshots(userId: string) {
         return screenshots.map(s => ({
             name: s.url.split('/').pop() || s.id,
             url: s.url,
-            createdAt: s.createdAt
+            createdAt: s.createdAt,
+            language: (s.settings as any)?.language
         }));
     });
 }

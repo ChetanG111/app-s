@@ -14,7 +14,7 @@ interface GenerateViewProps {
     onGenerate: () => Promise<{ image?: string; url?: string } | void>;
     isGenerating: boolean;
     currentStep: string | null;
-    latestGeneratedImage?: { image: string; url: string } | null; // For instant display
+    latestGeneratedImage?: { image: string; url: string; language?: string } | null; // For instant display
     settings: {
         style: string;
         background: string;
@@ -24,13 +24,14 @@ interface GenerateViewProps {
     creditCost?: number;
     onNotify?: (message: string, type: NotificationType) => void;
     onConfirm?: (options: { title: string; message: string; isDanger?: boolean; onConfirm: () => void }) => void;
-    onExport?: (url: string) => void;
+    onExport?: (url: string, language?: string) => void;
 }
 
 interface HistoryItem {
     name: string;
     url: string;
     createdAt: string;
+    language?: string;
 }
 
 export const GenerateView: React.FC<GenerateViewProps> = ({
@@ -46,7 +47,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
     onExport
 }) => {
     const [viewingImage, setViewingImage] = useState<string | null>(null);
-    const [optimisticImage, setOptimisticImage] = useState<{ image: string; url: string } | null>(null);
+    const [optimisticImage, setOptimisticImage] = useState<{ image: string; url: string; language?: string } | null>(null);
     const [loadedOutputImages, setLoadedOutputImages] = useState<Set<string>>(() => {
         // Initialize from global cache to prevent shimmer on revisit
         const cached = new Set<string>();
@@ -84,7 +85,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
         if (alreadyExists) return fetchedHistory;
         // Prepend optimistic image
         return [
-            { name: 'Latest', url: optimisticImage.url, createdAt: new Date().toISOString() },
+            { name: 'Latest', url: optimisticImage.url, createdAt: new Date().toISOString(), language: optimisticImage.language },
             ...fetchedHistory
         ];
     }, [outputsData?.files, optimisticImage]);
@@ -99,37 +100,28 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
         setLoadedOutputImages(prev => new Set(prev).add(url));
     };
 
-    // Simplified 4-state UI sequence
+    // Simplified 3-state UI sequence
     const uiSteps = [
         "Creating Overlay",
         "Background Generation",
-        "Translating",
-        "Adding Text",
-        "Verifying"
+        "Adding Text"
     ];
 
     /**
-     * Map complex backend states to our simple 4-state UI.
+     * Map complex backend states to our simple 3-state UI.
      * This prevents the "jumping" sensation by consolidating multiple steps.
      */
     const getCurrentStepIndex = () => {
         if (!currentStep) return 0;
+        const lower = currentStep.toLowerCase();
 
-        switch (currentStep) {
-            case "Creating overlay":
-            case "Verifying":
-                return 0;
-            case "Generating background":
-                return 1;
-            case (currentStep.startsWith("Translating") ? currentStep : null):
-                return 2;
-            case "Adding text":
-                return 3;
-            case "Cleaning up":
-                return 4;
-            default:
-                return 0;
-        }
+        if (lower.includes("creating overlay")) return 0;
+        if (lower.includes("generating background")) return 1;
+        if (lower.includes("translating")) return 2; // Fold translating into text step
+        if (lower.includes("adding text") || lower.includes("applying text")) return 2;
+        if (lower.includes("verifying")) return 2;
+
+        return 0;
     };
 
     const stepIndex = getCurrentStepIndex();
@@ -295,11 +287,20 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                                         unoptimized
                                     />
                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    {/* Language Label */}
+                                    {file.language && (
+                                        <div className="absolute top-3 left-3 sm:top-6 sm:left-6 z-20 pointer-events-none">
+                                            <span className="px-3 py-1.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white text-[10px] font-bold uppercase tracking-wider shadow-lg capitalize">
+                                                {file.language}
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className="absolute top-3 right-3 sm:top-6 sm:right-6 flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 pointer-events-auto sm:pointer-events-none sm:group-hover:pointer-events-auto transition-all duration-300 translate-y-0 sm:translate-y-2 sm:group-hover:translate-y-0">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (onExport) onExport(file.url);
+                                                if (onExport) onExport(file.url, file.language);
                                             }}
                                             className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-black transition-all hover:scale-110 active:scale-95"
                                             title="Export"
