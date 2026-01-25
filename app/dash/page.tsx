@@ -54,6 +54,7 @@ export default function Dashboard() {
     const [customColor, setCustomColor] = useState("#ffffff");
     const [selectedBg, setSelectedBg] = useState("charcoal");
     const [customBgPrompt, setCustomBgPrompt] = useState("");
+    const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
     const [projectName, setProjectName] = useState("App-1");
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentStep, setCurrentStep] = useState<string | null>(null);
@@ -308,6 +309,8 @@ export default function Dashboard() {
 
                 {selectedIndex === 4 && (
                     <TranslateView
+                        selected={selectedLanguage}
+                        onSelect={setSelectedLanguage}
                         onNext={handleNext}
                     />
                 )}
