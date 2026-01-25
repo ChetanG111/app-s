@@ -100,37 +100,28 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
         setLoadedOutputImages(prev => new Set(prev).add(url));
     };
 
-    // Simplified 4-state UI sequence
+    // Simplified 3-state UI sequence
     const uiSteps = [
         "Creating Overlay",
         "Background Generation",
-        "Translating",
-        "Adding Text",
-        "Verifying"
+        "Adding Text"
     ];
 
     /**
-     * Map complex backend states to our simple 4-state UI.
+     * Map complex backend states to our simple 3-state UI.
      * This prevents the "jumping" sensation by consolidating multiple steps.
      */
     const getCurrentStepIndex = () => {
         if (!currentStep) return 0;
+        const lower = currentStep.toLowerCase();
 
-        switch (currentStep) {
-            case "Creating overlay":
-            case "Verifying":
-                return 0;
-            case "Generating background":
-                return 1;
-            case (currentStep.startsWith("Translating") ? currentStep : null):
-                return 2;
-            case "Adding text":
-                return 3;
-            case "Cleaning up":
-                return 4;
-            default:
-                return 0;
-        }
+        if (lower.includes("creating overlay")) return 0;
+        if (lower.includes("generating background")) return 1;
+        if (lower.includes("translating")) return 2; // Fold translating into text step
+        if (lower.includes("adding text") || lower.includes("applying text")) return 2;
+        if (lower.includes("verifying")) return 2;
+
+        return 0;
     };
 
     const stepIndex = getCurrentStepIndex();

@@ -44,3 +44,17 @@ Pass state via **Signed Tokens**.
 - **Good**: Easier to debug specific failures.
 - **Good**: Rate limiting can be applied per-step.
 - **Bad**: More complex frontend state management.
+
+## ADR-004: Progress UI Simplification
+
+### Context
+The backend pipeline follows a strict multi-step process (Warp -> Background -> Translate -> Text -> Verify). Displaying every granular step to the user caused a "jumping" progress bar experience and cognitive overload.
+
+### Decision
+Collapse internal states into 3 visual phases: `Creating Overlay` -> `Background Generation` -> `Adding Text`.
+Translation and Verification are visually merged into the "Text" phase.
+
+### Consequences
+- **Good**: Smoother, less jittery progress bar.
+- **Good**: "Background Generation" (the longest step) gets its own distinct phase, managing wait expectations.
+- **Bad**: Slight mismatch between logs and UI text (mitigated by fuzzy matching in frontend logic).
