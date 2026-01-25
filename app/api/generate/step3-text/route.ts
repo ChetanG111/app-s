@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
 
     // Init Supabase inside handler to avoid build-time env var issues
     const supabase = createClient(supabaseUrl, supabaseKey);
-
     let userId: string | null = null;
+    let transactionId: string | null = null;
     try {
         const session = await auth();
         if (!session?.user?.id) {
@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
             color,
             style,
             backgroundId,
-            token
+            token,
+            skipText
         } = body;
 
         // Validation - Prevent DoS with massive text
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Invalid or expired token" }, { status: 403 });
         }
 
-        const transactionId = payload.transactionId;
+        transactionId = payload.transactionId;
 
         if (!image) {
             return NextResponse.json({ error: "Missing image" }, { status: 400 });
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
 
         // 4. Add Text
         let finalImageBase64 = image;
-        if (headline) {
+        if (headline && !skipText) {
             const cleanBase64 = image.split(',').pop();
             finalImageBase64 = await addTextOverlay(cleanBase64, headline, font, color);
         } else {
@@ -90,8 +91,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 5. Upload to Supabase Storage
-        const timestamp = Date.now();
-        const finalFilename = `mockup-${timestamp}.png`;
+        const finalFilename = `mockup-${crypto.randomUUID()}.png`;
         const buffer = Buffer.from(finalImageBase64, 'base64');
 
         const { error: uploadError } = await supabase
@@ -132,15 +132,16 @@ export async function POST(req: NextRequest) {
             });
 
             // Mark Transaction as Completed
-            // Assuming CreditTransaction model exists based on Step 1
             await tx.creditTransaction.updateMany({
-                where: { id: transactionId, userId: userId! },
+                where: { id: transactionId!, userId: userId! },
                 data: { status: "COMPLETED" }
             });
 
             return tx.screenshot.count({
                 where: { userId: userId! }
             });
+        }, {
+            timeout: 30000 // 30 seconds
         }));
 
         // Send Slack Notification (Only for first 3 images)
@@ -164,28 +165,24 @@ export async function POST(req: NextRequest) {
         console.error("Step 3 Text Error:", error);
 
         // Refund Credit
-        if (userId) {
+        // Refund Credit
+        if (userId && transactionId) {
             try {
-                const body = await req.clone().json().catch(() => ({}));
-                const token = body.token;
-                const payload = token ? await verifyToken(token).catch(() => null) : null;
-                const transactionId = payload?.transactionId;
-
-                if (transactionId && userId) {
-                    const uid = userId;
-                    const tid = transactionId;
-                    await withRetry(() => prisma.$transaction([
-                        prisma.user.update({
-                            where: { id: uid },
-                            data: { credits: { increment: 1 } }
-                        }),
-                        prisma.creditTransaction.updateMany({
-                            where: { id: tid, userId: uid },
-                            data: { status: "FAILED" }
-                        })
-                    ])).catch(e => console.error("CRITICAL: Credit refund failed", e));
-                }
-            } catch (e) { console.error("Refund failed", e); }
+                const uid = userId;
+                const tid = transactionId;
+                await withRetry(() => prisma.$transaction([
+                    prisma.user.update({
+                        where: { id: uid },
+                        data: { credits: { increment: 1 } }
+                    }),
+                    prisma.creditTransaction.updateMany({
+                        where: { id: tid, userId: uid },
+                        data: { status: "FAILED" }
+                    })
+                ])).catch(e => console.error("CRITICAL: Credit refund failed", e));
+            } catch (e) {
+                console.error("Refund logic execution failed", e);
+            }
         }
 
         const message = error instanceof Error ? error.message : "Text overlay failed";

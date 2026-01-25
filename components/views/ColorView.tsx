@@ -25,14 +25,16 @@ interface ColorViewProps {
     customColor: string;
     onCustomColorChange: (val: string) => void;
     onNext: () => void;
+    disabled?: boolean;
 }
 
-export const ColorView: React.FC<ColorViewProps> = ({ 
-    selected, 
-    onSelect, 
+export const ColorView: React.FC<ColorViewProps> = ({
+    selected,
+    onSelect,
     customColor,
     onCustomColorChange,
-    onNext 
+    onNext,
+    disabled = false
 }) => {
     const { trigger } = useHaptic();
     const [isFocused, setIsFocused] = useState(false);
@@ -52,15 +54,15 @@ export const ColorView: React.FC<ColorViewProps> = ({
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05, duration: 0.3 }}
-                            onClick={() => { trigger(); if (!isDisabled) { onSelect(option.id); if (option.id !== 'custom') onNext(); } }}
-                            disabled={isDisabled}
+                            onClick={() => { if (!disabled && !isDisabled) { trigger(); onSelect(option.id); if (option.id !== 'custom') onNext(); } }}
+                            disabled={disabled || isDisabled}
                             className={`
                                 w-full h-14 sm:h-16 shrink-0 rounded-2xl flex items-center justify-between px-6 sm:px-8 text-sm sm:text-lg font-semibold transition-all duration-300 border-2
-                                ${isDisabled
-                                    ? 'bg-[#0c0c0c]/60 border-zinc-700 text-zinc-400 cursor-not-allowed'
+                                ${disabled || isDisabled
+                                    ? 'bg-[#0c0c0c]/60 border-zinc-900/50 text-zinc-600 cursor-not-allowed opacity-50'
                                     : selected === option.id
                                         ? 'bg-white text-black border-white scale-[1.02]'
-                                        : 'bg-[#0c0c0c]/80 border-zinc-800 text-zinc-400 hover:border-zinc-500 hover:text-white'
+                                        : 'bg-[#0c0c0c]/80 border-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-white'
                                 }
                             `}
                         >
@@ -79,7 +81,7 @@ export const ColorView: React.FC<ColorViewProps> = ({
                                     </span>
                                 )}
                             </div>
-                            {selected === option.id && !isDisabled && (
+                            {selected === option.id && !disabled && !isDisabled && (
                                 <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
                                     <Check size={14} className="text-white" strokeWidth={4} />
                                 </div>
@@ -107,7 +109,8 @@ export const ColorView: React.FC<ColorViewProps> = ({
                                     onBlur={() => setIsFocused(false)}
                                     placeholder="Enter hex code (e.g. #FF0000)..."
                                     maxLength={20}
-                                    className="w-full bg-transparent text-white text-lg font-medium text-center outline-none placeholder:text-zinc-800 transition-all duration-300"
+                                    disabled={disabled}
+                                    className="w-full bg-transparent text-white text-lg font-medium text-center outline-none placeholder:text-zinc-800 transition-all duration-300 disabled:text-zinc-600"
                                 />
 
                                 <div className={`
@@ -127,7 +130,10 @@ export const ColorView: React.FC<ColorViewProps> = ({
                 )}
 
                 <p className="text-zinc-500 text-sm mt-8 sm:mt-12 text-center">
-                    Pick a color that pops against your background.
+                    {disabled
+                        ? "Enter a headline first to choose a color."
+                        : "Pick a color that pops against your background."
+                    }
                 </p>
             </div>
         </div>

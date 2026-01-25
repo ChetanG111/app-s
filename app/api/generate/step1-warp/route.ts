@@ -36,11 +36,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
         }
 
-        const { screenshot, style } = await req.json();
+        const { screenshot, style, skipWarp } = await req.json();
 
         // 2. Validate Inputs (Path Traversal Protection)
         const VALID_STYLES = ['Basic', 'Rotated', 'Rotated-left-facing'];
-        if (!screenshot || !style || !VALID_STYLES.includes(style)) {
+        if (!screenshot || (!skipWarp && (!style || !VALID_STYLES.includes(style)))) {
             return NextResponse.json({ error: "Invalid style or missing screenshot" }, { status: 400 });
         }
 
@@ -58,18 +58,13 @@ export async function POST(req: NextRequest) {
                     data: { credits: { decrement: 1 } }
                 });
 
-                // Assuming CreditTransaction model exists based on the file I read
-                // If it doesn't exist in schema, this will fail.
-                // But since I read it from the file, it must exist?
-                // Wait, I read the file content, so the CODE was there.
-                // I'll stick to what was there.
                 return await tx.creditTransaction.create({
                     data: {
                         userId,
                         amount: -1,
                         type: "GENERATION",
                         status: "PENDING",
-                        metadata: { style }
+                        metadata: { style, skipped: !!skipWarp }
                     }
                 });
             });
@@ -78,6 +73,17 @@ export async function POST(req: NextRequest) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const message = (error as any).message || "Payment failed";
             return NextResponse.json({ error: message }, { status: 402 });
+        }
+
+        // 4. Handle Skip
+        if (skipWarp) {
+            const imageHash = crypto.createHash('sha256').update(screenshot).digest('hex');
+            const token = await signToken({ userId, step: 1, transactionId, imageHash });
+            return NextResponse.json({
+                image: screenshot,
+                token,
+                success: true
+            });
         }
 
         const _cv = getCv();
@@ -100,7 +106,7 @@ export async function POST(req: NextRequest) {
         const screenshotBuffer = Buffer.from(screenshot.split(",")[1], 'base64');
         const shotRaw = await sharp(screenshotBuffer)
             .ensureAlpha()
-            .resize(1200)
+            .resize(1320)
             .toFormat('raw')
             .toBuffer({ resolveWithObject: true });
 

@@ -12,7 +12,8 @@ import {
     Sparkles,
     ChevronDown,
     MessageSquare,
-    ChevronRight
+    ChevronRight,
+    Languages
 } from 'lucide-react';
 import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
@@ -32,6 +33,7 @@ import { StyleView } from '@/components/views/StyleView';
 import { TextView } from '@/components/views/TextView';
 import { FontView } from '@/components/views/FontView';
 import { ColorView } from '@/components/views/ColorView';
+import { TranslateView } from '@/components/views/TranslateView';
 import { BackgroundView } from '@/components/views/BackgroundView';
 import { GenerateView } from '@/components/views/GenerateView';
 
@@ -52,6 +54,7 @@ export default function Dashboard() {
     const [customColor, setCustomColor] = useState("#ffffff");
     const [selectedBg, setSelectedBg] = useState("charcoal");
     const [customBgPrompt, setCustomBgPrompt] = useState("");
+    const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['english']);
     const [projectName, setProjectName] = useState("App-1");
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentStep, setCurrentStep] = useState<string | null>(null);
@@ -62,6 +65,8 @@ export default function Dashboard() {
         isOpen: false,
         url: null
     });
+    const [generateWarp, setGenerateWarp] = useState(true);
+    const [generateText, setGenerateText] = useState(true);
 
     // Aggressive caching: fetch once, only refetch after generation via mutate()
     const { data: creditsData } = useSWR('/api/credits', fetcher, {
@@ -98,75 +103,119 @@ export default function Dashboard() {
             return;
         }
 
-        setIsGenerating(true);
-        setCurrentStep("Creating overlay");
-
-        try {
-            // STEP 1: Warp
-            const res1 = await fetch("/api/generate/step1-warp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    screenshot: uploadedImage,
-                    style: selectedStyle
-                }),
-            });
-            const data1 = await res1.json();
-            if (!res1.ok) throw new Error(data1.error || "Step 1 failed");
-
-            const tokenStep1 = data1.token;
-
-            // STEP 2: Background
-            setCurrentStep(generateBackground ? "Generating background" : "Processing...");
-            const res2 = await fetch("/api/generate/step2-background", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    image: data1.image,
-                    backgroundId: selectedBg,
-                    customBackground: customBgPrompt,
-                    skipBackground: !generateBackground,
-                    token: tokenStep1
-                }),
-            });
-            const data2 = await res2.json();
-            if (!res2.ok) throw new Error(data2.error || "Step 2 failed");
-
-            const tokenStep2 = data2.token;
-
-            // STEP 3: Text & Save
-            setCurrentStep("Adding text");
-            const res3 = await fetch("/api/generate/step3-text", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    image: data2.image,
-                    headline,
-                    font: selectedFont,
-                    color: selectedColor === 'custom' ? customColor : selectedColor,
-                    style: selectedStyle,
-                    backgroundId: selectedBg,
-                    token: tokenStep2
-                }),
-            });
-            const data3 = await res3.json();
-            if (!res3.ok) throw new Error(data3.error || "Step 3 failed");
-
-            // Store for instant display (base64 + supabase URL)
-            if (data3.image && data3.url) {
-                setLatestGeneratedImage({ image: data3.image, url: data3.url });
-            }
-
-            showNotification("Mockup generated successfully!", "success");
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : "Generation failed";
-            showNotification(errorMessage, "error");
-        } finally {
-            setIsGenerating(false);
-            setCurrentStep(null);
-            mutate('/api/credits');
-            mutate('/api/outputs'); // Refresh outputs list
+        if (selectedLanguages.length === 0) {
+            showNotification("Please select at least one language.", "warning");
+            return;
         }
+
+        setIsGenerating(true);
+        const totalLanguages = selectedLanguages.length;
+        let successCount = 0;
+        const failedLanguages: string[] = [];
+
+        // Generate for each selected language sequentially
+        for (let i = 0; i < selectedLanguages.length; i++) {
+            const language = selectedLanguages[i];
+            const languageLabel = language.charAt(0).toUpperCase() + language.slice(1);
+
+            try {
+                setCurrentStep(`Creating overlay (${i + 1}/${totalLanguages})`);
+
+                // STEP 1: Warp
+                const res1 = await fetch("/api/generate/step1-warp", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        screenshot: uploadedImage,
+                        style: selectedStyle,
+                        skipWarp: !generateWarp
+                    }),
+                });
+                const data1 = await res1.json();
+                if (!res1.ok) throw new Error(data1.error || "Step 1 failed");
+
+                const tokenStep1 = data1.token;
+
+                // STEP 2: Background
+                setCurrentStep(generateBackground ? `Generating background (${i + 1}/${totalLanguages})` : `Processing (${i + 1}/${totalLanguages})...`);
+                const res2 = await fetch("/api/generate/step2-background", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        image: data1.image,
+                        backgroundId: selectedBg,
+                        customBackground: customBgPrompt,
+                        skipBackground: !generateBackground,
+                        token: tokenStep1
+                    }),
+                });
+                const data2 = await res2.json();
+                if (!res2.ok) throw new Error(data2.error || "Step 2 failed");
+
+                const tokenStep2 = data2.token;
+
+                // Translation Step (skip for English)
+                let finalHeadline = headline;
+                if (language !== 'english' && headline) {
+                    setCurrentStep(`Translating to ${languageLabel} (${i + 1}/${totalLanguages})`);
+                    const transRes = await fetch("/api/translate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            text: headline,
+                            targetLanguage: language
+                        }),
+                    });
+                    const transData = await transRes.json();
+                    if (transRes.ok && transData.translatedText) {
+                        finalHeadline = transData.translatedText;
+                    }
+                }
+
+                // STEP 3: Text & Save
+                setCurrentStep(`Adding text (${i + 1}/${totalLanguages})`);
+                const res3 = await fetch("/api/generate/step3-text", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        image: data2.image,
+                        headline: finalHeadline,
+                        font: selectedFont,
+                        color: selectedColor === 'custom' ? customColor : selectedColor,
+                        style: selectedStyle,
+                        backgroundId: selectedBg,
+                        token: tokenStep2,
+                        skipText: !generateText
+                    }),
+                });
+                const data3 = await res3.json();
+                if (!res3.ok) throw new Error(data3.error || "Step 3 failed");
+
+                // Store for instant display (base64 + supabase URL)
+                if (data3.image && data3.url) {
+                    setLatestGeneratedImage({ image: data3.image, url: data3.url });
+                }
+
+                successCount++;
+            } catch (err) {
+                console.error(`Failed to generate for ${languageLabel}:`, err);
+                failedLanguages.push(languageLabel);
+            }
+        }
+
+        // Show appropriate notification based on results
+        if (successCount === totalLanguages) {
+            showNotification(`${successCount} mockup${successCount !== 1 ? 's' : ''} generated successfully!`, "success");
+        } else if (successCount > 0) {
+            showNotification(`${successCount}/${totalLanguages} generated. Failed: ${failedLanguages.join(', ')}`, "warning");
+        } else {
+            showNotification(`Generation failed for all languages`, "error");
+        }
+
+        setIsGenerating(false);
+        setCurrentStep(null);
+        mutate('/api/credits');
+        mutate('/api/outputs'); // Refresh outputs list
     };
 
     const icons = [
@@ -174,6 +223,7 @@ export default function Dashboard() {
         { id: 'style', icon: Smartphone },
         { id: 'background', icon: Layers },
         { id: 'text', icon: Type },
+        { id: 'translate', icon: Languages },
         { id: 'font', icon: TextCursor },
         { id: 'color', icon: Droplet },
         { id: 'generate', icon: Sparkles },
@@ -216,10 +266,10 @@ export default function Dashboard() {
 
             {/* Top Navigation */}
             <div className="sm:hidden">
-                <CombinedNav 
-                    projectName={projectName} 
-                    setProjectName={setProjectName} 
-                    credits={credits} 
+                <CombinedNav
+                    projectName={projectName}
+                    setProjectName={setProjectName}
+                    credits={credits}
                     onFeedbackClick={() => setIsFeedbackOpen(true)}
                 />
             </div>
@@ -233,7 +283,10 @@ export default function Dashboard() {
                 <div className="flex flex-row sm:flex-col items-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/5 rounded-[22px] sm:rounded-full p-1 sm:p-2 shadow-[0_8px_32px_rgba(0,0,0,0.8)]">
                     {icons.map((item, index) => {
                         const isSelected = selectedIndex === index;
-                        const isDisabled = !uploadedImage && index !== 0 && index !== (icons.length - 1);
+                        const isHeadlineView = item.id === 'translate' || item.id === 'font' || item.id === 'color';
+                        const isHeadlineEmpty = !headline.trim();
+
+                        const isDisabled = (!uploadedImage && index !== 0 && index !== (icons.length - 1)) || (isHeadlineView && isHeadlineEmpty);
 
                         return (
                             <div key={item.id} className="relative">
@@ -280,6 +333,8 @@ export default function Dashboard() {
                         selected={selectedStyle}
                         onSelect={setSelectedStyle}
                         onNext={handleNext}
+                        generateWarp={generateWarp}
+                        onGenerateWarpChange={setGenerateWarp}
                     />
                 )}
 
@@ -300,28 +355,42 @@ export default function Dashboard() {
                         value={headline}
                         onChange={setHeadline}
                         onNext={handleNext}
+                        generateText={generateText}
+                        onGenerateTextChange={setGenerateText}
                     />
                 )}
 
                 {selectedIndex === 4 && (
-                    <FontView
-                        selected={selectedFont}
-                        onSelect={setSelectedFont}
+                    <TranslateView
+                        selectedLanguages={selectedLanguages}
+                        onSelectLanguages={setSelectedLanguages}
                         onNext={handleNext}
+                        disabled={!headline.trim()}
+                        availableCredits={credits}
                     />
                 )}
 
                 {selectedIndex === 5 && (
+                    <FontView
+                        selected={selectedFont}
+                        onSelect={setSelectedFont}
+                        onNext={handleNext}
+                        disabled={!headline.trim()}
+                    />
+                )}
+
+                {selectedIndex === 6 && (
                     <ColorView
                         selected={selectedColor}
                         onSelect={setSelectedColor}
                         customColor={customColor}
                         onCustomColorChange={setCustomColor}
                         onNext={handleNext}
+                        disabled={!headline.trim()}
                     />
                 )}
 
-                {selectedIndex === 6 && (
+                {selectedIndex === 7 && (
                     <GenerateView
                         uploadedImage={uploadedImage}
                         onGenerate={handleGenerate}
@@ -331,8 +400,10 @@ export default function Dashboard() {
                         settings={{
                             style: selectedStyle,
                             background: selectedBg,
-                            headline
+                            headline,
+                            languages: selectedLanguages
                         }}
+                        creditCost={selectedLanguages.length}
                         onNotify={showNotification}
                         onConfirm={confirm}
                         onExport={(url) => setExportConfig({ isOpen: true, url })}
@@ -355,6 +426,14 @@ export default function Dashboard() {
                             `}
                         >
                             Continue
+                            {selectedIndex === 4 && selectedLanguages.length > 0 && (
+                                <span className="flex items-center gap-1 px-2.5 py-1 bg-black/10 rounded-full text-sm">
+                                    <svg className="w-3 h-3 text-blue-600 fill-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    {selectedLanguages.length}
+                                </span>
+                            )}
                             <ChevronDown
                                 size={20}
                                 strokeWidth={3}
