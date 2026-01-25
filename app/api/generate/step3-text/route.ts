@@ -50,7 +50,8 @@ export async function POST(req: NextRequest) {
             style,
             backgroundId,
             token,
-            skipText
+            skipText,
+            language
         } = body;
 
         // Validation - Prevent DoS with massive text
@@ -155,7 +156,8 @@ export async function POST(req: NextRequest) {
                         headline: headline || '',
                         font: font || 'standard',
                         color: color || 'white',
-                        transactionId: transactionId // Link to transaction
+                        transactionId: transactionId, // Link to transaction
+                        language: language || 'english'
                     }
                 }
             });

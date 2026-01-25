@@ -24,12 +24,12 @@ export async function getUserScreenshots(userId: string) {
             where: { userId },
             orderBy: { createdAt: 'desc' }
         });
-        return screenshots.map(s => ({
-            name: s.url.split('/').pop() || s.id,
+        name: s.url.split('/').pop() || s.id,
             url: s.url,
-            createdAt: s.createdAt
-        }));
-    });
+                createdAt: s.createdAt,
+                    language: (s.settings as any)?.language
+    }));
+});
 }
 
 // Keep old exports for backward compatibility (they point to new functions)

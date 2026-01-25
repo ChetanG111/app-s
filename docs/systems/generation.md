@@ -30,12 +30,12 @@ The generation process is split into reusable stages to optimize cost and perfor
 
 ### Step 3: Text Overlay & Finalize (Parallel)
 `POST /api/generate/step3-text`
-- **Input**: Composite Image, Headline, Font/Color, Token.
+- **Input**: Composite Image, Headline, Font/Color, Language, Token.
 - **Process**:
     - **Atomic Limit Check**: Locks `CreditTransaction` row and increments `metadata.generatedCount`. Rejects if limit exceeded.
     - Adds text overlay (Sharp).
     - Uploads to Supabase.
-    - Creates `Screenshot` record.
+    - Creates `Screenshot` record (stores `language` in settings).
     - Marks Transaction `COMPLETED` (idempotent).
 - **Output**: Final Public URL.
 

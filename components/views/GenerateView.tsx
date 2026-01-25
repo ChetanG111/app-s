@@ -14,7 +14,7 @@ interface GenerateViewProps {
     onGenerate: () => Promise<{ image?: string; url?: string } | void>;
     isGenerating: boolean;
     currentStep: string | null;
-    latestGeneratedImage?: { image: string; url: string } | null; // For instant display
+    latestGeneratedImage?: { image: string; url: string; language?: string } | null; // For instant display
     settings: {
         style: string;
         background: string;
@@ -24,13 +24,14 @@ interface GenerateViewProps {
     creditCost?: number;
     onNotify?: (message: string, type: NotificationType) => void;
     onConfirm?: (options: { title: string; message: string; isDanger?: boolean; onConfirm: () => void }) => void;
-    onExport?: (url: string) => void;
+    onExport?: (url: string, language?: string) => void;
 }
 
 interface HistoryItem {
     name: string;
     url: string;
     createdAt: string;
+    language?: string;
 }
 
 export const GenerateView: React.FC<GenerateViewProps> = ({
@@ -46,7 +47,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
     onExport
 }) => {
     const [viewingImage, setViewingImage] = useState<string | null>(null);
-    const [optimisticImage, setOptimisticImage] = useState<{ image: string; url: string } | null>(null);
+    const [optimisticImage, setOptimisticImage] = useState<{ image: string; url: string; language?: string } | null>(null);
     const [loadedOutputImages, setLoadedOutputImages] = useState<Set<string>>(() => {
         // Initialize from global cache to prevent shimmer on revisit
         const cached = new Set<string>();
@@ -84,7 +85,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
         if (alreadyExists) return fetchedHistory;
         // Prepend optimistic image
         return [
-            { name: 'Latest', url: optimisticImage.url, createdAt: new Date().toISOString() },
+            { name: 'Latest', url: optimisticImage.url, createdAt: new Date().toISOString(), language: optimisticImage.language },
             ...fetchedHistory
         ];
     }, [outputsData?.files, optimisticImage]);
@@ -299,7 +300,7 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (onExport) onExport(file.url);
+                                                if (onExport) onExport(file.url, file.language);
                                             }}
                                             className="p-2.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-black transition-all hover:scale-110 active:scale-95"
                                             title="Export"

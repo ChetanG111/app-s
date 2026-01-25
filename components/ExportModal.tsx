@@ -10,13 +10,15 @@ interface ExportModalProps {
     imageUrl: string | null;
     onClose: () => void;
     onNotify: (message: string, type: 'success' | 'error') => void;
+    language?: string;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
     isOpen,
     imageUrl,
     onClose,
-    onNotify
+    onNotify,
+    language
 }) => {
     if (!imageUrl) return null;
 
@@ -33,14 +35,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 const canvas = document.createElement('canvas');
                 canvas.width = bitmap.width;
                 canvas.height = bitmap.height;
-                
+
                 const ctx = canvas.getContext('2d');
                 if (ctx) {
                     // JPG doesn't support transparency, so fill with white first
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     ctx.drawImage(bitmap, 0, 0);
-                    
+
                     finalBlob = await new Promise<Blob>((resolve, reject) => {
                         canvas.toBlob((blob) => {
                             if (blob) resolve(blob);
@@ -53,12 +55,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             finalUrl = window.URL.createObjectURL(finalBlob);
             const link = document.createElement('a');
             link.href = finalUrl;
-            
+
             // Generate clean filename
             const date = new Date().toISOString().split('T')[0];
             const timestamp = new Date().getTime().toString().slice(-4);
-            const filename = `shot-${date}-${timestamp}.${format}`;
-            
+            const langPart = language ? `${language.toLowerCase()}-` : '';
+            const filename = `shot-${langPart}${date}-${timestamp}.${format}`;
+
             link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();

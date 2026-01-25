@@ -59,11 +59,12 @@ export default function Dashboard() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentStep, setCurrentStep] = useState<string | null>(null);
     const [generateBackground, setGenerateBackground] = useState(true);
-    const [latestGeneratedImage, setLatestGeneratedImage] = useState<{ image: string; url: string } | null>(null);
+    const [latestGeneratedImage, setLatestGeneratedImage] = useState<{ image: string; url: string; language?: string } | null>(null);
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
-    const [exportConfig, setExportConfig] = useState<{ isOpen: boolean; url: string | null }>({
+    const [exportConfig, setExportConfig] = useState<{ isOpen: boolean; url: string | null; language: string | null }>({
         isOpen: false,
-        url: null
+        url: null,
+        language: null
     });
     const [generateWarp, setGenerateWarp] = useState(true);
     const [generateText, setGenerateText] = useState(true);
@@ -185,7 +186,8 @@ export default function Dashboard() {
                             style: selectedStyle,
                             backgroundId: selectedBg,
                             token: tokenStep2,
-                            skipText: !generateText
+                            skipText: !generateText,
+                            language: language // Pass language to backend
                         }),
                     });
                     const data3 = await res3.json();
@@ -193,7 +195,7 @@ export default function Dashboard() {
 
                     // Store for instant display (base64 + supabase URL)
                     if (data3.image && data3.url) {
-                        setLatestGeneratedImage({ image: data3.image, url: data3.url });
+                        setLatestGeneratedImage({ image: data3.image, url: data3.url, language: language });
                     }
 
                     successCount++;
@@ -267,6 +269,7 @@ export default function Dashboard() {
             <ExportModal
                 isOpen={exportConfig.isOpen}
                 imageUrl={exportConfig.url}
+                language={exportConfig.language || undefined}
                 onClose={() => setExportConfig({ ...exportConfig, isOpen: false })}
                 onNotify={showNotification}
             />
@@ -417,7 +420,7 @@ export default function Dashboard() {
                         creditCost={selectedLanguages.length}
                         onNotify={showNotification}
                         onConfirm={confirm}
-                        onExport={(url) => setExportConfig({ isOpen: true, url })}
+                        onExport={(url, language) => setExportConfig({ isOpen: true, url, language: language || null })}
                     />
                 )}
 
