@@ -299,8 +299,8 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
 
                                     {/* Language Label */}
                                     {file.language && (
-                                        <div className="absolute top-3 left-3 sm:top-6 sm:left-6 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 translate-y-0 sm:translate-y-2 sm:group-hover:translate-y-0 pointer-events-none">
-                                            <span className="px-3 py-1.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white text-[10px] font-bold uppercase tracking-wider shadow-lg">
+                                        <div className="absolute top-3 left-3 sm:top-6 sm:left-6 z-20 pointer-events-none">
+                                            <span className="px-3 py-1.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white text-[10px] font-bold uppercase tracking-wider shadow-lg capitalize">
                                                 {file.language}
                                             </span>
                                         </div>
