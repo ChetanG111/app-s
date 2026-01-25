@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
     let transactionId: string | null = null;
     let userId: string | null = null;
 
+    let costToDeduct = 1;
     try {
         const session = await auth();
         if (!session?.user?.id) {
@@ -36,7 +37,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
         }
 
-        const { screenshot, style, skipWarp } = await req.json();
+        const body = await req.json();
+        const creditCost = typeof body.creditCost === 'number' ? Math.max(1, Math.floor(body.creditCost)) : 1;
+        const { screenshot, style, skipWarp } = body;
+        costToDeduct = creditCost;
 
         // 2. Validate Inputs (Path Traversal Protection)
         const VALID_STYLES = ['Basic', 'Rotated', 'Rotated-left-facing'];
@@ -49,24 +53,30 @@ export async function POST(req: NextRequest) {
             const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
                 if (!userId) throw new Error("Unauthorized");
                 const user = await tx.user.findUnique({ where: { id: userId } });
-                if (!user || user.credits < 1) {
+                if (!user || user.credits < costToDeduct) {
                     throw new Error("Insufficient credits");
                 }
 
                 await tx.user.update({
                     where: { id: userId },
-                    data: { credits: { decrement: 1 } }
+                    data: { credits: { decrement: costToDeduct } }
                 });
 
                 return await tx.creditTransaction.create({
                     data: {
                         userId,
-                        amount: -1,
+                        amount: -costToDeduct,
                         type: "GENERATION",
                         status: "PENDING",
-                        metadata: { style, skipped: !!skipWarp }
+                        metadata: {
+                            style,
+                            skipped: !!skipWarp,
+                            allowedImages: costToDeduct
+                        }
                     }
                 });
+            }, {
+                timeout: 20000 // 20 seconds
             });
             transactionId = result.id;
         } catch (error: unknown) {
@@ -262,17 +272,17 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error: unknown) {
-        console.error("Step 1 Warp Error:", error);
         const message = error instanceof Error ? error.message : "Warp failed";
 
         if (userId && transactionId) {
             const uid = userId;
             const tid = transactionId;
+            const refundAmount = costToDeduct;
             // Use withRetry to ensure credits are not lost if DB is briefly unavailable
             await withRetry(() => prisma.$transaction([
                 prisma.user.update({
                     where: { id: uid },
-                    data: { credits: { increment: 1 } }
+                    data: { credits: { increment: refundAmount } }
                 }),
                 prisma.creditTransaction.updateMany({
                     where: { id: tid, userId: uid },

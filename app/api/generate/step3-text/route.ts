@@ -115,7 +115,35 @@ export async function POST(req: NextRequest) {
 
         // 7. Save to DB & Complete Transaction
         const screenshotCount = await withRetry<number>(() => prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-            // Create Screenshot Record
+            // 7.1 Atomic Limit Check via Row Locking (Update)
+            // Fetch current state
+            const transaction = await tx.creditTransaction.findUnique({
+                where: { id: transactionId!, userId: userId! }
+            });
+
+            if (!transaction) throw new Error("Transaction not found");
+
+            const metadata = transaction.metadata as any || {};
+            const allowedImages = metadata.allowedImages || 1;
+            const currentCount = metadata.generatedCount || 0;
+
+            if (currentCount >= allowedImages) {
+                throw new Error("Generation limit reached for this transaction");
+            }
+
+            // INCREMENT COUNT: This locks the row and persists the new count
+            // preventing race conditions.
+            await tx.creditTransaction.update({
+                where: { id: transactionId! },
+                data: {
+                    metadata: {
+                        ...metadata,
+                        generatedCount: currentCount + 1
+                    }
+                }
+            });
+
+            // 7.2 Create Screenshot Record
             await tx.screenshot.create({
                 data: {
                     userId: userId!,
@@ -126,7 +154,8 @@ export async function POST(req: NextRequest) {
                         backgroundId: backgroundId || 'charcoal',
                         headline: headline || '',
                         font: font || 'standard',
-                        color: color || 'white'
+                        color: color || 'white',
+                        transactionId: transactionId // Link to transaction
                     }
                 }
             });
@@ -164,26 +193,8 @@ export async function POST(req: NextRequest) {
     } catch (error: unknown) {
         console.error("Step 3 Text Error:", error);
 
-        // Refund Credit
-        // Refund Credit
-        if (userId && transactionId) {
-            try {
-                const uid = userId;
-                const tid = transactionId;
-                await withRetry(() => prisma.$transaction([
-                    prisma.user.update({
-                        where: { id: uid },
-                        data: { credits: { increment: 1 } }
-                    }),
-                    prisma.creditTransaction.updateMany({
-                        where: { id: tid, userId: uid },
-                        data: { status: "FAILED" }
-                    })
-                ])).catch(e => console.error("CRITICAL: Credit refund failed", e));
-            } catch (e) {
-                console.error("Refund logic execution failed", e);
-            }
-        }
+        // REMOVED: Automatic refund logic due to exploit risk with parallel requests.
+        // Users can retry with their existing token if a transient error occurs.
 
         const message = error instanceof Error ? error.message : "Text overlay failed";
         return NextResponse.json({ error: message }, { status: 500 });
