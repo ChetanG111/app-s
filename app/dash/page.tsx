@@ -12,7 +12,8 @@ import {
     Sparkles,
     ChevronDown,
     MessageSquare,
-    ChevronRight
+    ChevronRight,
+    Languages
 } from 'lucide-react';
 import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
@@ -32,6 +33,7 @@ import { StyleView } from '@/components/views/StyleView';
 import { TextView } from '@/components/views/TextView';
 import { FontView } from '@/components/views/FontView';
 import { ColorView } from '@/components/views/ColorView';
+import { TranslateView } from '@/components/views/TranslateView';
 import { BackgroundView } from '@/components/views/BackgroundView';
 import { GenerateView } from '@/components/views/GenerateView';
 
@@ -176,6 +178,7 @@ export default function Dashboard() {
         { id: 'text', icon: Type },
         { id: 'font', icon: TextCursor },
         { id: 'color', icon: Droplet },
+        { id: 'translate', icon: Languages },
         { id: 'generate', icon: Sparkles },
     ];
 
@@ -216,10 +219,10 @@ export default function Dashboard() {
 
             {/* Top Navigation */}
             <div className="sm:hidden">
-                <CombinedNav 
-                    projectName={projectName} 
-                    setProjectName={setProjectName} 
-                    credits={credits} 
+                <CombinedNav
+                    projectName={projectName}
+                    setProjectName={setProjectName}
+                    credits={credits}
                     onFeedbackClick={() => setIsFeedbackOpen(true)}
                 />
             </div>
@@ -322,6 +325,12 @@ export default function Dashboard() {
                 )}
 
                 {selectedIndex === 6 && (
+                    <TranslateView
+                        onNext={handleNext}
+                    />
+                )}
+
+                {selectedIndex === 7 && (
                     <GenerateView
                         uploadedImage={uploadedImage}
                         onGenerate={handleGenerate}
