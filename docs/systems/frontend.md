@@ -16,7 +16,15 @@ The editor is a wizard. We explicitly separate logic into "Views":
 -   `TextView`: Headline input.
 -   `TranslateView`: Multi-language selection (English + 4 languages).
 -   `FontView`: Font selection.-   `ColorView`: Text color picker.
--   `GenerateView`: Generation trigger + output gallery.
+-   `GenerateView`: Generation trigger + output gallery (displays per-language results).
+
+## Output Gallery
+-   **Data Source**: `/api/outputs` returns recent generations.
+-   **Language Labels**:
+    -   The backend stores the **raw language identifier** (e.g., "english", "french") in the `settings` JSON column of the `Screenshot` record.
+    -   The UI reads this directly to display the top-left language pill on the image card.
+    -   *Note*: This identifier is the same string used for file generation/naming.
+
 
 ## Editor Logic
 Located in `app/dash/page.tsx`.

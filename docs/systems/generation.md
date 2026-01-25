@@ -35,7 +35,7 @@ The generation process is split into reusable stages to optimize cost and perfor
     - **Atomic Limit Check**: Locks `CreditTransaction` row and increments `metadata.generatedCount`. Rejects if limit exceeded.
     - Adds text overlay (Sharp).
     - Uploads to Supabase.
-    - Creates `Screenshot` record (stores `language` in settings).
+    - Creates `Screenshot` record (stores `language` ID in settings, which powers the UI label).
     - Marks Transaction `COMPLETED` (idempotent).
 - **Output**: Final Public URL.
 

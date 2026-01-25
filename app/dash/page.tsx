@@ -440,7 +440,7 @@ export default function Dashboard() {
                             `}
                         >
                             Continue
-                            {selectedIndex === 4 && selectedLanguages.length > 0 && (
+                            {selectedLanguages.length > 0 && (
                                 <span className="flex items-center gap-1 px-2.5 py-1 bg-black/10 rounded-full text-sm">
                                     <svg className="w-3 h-3 text-blue-600 fill-blue-600" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M13 10V3L4 14h7v7l9-11h-7z" />

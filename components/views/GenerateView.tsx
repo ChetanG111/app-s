@@ -296,6 +296,15 @@ export const GenerateView: React.FC<GenerateViewProps> = ({
                                         unoptimized
                                     />
                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    {/* Language Label */}
+                                    {file.language && (
+                                        <div className="absolute top-3 left-3 sm:top-6 sm:left-6 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 translate-y-0 sm:translate-y-2 sm:group-hover:translate-y-0 pointer-events-none">
+                                            <span className="px-3 py-1.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white text-[10px] font-bold uppercase tracking-wider shadow-lg">
+                                                {file.language}
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className="absolute top-3 right-3 sm:top-6 sm:right-6 flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 pointer-events-auto sm:pointer-events-none sm:group-hover:pointer-events-auto transition-all duration-300 translate-y-0 sm:translate-y-2 sm:group-hover:translate-y-0">
                                         <button
                                             onClick={(e) => {
