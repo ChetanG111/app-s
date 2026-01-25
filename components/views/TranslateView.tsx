@@ -9,7 +9,7 @@ interface TranslateViewProps {
 export const TranslateView: React.FC<TranslateViewProps> = ({ onNext }) => {
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
-            <h1 className="text-white text-3xl sm:text-5xl font-black mb-8 sm:mb-auto pt-32 sm:pt-16 tracking-tight text-center">
+            <h1 className="text-white text-3xl sm:text-5xl font-black mb-8 sm:mb-auto pt-48 sm:pt-32 tracking-tight text-center">
                 Translate
             </h1>
 

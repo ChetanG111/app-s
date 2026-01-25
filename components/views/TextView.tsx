@@ -18,7 +18,7 @@ export const TextView: React.FC<TextViewProps> = ({ value, onChange, onNext }) =
 
     return (
         <div className="flex flex-col items-center justify-center w-full h-full max-w-5xl mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-20 pb-28 sm:pt-0 sm:pb-0">
-            <h1 className="text-white text-3xl sm:text-5xl font-black mb-10 sm:mb-auto tracking-tight text-center">
+            <h1 className="text-white text-3xl sm:text-5xl font-black mb-10 sm:mb-auto pt-48 sm:pt-32 tracking-tight text-center">
                 Headline Text
             </h1>
 

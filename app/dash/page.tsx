@@ -176,9 +176,9 @@ export default function Dashboard() {
         { id: 'style', icon: Smartphone },
         { id: 'background', icon: Layers },
         { id: 'text', icon: Type },
+        { id: 'translate', icon: Languages },
         { id: 'font', icon: TextCursor },
         { id: 'color', icon: Droplet },
-        { id: 'translate', icon: Languages },
         { id: 'generate', icon: Sparkles },
     ];
 
@@ -307,6 +307,12 @@ export default function Dashboard() {
                 )}
 
                 {selectedIndex === 4 && (
+                    <TranslateView
+                        onNext={handleNext}
+                    />
+                )}
+
+                {selectedIndex === 5 && (
                     <FontView
                         selected={selectedFont}
                         onSelect={setSelectedFont}
@@ -314,18 +320,12 @@ export default function Dashboard() {
                     />
                 )}
 
-                {selectedIndex === 5 && (
+                {selectedIndex === 6 && (
                     <ColorView
                         selected={selectedColor}
                         onSelect={setSelectedColor}
                         customColor={customColor}
                         onCustomColorChange={setCustomColor}
-                        onNext={handleNext}
-                    />
-                )}
-
-                {selectedIndex === 6 && (
-                    <TranslateView
                         onNext={handleNext}
                     />
                 )}
