@@ -48,15 +48,18 @@ interface TranslateViewProps {
     onSelectLanguages: (languages: string[]) => void;
     onNext: () => void;
     disabled?: boolean;
+    availableCredits: number;
 }
 
 export const TranslateView: React.FC<TranslateViewProps> = ({
     selectedLanguages,
     onSelectLanguages,
     onNext,
-    disabled = false
+    disabled = false,
+    availableCredits
 }) => {
     const { trigger } = useHaptic();
+    const [showCreditError, setShowCreditError] = React.useState(false);
 
     const handleToggle = (id: string) => {
         if (disabled) return;
@@ -66,7 +69,14 @@ export const TranslateView: React.FC<TranslateViewProps> = ({
             // Don't allow deselecting if it's the last one
             if (selectedLanguages.length === 1) return;
             onSelectLanguages(selectedLanguages.filter(lang => lang !== id));
+            setShowCreditError(false);
         } else {
+            // Check if user has enough credits
+            if (selectedLanguages.length >= availableCredits) {
+                setShowCreditError(true);
+                return;
+            }
+            setShowCreditError(false);
             onSelectLanguages([...selectedLanguages, id]);
         }
     };
@@ -146,7 +156,12 @@ export const TranslateView: React.FC<TranslateViewProps> = ({
                     One language costs 1 credit.
                 </p>
 
-
+                {/* Insufficient Credits Error */}
+                {showCreditError && (
+                    <p className="text-red-400 text-xs mt-3 text-center font-medium animate-in fade-in duration-200">
+                        Not enough credits. You have {availableCredits} credit{availableCredits !== 1 ? 's' : ''}.
+                    </p>
+                )}
                 {/* Mobile Continue Button */}
                 <div className="sm:hidden mt-6 flex justify-center">
                     <button

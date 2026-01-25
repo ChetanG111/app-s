@@ -366,6 +366,7 @@ export default function Dashboard() {
                         onSelectLanguages={setSelectedLanguages}
                         onNext={handleNext}
                         disabled={!headline.trim()}
+                        availableCredits={credits}
                     />
                 )}
 
