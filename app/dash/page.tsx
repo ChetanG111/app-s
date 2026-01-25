@@ -210,7 +210,11 @@ export default function Dashboard() {
 
         } catch (err: any) {
             console.error("Batch generation failed:", err);
-            showNotification(err.message || "Generation failed", "error");
+            let message = err.message || "Generation failed";
+            if (!message.toLowerCase().includes("insufficient credits")) {
+                message += " Transaction credits will be refunded in ~10s.";
+            }
+            showNotification(message, "error");
         } finally {
             // Show appropriate notification based on results
             if (successCount === totalLanguages) {
