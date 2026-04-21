@@ -1,0 +1,15 @@
+# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+#
+# To control which paths are crawled, use the "Allow" and "Disallow"
+# directives. To apply the rules to all crawlers, use the "User-agent: *"
+# directive. To apply the rules to a specific crawler, use the
+# "User-agent: <crawler-name>" directive.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dash/
+Disallow: /settings/
+Disallow: /payment-success/
+
+Sitemap: /sitemap.xml
