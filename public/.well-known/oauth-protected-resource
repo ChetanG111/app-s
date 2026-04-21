@@ -1,0 +1,10 @@
+{
+  "resource": "https://app-s.com/api",
+  "authorization_servers": [
+    "https://app-s.com"
+  ],
+  "scopes_supported": [
+    "read",
+    "write"
+  ]
+}
