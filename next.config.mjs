@@ -45,6 +45,10 @@ const nextConfig = {
           {
             key: 'Link',
             value: '</docs/api>; rel="service-doc"'
+          },
+          {
+            key: 'Vary',
+            value: 'Accept'
           }
         ]
       }
