@@ -12,4 +12,28 @@ Disallow: /dash/
 Disallow: /settings/
 Disallow: /payment-success/
 
+User-agent: GPTBot
+Disallow: /api/
+Disallow: /dash/
+Disallow: /settings/
+Disallow: /payment-success/
+
+User-agent: OAI-SearchBot
+Disallow: /api/
+Disallow: /dash/
+Disallow: /settings/
+Disallow: /payment-success/
+
+User-agent: Claude-Web
+Disallow: /api/
+Disallow: /dash/
+Disallow: /settings/
+Disallow: /payment-success/
+
+User-agent: Google-Extended
+Disallow: /api/
+Disallow: /dash/
+Disallow: /settings/
+Disallow: /payment-success/
+
 Sitemap: /sitemap.xml
