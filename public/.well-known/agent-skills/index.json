@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cloudflare/agent-skills-discovery-rfc/main/json-schema/skill-discovery-index.json",
+  "skills": [
+    {
+      "name": "Generate Mockup",
+      "type": "api",
+      "description": "Generates a mockup based on a given prompt.",
+      "url": "/.well-known/agent-skills/generate-mockup.json",
+      "sha256": "..."
+    }
+  ]
+}

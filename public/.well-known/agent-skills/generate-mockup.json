@@ -1,0 +1,22 @@
+{
+  "name": "Generate Mockup",
+  "description": "Generates a mockup based on a given prompt.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "prompt": {
+        "type": "string",
+        "description": "The prompt to generate the mockup from."
+      }
+    },
+    "required": [
+      "prompt"
+    ]
+  },
+  "api": {
+    "type": "openapi",
+    "url": "/openapi.json",
+    "path": "/api/generate",
+    "method": "POST"
+  }
+}
