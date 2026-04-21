@@ -1,14 +1,22 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import NextAuth from 'next-auth';
 import { authConfig } from '@/auth'; // Import authConfig directly
 
 const { auth } = (NextAuth as any)(authConfig);
 
 export default auth((req: any) => {
-    const isLoggedIn = !!req.auth;
     const { nextUrl } = req;
-    const isDashboard = nextUrl.pathname.startsWith('/dash');
     const isApi = nextUrl.pathname.startsWith('/api');
+
+    if (req.headers.get('Accept')?.includes('text/markdown') && !isApi) {
+      const url = nextUrl.clone()
+      url.pathname = '/api/markdown-converter'
+      url.search = `?url=${nextUrl.href}`
+      return NextResponse.rewrite(url)
+    }
+
+    const isLoggedIn = !!req.auth;
+    const isDashboard = nextUrl.pathname.startsWith('/dash');
     const isPublicApi = nextUrl.pathname.startsWith('/api/auth') ||
         nextUrl.pathname.startsWith('/api/webhooks') ||
         nextUrl.pathname.startsWith('/api/health'); // Allow health check
