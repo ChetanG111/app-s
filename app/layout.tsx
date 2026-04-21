@@ -29,6 +29,27 @@ export default function RootLayout({
                     {children}
                     <Analytics />
                 </SessionProvider>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `
+              if (navigator.modelContext) {
+                navigator.modelContext.provideContext({
+                  tools: [
+                    {
+                      name: 'generateMockup',
+                      description: 'Generates a mockup based on a given prompt.',
+                      execute: async (prompt) => {
+                        console.log('Generating mockup with prompt:', prompt);
+                        // Here you would call your API to generate the mockup
+                        return { result: 'Mockup generation started.' };
+                      },
+                    },
+                  ],
+                });
+              }
+            `,
+                    }}
+                />
             </body>
         </html>
     );
