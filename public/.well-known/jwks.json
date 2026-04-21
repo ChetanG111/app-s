@@ -1,0 +1,11 @@
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "kid": "1",
+      "use": "sig",
+      "alg": "RS256",
+      "n": "nbfissL3_1-..."
+    }
+  ]
+}

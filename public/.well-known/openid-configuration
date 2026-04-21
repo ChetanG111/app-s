@@ -1,0 +1,24 @@
+{
+  "issuer": "https://app-s.com",
+  "authorization_endpoint": "https://app-s.com/api/auth/authorization",
+  "token_endpoint": "https://app-s.com/api/auth/token",
+  "jwks_uri": "https://app-s.com/.well-known/jwks.json",
+  "grant_types_supported": [
+    "authorization_code",
+    "refresh_token",
+    "client_credentials"
+  ],
+  "response_types_supported": [
+    "code",
+    "token",
+    "id_token",
+    "code token",
+    "code id_token"
+  ],
+  "subject_types_supported": [
+    "public"
+  ],
+  "id_token_signing_alg_values_supported": [
+    "RS256"
+  ]
+}
