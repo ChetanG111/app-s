@@ -11,29 +11,34 @@ Disallow: /api/
 Disallow: /dash/
 Disallow: /settings/
 Disallow: /payment-success/
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 User-agent: GPTBot
 Disallow: /api/
 Disallow: /dash/
 Disallow: /settings/
 Disallow: /payment-success/
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 User-agent: OAI-SearchBot
 Disallow: /api/
 Disallow: /dash/
 Disallow: /settings/
 Disallow: /payment-success/
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 User-agent: Claude-Web
 Disallow: /api/
 Disallow: /dash/
 Disallow: /settings/
 Disallow: /payment-success/
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 User-agent: Google-Extended
 Disallow: /api/
 Disallow: /dash/
 Disallow: /settings/
 Disallow: /payment-success/
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 Sitemap: /sitemap.xml
