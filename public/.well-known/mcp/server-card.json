@@ -1,0 +1,10 @@
+{
+  "serverInfo": {
+    "name": "App-S MCP Server",
+    "version": "1.0.0"
+  },
+  "transport": {
+    "endpoint": "https://app-s.com/mcp"
+  },
+  "capabilities": []
+}
